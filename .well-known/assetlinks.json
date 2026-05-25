@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.newsneta.twa",
+        "sha256_cert_fingerprints": ["E6:C2:E9:EF:B3:DA:A8:94:79:CF:C8:36:9D:E6:DE:12:5A:C8:CA:9A:C7:A9:0E:88:82:05:6B:99:39:8A:59:3E"]
+      }
+    }]

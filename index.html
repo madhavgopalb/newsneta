@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>NewsNeta - Telugu News, Breaking News, District News</title>
+<meta name="description" content="NewsNeta is a Telugu-first news website with breaking news, district updates, short news videos, live feeds, polls, cricket scores, voice readouts, and personalized recommendations."/>
+<meta name="theme-color" content="#d71920"/>
+<meta property="og:title" content="NewsNeta - Telugu News, Breaking News, District News"/>
+<meta property="og:description" content="Premium Telugu news with short updates, live coverage, district news, voice readouts, and smart recommendations."/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="te_IN"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+ --bg:#f7f8fb;
+ --surface:#ffffff;
+ --surface-2:rgba(255,255,255,.72);
+ --ink:#111827;
+ --muted:#667085;
+ --line:rgba(17,24,39,.1);
+ --brand:#d71920;
+ --brand-2:#ffb000;
+ --teal:#0ea5a8;
+ --blue:#2563eb;
+ --green:#16a34a;
+ --violet:#7c3aed;
+ --shadow:0 18px 60px rgba(15,23,42,.12);
+ --radius:8px;
+ color-scheme:light;
+}
+[data-theme="dark"]{
+ --bg:#080b12;
+ --surface:#101622;
+ --surface-2:rgba(16,22,34,.76);
+ --ink:#f8fafc;
+ --muted:#a8b3c7;
+ --line:rgba(255,255,255,.11);
+ --shadow:0 22px 70px rgba(0,0,0,.42);
+ color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+ margin:0;
+ background:
+  radial-gradient(circle at 15% -10%, rgba(215,25,32,.12), transparent 28rem),
+  radial-gradient(circle at 92% 8%, rgba(14,165,168,.12), transparent 24rem),
+  var(--bg);
+ color:var(--ink);
+ font-family:"Noto Sans Telugu", Inter, system-ui, sans-serif;
+ line-height:1.5;
+}
+body.lock{overflow:hidden}
+a{color:inherit;text-decoration:none}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app-shell{min-height:100vh}
+.topbar{
+ position:sticky;
+ top:0;
+ z-index:50;
+ backdrop-filter:blur(18px);
+ background:var(--surface-2);
+ border-bottom:1px solid var(--line);
+}
+.header{
+ display:grid;
+ grid-template-columns:auto 1fr auto;
+ align-items:center;
+ gap:14px;
+ max-width:1240px;
+ margin:0 auto;
+ padding:12px 16px;
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-logo{
+ width:300px;
+ height:78px;
+ border-radius:8px;
+ object-fit:cover;
+ object-position:center;
+ background:#fff;
+ padding:0;
+ box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+.brand h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.brand small{display:none}
+.search-wrap{position:relative}
+.search-wrap input{
+ width:100%;
+ height:44px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:rgba(255,255,255,.62);
+ color:var(--ink);
+ padding:0 46px 0 42px;
+ outline:none;
+}
+[data-theme="dark"] .search-wrap input{background:rgba(255,255,255,.06)}
+.search-icon,.spark-icon{position:absolute;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search-icon{left:15px}.spark-icon{right:15px;color:var(--brand)}
+.header-actions{display:flex;align-items:center;gap:8px}
+.icon-btn,.pill-btn{
+ border:1px solid var(--line);
+ background:var(--surface);
+ color:var(--ink);
+ min-width:44px;
+ height:44px;
+ border-radius:999px;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ box-shadow:0 8px 24px rgba(15,23,42,.06);
+}
+.pill-btn{padding:0 14px;font-weight:800}
+.admin-login-btn{background:var(--brand);color:#fff;border-color:var(--brand)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 6px rgba(215,25,32,.16);animation:pulse 1.4s infinite}
+.nav{
+ max-width:1240px;
+ margin:0 auto;
+ display:flex;
+ gap:8px;
+ overflow:auto;
+ padding:0 16px 12px;
+ scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none}
+.nav a,.chip{
+ flex:0 0 auto;
+ border:1px solid var(--line);
+ background:var(--surface);
+ color:var(--muted);
+ padding:9px 13px;
+ border-radius:999px;
+ font-weight:700;
+ font-size:14px;
+}
+.nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.nav-districts{
+ max-width:1240px;
+ margin:0 auto;
+ display:grid;
+ grid-template-columns:1fr 1fr auto;
+ gap:10px;
+ padding:0 16px 12px;
+}
+.menu-select{
+ min-height:42px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:var(--surface);
+ color:var(--ink);
+ padding:0 14px;
+ font-weight:800;
+ outline:none;
+}
+.menu-refresh{white-space:nowrap}
+.refresh-inline{
+ max-width:1240px;
+ margin:0 auto;
+ padding:0 16px 10px;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:800;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.ticker{
+ position:sticky;
+ top:82px;
+ z-index:40;
+ border-bottom:1px solid var(--line);
+ background:linear-gradient(90deg,#151821,#2a1013);
+ color:#fff;
+ overflow:hidden;
+}
+.ticker-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:9px 16px}
+.ticker-label{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;background:var(--brand);padding:7px 9px;border-radius:999px;white-space:nowrap}
+.ticker-track{white-space:nowrap;animation:marquee 34s linear infinite;color:#f8fafc;font-size:14px}
+.page{max-width:1240px;margin:0 auto;padding:18px 16px 96px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.8fr);gap:16px;align-items:stretch}
+.hero{
+ min-height:430px;
+ position:relative;
+ overflow:hidden;
+ border-radius:var(--radius);
+ background:#111;
+ box-shadow:var(--shadow);
+ isolation:isolate;
+}
+.hero::before{
+ content:"";
+ position:absolute;
+ inset:0;
+ background:
+  linear-gradient(90deg,rgba(0,0,0,.88),rgba(0,0,0,.42),rgba(0,0,0,.08)),
+  var(--hero-image,linear-gradient(135deg,#111,#333));
+ background-size:cover;
+ background-position:center;
+ z-index:-1;
+ transition:opacity .35s ease;
+}
+.hero-content{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:28px;max-width:720px;color:#fff}
+.kicker{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.08em}
+.tag{display:inline-flex;align-items:center;gap:6px;width:max-content;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:7px 10px;backdrop-filter:blur(12px);font-weight:800;font-size:12px}
+.hero h2{font-size:clamp(27px,4.8vw,56px);line-height:1.08;margin:16px 0 10px;letter-spacing:0}
+.hero p{font-size:17px;max-width:58ch;color:#e7eaf0;margin:0 0 18px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hero-carousel-controls{
+ position:absolute;
+ left:18px;
+ right:18px;
+ bottom:18px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ pointer-events:none;
+}
+.hero-arrow{
+ width:42px;
+ height:42px;
+ border-radius:999px;
+ border:1px solid rgba(255,255,255,.38);
+ background:rgba(0,0,0,.34);
+ color:#fff;
+ display:grid;
+ place-items:center;
+ font-size:22px;
+ pointer-events:auto;
+ backdrop-filter:blur(10px);
+}
+.hero-dots{display:flex;gap:7px;pointer-events:auto}
+.hero-dot{
+ width:9px;
+ height:9px;
+ border-radius:999px;
+ border:0;
+ padding:0;
+ background:rgba(255,255,255,.42);
+}
+.hero-dot.active{width:28px;background:#fff}
+.hero-source{margin-top:8px;color:#d6dae3;font:800 12px/1 Inter,sans-serif}
+.primary-btn,.ghost-btn{
+ min-height:44px;
+ border-radius:999px;
+ padding:0 16px;
+ border:1px solid rgba(255,255,255,.24);
+ display:inline-flex;
+ align-items:center;
+ gap:8px;
+ font-weight:800;
+}
+.primary-btn{background:#fff;color:#111827}
+.ghost-btn{background:rgba(255,255,255,.14);color:#fff}
+.side-stack{display:grid;gap:16px}
+.glass-panel,.section,.news-card,.mini-card,.admin-card{
+ border:1px solid var(--line);
+ background:var(--surface-2);
+ backdrop-filter:blur(18px);
+ border-radius:var(--radius);
+ box-shadow:0 10px 34px rgba(15,23,42,.08);
+}
+.glass-panel{padding:16px}
+.panel-title,.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.panel-title h3,.section-title h2{margin:0;font-size:18px}
+.counter-list{display:grid;gap:10px}
+.counter-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:10px}
+.counter-row:last-child{border-bottom:0;padding-bottom:0}
+.counter-row strong{font-size:15px}
+.counter{font:800 20px/1 Inter,sans-serif;color:var(--brand)}
+.trust-meter{display:grid;gap:10px}
+.meter{height:8px;background:rgba(127,139,160,.2);border-radius:99px;overflow:hidden}
+.meter span{display:block;height:100%;width:91%;background:linear-gradient(90deg,var(--green),var(--teal))}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.section{padding:18px;margin-top:18px}
+.story-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.news-card{overflow:hidden;background:var(--surface);transition:transform .22s ease, box-shadow .22s ease}
+.news-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.thumb{aspect-ratio:16/10;background:linear-gradient(135deg,#d9e2f2,#fff);position:relative;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.badge-row{position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+.badge{border-radius:999px;background:rgba(0,0,0,.62);color:#fff;padding:5px 8px;font:800 11px/1 Inter,sans-serif;backdrop-filter:blur(8px)}
+.card-body{padding:13px}
+.card-body h3{margin:0 0 10px;font-size:18px;line-height:1.35}
+.summary{color:var(--muted);font-size:14px;margin:0 0 12px}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font:700 12px/1 Inter,sans-serif}
+.refresh-note{margin-top:9px;color:var(--muted);font:700 11px/1.3 Inter,sans-serif}
+.voice-btn{border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);height:34px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font-weight:800}
+.reels{
+ display:grid;
+ grid-auto-flow:column;
+ grid-auto-columns:minmax(230px,280px);
+ gap:14px;
+ overflow:auto;
+ scroll-snap-type:x mandatory;
+ padding-bottom:6px;
+ scrollbar-width:thin;
+}
+.reel{
+ min-height:420px;
+ border-radius:var(--radius);
+ overflow:hidden;
+ position:relative;
+ scroll-snap-align:start;
+ color:#fff;
+ background:#111;
+ display:flex;
+ align-items:flex-end;
+ box-shadow:var(--shadow);
+}
+.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.72}
+.reel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,rgba(0,0,0,.82))}
+.reel-content{position:relative;z-index:1;padding:16px}
+.reel-content h3{font-size:21px;line-height:1.25;margin:10px 0}
+.reel-actions{display:flex;align-items:center;gap:8px;margin-top:12px}
+.round{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center}
+.category-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.district-tools{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:14px}
+.district-tools select{
+ min-height:44px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:var(--surface);
+ color:var(--ink);
+ padding:0 14px;
+ outline:none;
+}
+.refresh-status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:800}
+.category-tile{
+ min-height:112px;
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ padding:12px;
+ display:flex;
+ flex-direction:column;
+ justify-content:space-between;
+ background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(255,255,255,.42));
+}
+[data-theme="dark"] .category-tile{background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.03))}
+.category-tile strong{font-size:15px}
+.category-tile span{font:800 22px/1 Inter,sans-serif;color:var(--brand)}
+.wide-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.mini-card{padding:14px;background:var(--surface)}
+.mini-card h3{margin:0 0 8px;font-size:17px}
+.poll-option{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:999px;padding:10px 12px;margin-top:9px;background:transparent;color:var(--ink);width:100%;font-weight:800}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;text-align:center}
+.score strong{font:800 24px/1 Inter,sans-serif}
+.dashboard-table{display:grid;gap:8px}
+.dash-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px;border-radius:var(--radius);background:rgba(127,139,160,.1)}
+.summarizer textarea{
+ width:100%;
+ min-height:128px;
+ resize:vertical;
+ border:1px solid var(--line);
+ background:var(--surface);
+ color:var(--ink);
+ border-radius:var(--radius);
+ padding:12px;
+ outline:none;
+}
+.summary-output{margin-top:10px;padding:12px;border-radius:var(--radius);background:rgba(14,165,168,.12);color:var(--ink)}
+.layout-doc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.permission-list{display:grid;gap:7px;margin-top:10px;color:var(--muted);font-size:13px}
+.permission-list span{display:flex;gap:8px;align-items:flex-start;width:auto;height:auto;border-radius:0;background:transparent;color:var(--muted);font-weight:700}
+.permission-list b{color:var(--green)}
+.admin-card{padding:14px;background:var(--surface)}
+.admin-card > span{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(215,25,32,.12);color:var(--brand);font-weight:900}
+.admin-card h3{margin:10px 0 6px;font-size:16px}
+.admin-card p{margin:0;color:var(--muted);font-size:13px}
+.floating-ai{
+ position:fixed;
+ right:18px;
+ bottom:18px;
+ z-index:70;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:var(--ink);
+ color:var(--bg);
+ padding:10px 14px;
+ font-weight:900;
+ box-shadow:var(--shadow);
+}
+.ai-panel{
+ position:fixed;
+ right:18px;
+ bottom:78px;
+ width:min(360px,calc(100vw - 28px));
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ background:var(--surface);
+ box-shadow:var(--shadow);
+ z-index:80;
+ overflow:hidden;
+ transform:translateY(14px);
+ opacity:0;
+ pointer-events:none;
+ transition:.2s ease;
+}
+.ai-panel.open{transform:none;opacity:1;pointer-events:auto}
+.ai-head{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--line)}
+.ai-body{padding:14px;display:grid;gap:10px}
+.bubble{padding:10px 12px;border-radius:14px;background:rgba(127,139,160,.12);font-size:14px}
+.bubble.user{background:rgba(215,25,32,.12);justify-self:end}
+.notify{
+ position:fixed;
+ left:16px;
+ right:16px;
+ bottom:18px;
+ max-width:520px;
+ margin:auto;
+ z-index:90;
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ background:var(--surface);
+ box-shadow:var(--shadow);
+ padding:14px;
+ display:none;
+}
+.notify.show{display:block;animation:slideUp .28s ease}
+.notify-actions{display:flex;gap:10px;margin-top:12px}
+.modal-backdrop{
+ position:fixed;
+ inset:0;
+ z-index:100;
+ display:none;
+ place-items:center;
+ padding:16px;
+ background:rgba(2,6,23,.64);
+ backdrop-filter:blur(10px);
+}
+.modal-backdrop.open{display:grid}
+.login-modal{
+ width:min(460px,100%);
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ background:var(--surface);
+ box-shadow:var(--shadow);
+ overflow:hidden;
+}
+.story-modal{
+ width:min(760px,100%);
+ max-height:min(86vh,820px);
+ overflow:auto;
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ background:var(--surface);
+ box-shadow:var(--shadow);
+}
+.story-modal img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.story-modal-body{padding:18px}
+.story-modal-body h2{font-size:clamp(24px,4vw,38px);line-height:1.16;margin:8px 0 12px}
+.story-modal-body p{color:var(--muted);font-size:16px}
+.story-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.story-detail-copy{
+ margin-top:14px;
+ padding:14px;
+ border-radius:var(--radius);
+ background:rgba(127,139,160,.1);
+ color:var(--ink);
+ font-size:15px;
+ line-height:1.65;
+}
+.login-modal header{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:16px;
+ border-bottom:1px solid var(--line);
+}
+.login-modal form{display:grid;gap:12px;padding:16px}
+.login-modal label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:800}
+.login-modal input,.login-modal select{
+ min-height:44px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:var(--bg);
+ color:var(--ink);
+ padding:0 14px;
+ outline:none;
+}
+.cms-preview{border-top:1px solid var(--line);padding:14px 16px;background:rgba(127,139,160,.1)}
+.cms-preview strong{display:block;margin-bottom:8px}
+.cms-preview div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;color:var(--muted);font-size:13px}
+.bottom-nav{
+ display:none;
+ position:fixed;
+ bottom:0;
+ left:0;
+ right:0;
+ z-index:60;
+ background:var(--surface-2);
+ backdrop-filter:blur(18px);
+ border-top:1px solid var(--line);
+ padding:8px 8px max(8px,env(safe-area-inset-bottom));
+}
+.bottom-nav a{flex:1;text-align:center;color:var(--muted);font-size:11px;font-weight:800}
+.bottom-nav span{display:block;font-size:20px;margin-bottom:2px}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-55%)}}
+@keyframes pulse{50%{opacity:.45;transform:scale(.9)}}
+@keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:980px){
+ .header{grid-template-columns:auto auto;gap:10px}
+ .search-wrap{grid-column:1/-1;order:3}
+ .hero-grid,.grid-2,.wide-grid{grid-template-columns:1fr}
+ .story-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .category-grid{grid-template-columns:repeat(3,1fr)}
+ .layout-doc,.role-grid{grid-template-columns:1fr 1fr}
+ .ticker{top:124px}
+}
+@media (max-width:640px){
+ .page{padding:12px 12px 86px}
+ .header{padding:10px 12px}
+ .brand-logo{width:210px;height:58px}
+ .brand h1{font-size:18px}
+ .brand small{font-size:11px}
+ .pill-btn .label{display:none}
+ .nav{padding:0 12px 10px}
+ .nav-districts{grid-template-columns:1fr;padding:0 12px 10px}
+ .ticker{top:121px}
+ .ticker-inner{padding:8px 12px}
+ .hero{min-height:470px;border-radius:0;margin-left:-12px;margin-right:-12px}
+ .hero-content{padding:22px 18px}
+ .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
+ .section{padding:14px;margin-top:14px}
+ .reels{grid-auto-columns:82vw}
+ .bottom-nav{display:flex}
+ .floating-ai{bottom:74px;right:12px}
+ .ai-panel{bottom:132px;right:12px}
+ .story-modal{max-height:92vh}
+ .story-modal-body{padding:14px}
+ .story-modal-actions .pill-btn{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+ <div class="topbar">
+  <header class="header" aria-label="NewsNeta header">
+   <a class="brand" href="#">
+    <img class="brand-logo" src="assets/newsneta-logo.jpg" alt="NewsNeta logo"/>
+    <div>
+     <h1>NewsNeta</h1>
+     <small>తెలుగు ప్రజల వార్తా వేదిక</small>
+    </div>
+   </a>
+   <label class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input id="searchInput" type="search" placeholder="తెలుగులో వార్తలు వెతకండి..." autocomplete="off"/>
+    <span class="spark-icon">Smart</span>
+   </label>
+   <div class="header-actions">
+    <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button"><span class="label">Admin Login</span></button>
+    <button class="pill-btn" id="liveBtn" type="button"><span class="live-dot"></span><span class="label">LIVE</span></button>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
+   </div>
+  </header>
+  <nav class="nav" aria-label="News categories" id="categoryNav"></nav>
+  <div class="nav-districts" aria-label="District news menu">
+   <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>
+   <select class="menu-select" id="apMenuSelect" aria-label="Andhra Pradesh district news"></select>
+   <button class="pill-btn menu-refresh" id="menuRefreshNow" type="button">Refresh news</button>
+  </div>
+  <div class="refresh-inline"><span class="live-dot"></span><span id="menuRefreshStatus">News refresh starts after page load</span></div>
+ </div>
+
+ <div class="ticker" aria-label="Breaking news ticker">
+  <div class="ticker-inner">
+   <div class="ticker-label"><span class="live-dot"></span>BREAKING</div>
+   <div class="ticker-track" id="tickerTrack">తాజా వార్తలు లోడ్ అవుతున్నాయి...</div>
+  </div>
+ </div>
+
+ <main class="page">
+  <section class="hero-grid" aria-label="Top stories">
+   <article class="hero" id="hero">
+    <div class="hero-content">
+     <span class="tag">Top Story</span>
+     <h2 id="heroTitle">తెలుగు వార్తలను వేగంగా, స్పష్టంగా, నమ్మకంగా అందించే NewsNeta</h2>
+     <p id="heroSummary">లైవ్ బ్రేకింగ్ న్యూస్, జిల్లా వార్తలు, చిన్న వార్తా వీడియోలు, స్మార్ట్ సారాంశాలు, వాయిస్ రీడ్, ఫ్యాక్ట్ చెక్ సంకేతాలు అన్నీ ఒకే ప్రీమియం అనుభవంలో.</p>
+     <div class="hero-source" id="heroSource">Global desk</div>
+     <div class="hero-actions">
+      <button class="primary-btn" type="button" id="readHero">వాయిస్ వినండి</button>
+      <a class="ghost-btn" href="#reels">షార్ట్ న్యూస్ చూడండి</a>
+     </div>
+    </div>
+    <div class="hero-carousel-controls" aria-label="Top story carousel controls">
+     <button class="hero-arrow" id="heroPrev" type="button" aria-label="Previous top story">‹</button>
+     <div class="hero-dots" id="heroDots"></div>
+     <button class="hero-arrow" id="heroNext" type="button" aria-label="Next top story">›</button>
+    </div>
+   </article>
+
+   <div class="side-stack">
+    <aside class="glass-panel">
+     <div class="panel-title"><h3>Trending Telugu News</h3><span class="tag">Live</span></div>
+     <div class="counter-list" id="trendingList"></div>
+    </aside>
+    <aside class="glass-panel">
+     <div class="panel-title"><h3>Fact Check Signal</h3><span>91%</span></div>
+     <div class="trust-meter">
+      <div class="meter"><span></span></div>
+      <p class="summary">సోర్స్ నమ్మకత్వం, భాషా తీవ్రత, రిపీట్ క్లెయిమ్స్, అధికారిక ధృవీకరణ ఆధారంగా వార్తా నమ్మకత్వం చూపించబడుతుంది.</p>
+     </div>
+    </aside>
+   </div>
+  </section>
+
+  <section class="section" id="reels">
+   <div class="section-title">
+    <h2>Short News Reels</h2>
+    <span class="chip active">Swipe</span>
+   </div>
+   <div class="reels" id="reelsFeed"></div>
+  </section>
+
+  <section class="grid-2">
+   <div class="section">
+    <div class="section-title"><h2>Recommended News</h2><span class="chip">Personalized</span></div>
+    <div class="story-grid" id="recommendedGrid"></div>
+   </div>
+   <div class="section">
+    <div class="section-title"><h2>Most Viewed Stories</h2><span class="chip">24h</span></div>
+    <div id="mostViewed"></div>
+   </div>
+  </section>
+
+  <section class="section">
+   <div class="section-title"><h2>Category-wise Telugu News</h2><span class="chip">Auto-tagged</span></div>
+   <div class="category-grid" id="categoryGrid"></div>
+  </section>
+
+  <section class="section">
+   <div class="section-title"><h2 id="latestTitle">Latest News</h2><span class="chip">Live</span></div>
+   <div class="story-grid" id="latestGrid"></div>
+  </section>
+
+  <section class="wide-grid">
+   <article class="mini-card">
+    <div class="panel-title"><h3>Public Opinion Poll</h3><span class="tag">Live</span></div>
+    <p class="summary">ఈరోజు ప్రధాన రాజకీయ చర్చలో మీ అభిప్రాయం?</p>
+    <button class="poll-option" type="button"><span>ప్రభుత్వ నిర్ణయం బాగుంది</span><b>42%</b></button>
+    <button class="poll-option" type="button"><span>మరింత చర్చ అవసరం</span><b>38%</b></button>
+    <button class="poll-option" type="button"><span>ప్రజలకు స్పష్టత కావాలి</span><b>20%</b></button>
+   </article>
+   <article class="mini-card">
+    <div class="panel-title"><h3>Election Dashboard</h3><span class="tag">2026</span></div>
+    <div class="dashboard-table">
+     <div class="dash-row"><span>Telangana sentiment</span><b>+6.4</b></div>
+     <div class="dash-row"><span>AP public pulse</span><b>+3.1</b></div>
+     <div class="dash-row"><span>Top constituency heat</span><b>Vijayawada</b></div>
+    </div>
+   </article>
+   <article class="mini-card">
+    <div class="panel-title"><h3>Live Cricket Scores</h3><span class="tag">Widget</span></div>
+    <div class="score">
+     <div><small>HYD</small><strong>178/5</strong></div>
+     <b>vs</b>
+     <div><small>CHE</small><strong>142/4</strong></div>
+    </div>
+    <p class="summary">16.2 overs - Match tracker: Hyderabad 63%</p>
+   </article>
+  </section>
+
+  <section class="grid-2">
+   <article class="section summarizer">
+    <div class="section-title"><h2>News Brief Tool</h2><span class="chip">Telugu</span></div>
+    <textarea id="summaryInput" placeholder="ఏదైనా వార్తా కాపీని ఇక్కడ పేస్ట్ చేయండి..."></textarea>
+    <button class="pill-btn" id="summarizeBtn" type="button" style="margin-top:10px;background:var(--ink);color:var(--bg)">సారాంశం రూపొందించండి</button>
+    <div class="summary-output" id="summaryOutput">AI సారాంశం ఇక్కడ కనిపిస్తుంది.</div>
+   </article>
+   <article class="section">
+    <div class="section-title"><h2>Live TV / YouTube</h2><span class="chip">Embed-ready</span></div>
+    <div style="aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#111;display:grid;place-items:center;color:#fff;text-align:center;padding:20px">
+     <div>
+      <strong>NewsNeta LIVE</strong>
+      <p style="margin:8px 0 0;color:#d6dae3">Productionలో YouTube live embed లేదా HLS stream ఇక్కడ లోడ్ అవుతుంది.</p>
+     </div>
+    </div>
+   </article>
+  </section>
+
+  <section class="section">
+   <div class="section-title"><h2>Editor's Picks</h2><span class="chip">Newsroom Choice</span></div>
+   <div class="wide-grid">
+    <article class="mini-card"><h3>ఈరోజు ప్రధాన రాజకీయ పరిణామాలు</h3><p class="summary">తెలంగాణ, ఆంధ్రప్రదేశ్, జాతీయ రాజకీయాల్లో పాఠకులు తప్పక చదవాల్సిన ముఖ్య కథనాలు.</p></article>
+    <article class="mini-card"><h3>జిల్లాల నుంచి ప్రత్యేక కథనాలు</h3><p class="summary">స్థానిక సమస్యలు, అభివృద్ధి పనులు, ప్రజా స్పందనలపై ప్రత్యేక కవరేజ్.</p></article>
+    <article class="mini-card"><h3>సినిమా, క్రీడలు, బిజినెస్ ఫోకస్</h3><p class="summary">వినోదం నుంచి మార్కెట్ వరకు వేగంగా చదవగలిగే తాజా అప్డేట్లు.</p></article>
+   </div>
+  </section>
+
+  <section class="wide-grid">
+   <article class="mini-card">
+    <div class="panel-title"><h3>Photo News</h3><span class="tag">Gallery</span></div>
+    <p class="summary">రోజు ముఖ్య ఘటనలను ఫోటోలు, క్యాప్షన్‌లు, చిన్న వివరాలతో చూడండి.</p>
+    <div class="dashboard-table">
+     <div class="dash-row"><span>Hyderabad civic update</span><b>12 photos</b></div>
+     <div class="dash-row"><span>AP coastal weather</span><b>8 photos</b></div>
+     <div class="dash-row"><span>Movie event highlights</span><b>15 photos</b></div>
+    </div>
+   </article>
+   <article class="mini-card">
+    <div class="panel-title"><h3>Opinion & Analysis</h3><span class="tag">Columns</span></div>
+    <p class="summary">ప్రస్తుత రాజకీయాలు, పాలసీలు, ప్రజా సమస్యలపై విశ్లేషణాత్మక కథనాలు.</p>
+    <button class="poll-option" type="button"><span>Editorial</span><b>Read</b></button>
+    <button class="poll-option" type="button"><span>Explainers</span><b>Read</b></button>
+   </article>
+   <article class="mini-card">
+    <div class="panel-title"><h3>Local Alerts</h3><span class="tag">Updates</span></div>
+    <div class="dashboard-table">
+     <div class="dash-row"><span>Traffic and metro updates</span><b>Live</b></div>
+     <div class="dash-row"><span>Weather warnings</span><b>Today</b></div>
+     <div class="dash-row"><span>Power and water notices</span><b>District</b></div>
+    </div>
+   </article>
+  </section>
+ </main>
+
+ <div class="ai-panel" id="aiPanel" aria-label="News assistant">
+  <div class="ai-head"><strong>NewsNeta Assistant</strong><button class="icon-btn" id="closeAi" type="button">×</button></div>
+  <div class="ai-body">
+   <div class="bubble">మీ కోసం ప్రధాన వార్తలను తెలుగులో చిన్నగా చెబుతాను. సెర్చ్‌లో విషయం టైప్ చేస్తే సంబంధిత కథనాలు సూచిస్తాను.</div>
+   <div class="bubble user">నేడు టాప్ రాజకీయ వార్తలు?</div>
+   <div class="bubble">ప్రస్తుతం తెలంగాణ, ఆంధ్రప్రదేశ్, జాతీయ వార్తల్లో వేగంగా పెరుగుతున్న కథనాలను స్మార్ట్ ర్యాంకింగ్‌తో చూపిస్తున్నాను.</div>
+  </div>
+ </div>
+ <button class="floating-ai" id="aiButton" type="button">News Assistant</button>
+
+ <div class="notify" id="notify">
+  <strong>బ్రేకింగ్ న్యూస్ అలర్ట్స్ ఆన్ చేయాలా?</strong>
+  <p class="summary" style="margin:6px 0 0">మీ ప్రాంతం, ఆసక్తుల ఆధారంగా ముఖ్యమైన వార్తలు మాత్రమే పంపిస్తాం.</p>
+  <div class="notify-actions">
+   <button class="pill-btn" id="allowNotify" type="button" style="background:var(--brand);color:white;border-color:var(--brand)">Subscribe</button>
+   <button class="pill-btn" id="skipNotify" type="button">Later</button>
+  </div>
+ </div>
+
+ <div class="modal-backdrop" id="loginBackdrop" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <div class="login-modal">
+   <header>
+    <div>
+     <strong id="loginTitle">NewsNeta CMS Login</strong>
+     <p class="summary" style="margin:4px 0 0">Admin, Reporter, and Reviewer access</p>
+    </div>
+    <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
+   </header>
+   <form id="loginForm">
+    <label>
+     Email
+     <input type="email" value="admin@newsneta.in" autocomplete="email"/>
+    </label>
+    <label>
+     Password
+     <input type="password" value="newsneta-demo" autocomplete="current-password"/>
+    </label>
+    <label>
+     Role
+     <select id="roleSelect">
+      <option value="admin">Admin - full access</option>
+      <option value="reporter">Reporter - create district news</option>
+      <option value="reviewer">Reviewer - approve and fact-check</option>
+     </select>
+    </label>
+    <button class="pill-btn admin-login-btn" type="submit">Open dashboard</button>
+   </form>
+   <div class="cms-preview" id="cmsPreview">
+    <strong>Admin permissions preview</strong>
+    <div><span>Publish / unpublish news</span><b>Allowed</b></div>
+    <div><span>Manage reporters, reviewers, districts</span><b>Allowed</b></div>
+    <div><span>Ads, analytics, sources, push alerts</span><b>Allowed</b></div>
+   </div>
+  </div>
+ </div>
+
+ <div class="modal-backdrop" id="storyBackdrop" role="dialog" aria-modal="true" aria-labelledby="storyModalTitle">
+  <article class="story-modal">
+   <button class="icon-btn" id="closeStory" type="button" aria-label="Close story" style="position:absolute;right:24px;top:24px;z-index:2;background:rgba(255,255,255,.92)">×</button>
+   <img id="storyModalImage" src="assets/newsneta-logo.jpg" alt="">
+   <div class="story-modal-body">
+    <span class="tag" id="storyModalCategory">News</span>
+    <h2 id="storyModalTitle">Story title</h2>
+   <p id="storyModalSummary">Story summary</p>
+    <div class="story-detail-copy" id="storyModalCopy">Full story details will appear here.</div>
+    <div class="dashboard-table" id="storyModalFacts"></div>
+    <div class="story-modal-actions">
+     <button class="pill-btn" id="storyModalListen" type="button">Listen</button>
+    </div>
+   </div>
+  </article>
+ </div>
+
+ <nav class="bottom-nav" aria-label="Mobile navigation">
+  <a href="#"><span>⌂</span>Home</a>
+  <a href="#reels"><span>▯</span>Reels</a>
+  <a href="#recommendedGrid"><span>★</span>For You</a>
+  <a href="#summaryInput"><span>✦</span>Tools</a>
+ </nav>
+</div>
+
+<script>
+const categories = [
+ ["politics","Politics"],["telangana","Telangana"],["ap","Andhra Pradesh"],["national","National"],
+ ["international","International"],["cinema","Cinema"],["sports","Sports"],["technology","Technology"],
+ ["business","Business"],["viral","Viral"]
+];
+
+const refreshIntervalMs = 5 * 60 * 1000;
+
+const districts = {
+ telangana: [
+  "Adilabad","Bhadradri Kothagudem","Hanamkonda","Hyderabad","Jagtial","Jangaon","Jayashankar Bhupalpally",
+  "Jogulamba Gadwal","Kamareddy","Karimnagar","Khammam","Komaram Bheem Asifabad","Mahabubabad","Mahabubnagar",
+  "Mancherial","Medak","Medchal Malkajgiri","Mulugu","Nagarkurnool","Nalgonda","Narayanpet","Nirmal",
+  "Nizamabad","Peddapalli","Rajanna Sircilla","Rangareddy","Sangareddy","Siddipet","Suryapet","Vikarabad",
+  "Wanaparthy","Warangal","Yadadri Bhuvanagiri"
+ ],
+ ap: [
+  "Alluri Sitharama Raju","Anakapalli","Ananthapuramu","Annamayya","Bapatla","Chittoor","Dr. B.R. Ambedkar Konaseema",
+  "East Godavari","Eluru","Guntur","Kakinada","Krishna","Kurnool","Nandyal","NTR","Palnadu","Parvathipuram Manyam",
+  "Prakasam","Sri Potti Sriramulu Nellore","Sri Sathya Sai","Srikakulam","Tirupati","Visakhapatnam","Vizianagaram",
+  "West Godavari","YSR Kadapa"
+ ]
+};
+
+const stateLabels = {
+ telangana: "Telangana Districts",
+ ap: "Andhra Pradesh Districts"
+};
+
+const fallbackStories = [
+ {title:"తెలంగాణలో కొత్త అభివృద్ధి ప్రణాళికలపై కీలక సమీక్ష", category:"Telangana", views:98240, sentiment:"Positive", trust:94, image:"https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75"},
+ {title:"ఆంధ్రప్రదేశ్ పెట్టుబడులపై పరిశ్రమల శాఖ తాజా ప్రకటన", category:"Andhra Pradesh", views:87210, sentiment:"Neutral", trust:89, image:"https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=75"},
+ {title:"జాతీయ రాజకీయాల్లో కొత్త కూటములపై చర్చ వేగం", category:"Politics", views:76420, sentiment:"Mixed", trust:86, image:"https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=75"},
+ {title:"సినిమా రిలీజ్‌లతో తెలుగు బాక్సాఫీస్‌లో రికార్డు వసూళ్లు", category:"Cinema", views:69880, sentiment:"Positive", trust:92, image:"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=75"},
+ {title:"క్రికెట్ మ్యాచ్‌లో చివరి ఓవర్ ఉత్కంఠ, అభిమానుల్లో సందడి", category:"Sports", views:65770, sentiment:"Positive", trust:90, image:"https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=900&q=75"},
+ {title:"AI టూల్స్‌తో స్థానిక భాషా మీడియా వేగంగా మారుతోంది", category:"Technology", views:61320, sentiment:"Positive", trust:95, image:"https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=75"},
+ {title:"స్టార్టప్ మార్కెట్‌లో కొత్త పెట్టుబడుల ప్రవాహం", category:"Business", views:58760, sentiment:"Neutral", trust:91, image:"https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=75"},
+ {title:"సోషల్ మీడియాలో వైరల్ అవుతున్న వీడియోపై ఫ్యాక్ట్ చెక్", category:"Viral", views:55210, sentiment:"Alert", trust:78, image:"https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&w=900&q=75"}
+];
+
+const globalTopStories = [
+ {id:"global-economy", title:"ప్రపంచ మార్కెట్లలో కీలక మార్పులు, ఆసియా సూచీలపై ప్రభావం", category:"Global", views:112400, sentiment:"Neutral", trust:92, image:"https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=75", link:"#"},
+ {id:"global-diplomacy", title:"అంతర్జాతీయ వేదికపై కొత్త ఒప్పందాలపై దేశాల మధ్య చర్చలు", category:"International", views:108900, sentiment:"Mixed", trust:91, image:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=75", link:"#"},
+ {id:"global-tech", title:"టెక్నాలజీ రంగంలో కొత్త భద్రతా మార్గదర్శకాలు విడుదల", category:"Technology", views:98750, sentiment:"Positive", trust:94, image:"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=75", link:"#"},
+ {id:"global-climate", title:"వాతావరణ హెచ్చరికలతో తీరప్రాంతాల్లో అప్రమత్తత పెంపు", category:"World", views:94300, sentiment:"Alert", trust:93, image:"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=75", link:"#"}
+];
+
+let stories = [...fallbackStories];
+let districtStories = [...fallbackStories];
+let lastRefreshAt = null;
+let refreshCount = 0;
+let nextRefreshAt = null;
+let newsSourceMode = "Static preview";
+let activeDistrictFilter = null;
+let heroStories = [...globalTopStories, ...fallbackStories];
+let heroIndex = 0;
+
+function icon(name){
+ const map = {Politics:"🏛",Telangana:"◆","Andhra Pradesh":"◈",National:"◎",International:"◌",Cinema:"▶",Sports:"●",Technology:"AI",Business:"₹",Viral:"↗"};
+ return map[name] || "•";
+}
+
+function setupNav(){
+ const nav = document.getElementById("categoryNav");
+ nav.innerHTML = categories.map(([id,label],i)=>`<a href="#latestGrid" data-cat="${id}" class="${i===0?"active":""}">${label}</a>`).join("");
+ nav.addEventListener("click", event=>{
+  const link = event.target.closest("a");
+  if(!link) return;
+  activeDistrictFilter = null;
+  const telanganaMenuSelect = document.getElementById("telanganaMenuSelect");
+  const apMenuSelect = document.getElementById("apMenuSelect");
+  if(telanganaMenuSelect) telanganaMenuSelect.value = "";
+  if(apMenuSelect) apMenuSelect.value = "";
+  nav.querySelectorAll("a").forEach(a=>a.classList.remove("active"));
+  link.classList.add("active");
+  loadNews(link.dataset.cat);
+ });
+}
+
+function makeSummary(title){
+ return `${title} అనే అంశంపై NewsNeta ముఖ్యాంశాలను సంక్షిప్తంగా కుదించి, నేపథ్యం మరియు ప్రభావాన్ని త్వరగా అర్థమయ్యేలా చూపిస్తుంది.`;
+}
+
+function normalizeItems(items){
+ return items.map((item,index)=>({
+  id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
+  title:item.title || fallbackStories[index % fallbackStories.length].title,
+  category:item.category || fallbackStories[index % fallbackStories.length].category,
+  views:item.views || Math.floor(42000 + Math.random()*68000),
+  sentiment:item.sentiment || ["Positive","Neutral","Mixed"][index % 3],
+  trust:item.trust || Math.floor(82 + Math.random()*14),
+  image:item.image || fallbackStories[index % fallbackStories.length].image,
+  link:item.link || "#",
+  pubDate:item.pubDate || new Date().toISOString()
+ }));
+}
+
+function storyCard(story){
+ const refreshedAt = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "loading";
+ const storyId = story.id || story.link || story.title;
+ return `<article class="news-card">
+  <a href="#" data-story-id="${storyId}">
+   <div class="thumb">
+    <img loading="lazy" src="${story.image}" alt="${story.title}">
+    <div class="badge-row"><span class="badge">${story.category}</span><span class="badge">NewsNeta</span></div>
+   </div>
+  </a>
+  <div class="card-body">
+   <a href="#" data-story-id="${storyId}"><h3>${story.title}</h3></a>
+   <p class="summary">${makeSummary(story.title)}</p>
+   <div class="meta"><span>${Intl.NumberFormat("en-IN").format(story.views)} views</span><button class="voice-btn" type="button" data-speak="${story.title}">Listen</button></div>
+   <div class="refresh-note">Checked at ${refreshedAt}</div>
+  </div>
+ </article>`;
+}
+
+function render(){
+ const sorted = [...stories].sort((a,b)=>b.views-a.views);
+ heroStories = normalizeItems([...globalTopStories, ...sorted]).slice(0,8);
+ if(heroIndex >= heroStories.length) heroIndex = 0;
+ renderHeroSlide();
+ document.getElementById("tickerTrack").textContent = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
+ document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<div class="counter-row"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></div>`).join("");
+ document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(s=>`<article class="reel"><img loading="lazy" src="${s.image}" alt="${s.title}"><div class="reel-content"><span class="tag">${icon(s.category)} ${s.category}</span><h3>${s.title}</h3><p>${makeSummary(s.title)}</p><div class="reel-actions"><button class="round" data-speak="${s.title}" type="button">▶</button><button class="round" type="button">↗</button><button class="round" type="button">♡</button></div></div></article>`).join("");
+ document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");
+ document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,9).map(storyCard).join("");
+ document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<div class="counter-row"><strong>${s.title}</strong><span>${Intl.NumberFormat("en-IN").format(s.views)}</span></div>`).join("");
+ const counts = categories.map(([,label],i)=>({label,count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
+ document.getElementById("categoryGrid").innerHTML = counts.map(c=>`<a class="category-tile" href="#latestGrid"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">stories today</small></a>`).join("");
+ animateCounters();
+ updateRefreshStatus();
+}
+
+function renderHeroSlide(){
+ const heroStory = heroStories[heroIndex] || fallbackStories[0];
+ document.getElementById("hero").style.setProperty("--hero-image", `url("${heroStory.image}")`);
+ document.getElementById("heroTitle").textContent = heroStory.title;
+ document.getElementById("heroSummary").textContent = makeSummary(heroStory.title);
+ document.getElementById("heroSource").textContent = `${heroStory.category || "Top Story"} • ${Intl.NumberFormat("en-IN").format(heroStory.views || 0)} reads`;
+ document.getElementById("heroDots").innerHTML = heroStories.map((_,index)=>`<button class="hero-dot ${index === heroIndex ? "active" : ""}" type="button" data-hero-index="${index}" aria-label="Top story ${index + 1}"></button>`).join("");
+}
+
+function moveHeroSlide(step){
+ heroIndex = (heroIndex + step + heroStories.length) % heroStories.length;
+ renderHeroSlide();
+}
+
+function animateCounters(){
+ document.querySelectorAll(".counter").forEach(el=>{
+  const target = Number(el.dataset.target || 0);
+  let current = 0;
+  const step = Math.max(1, Math.round(target / 24));
+  const timer = setInterval(()=>{
+   current += step;
+   if(current >= target){ current = target; clearInterval(timer); }
+   el.textContent = `${current}K`;
+  },32);
+ });
+}
+
+async function loadNews(cat="telangana"){
+ try{
+  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}&refresh=${Date.now()}`, {cache:"no-store"});
+  if(!res.ok) throw new Error("news api failed");
+  const data = await res.json();
+  newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
+  stories = normalizeItems(data.items && data.items.length ? data.items : fallbackStories);
+ }catch(error){
+  newsSourceMode = "Static preview demo";
+  stories = normalizeItems(fallbackStories);
+ }
+ const latestTitle = document.getElementById("latestTitle");
+ const categoryLabel = categories.find(([id])=>id === cat)?.[1] || "Latest";
+ if(latestTitle) latestTitle.textContent = `${categoryLabel} News`;
+ lastRefreshAt = new Date();
+ nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
+ refreshCount += 1;
+ render();
+}
+
+function setupDistricts(){
+ const telanganaMenuSelect = document.getElementById("telanganaMenuSelect");
+ const apMenuSelect = document.getElementById("apMenuSelect");
+
+ function populate(){
+  telanganaMenuSelect.innerHTML = `<option value="">Telangana districts</option>` + districts.telangana.map(district=>`<option value="${district}">${district}</option>`).join("");
+  apMenuSelect.innerHTML = `<option value="">Andhra Pradesh districts</option>` + districts.ap.map(district=>`<option value="${district}">${district}</option>`).join("");
+ }
+
+ function selectDistrictFromMenu(state, district){
+  if(!district) return;
+  activeDistrictFilter = {state, district};
+  telanganaMenuSelect.value = state === "telangana" ? district : "";
+  apMenuSelect.value = state === "ap" ? district : "";
+  document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));
+  loadDistrictNews(state, district);
+  document.getElementById("latestGrid").scrollIntoView({behavior:"smooth", block:"start"});
+ }
+
+ telanganaMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("telangana", event.target.value));
+ apMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("ap", event.target.value));
+ document.getElementById("menuRefreshNow").addEventListener("click",refreshAllNews);
+ populate();
+}
+
+async function loadDistrictNews(state, district){
+ if(!state || !district) return loadNews(document.querySelector(".nav a.active")?.dataset.cat || "telangana");
+ try{
+  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}`, {cache:"no-store"});
+  if(!res.ok) throw new Error("district news api failed");
+  const data = await res.json();
+  newsSourceMode = data.status === "ok" ? "Live RSS feed" : newsSourceMode;
+  stories = normalizeItems(data.items && data.items.length ? data.items : fallbackStories)
+   .map(story=>({...story, category: district}));
+ }catch(error){
+  newsSourceMode = "Static preview demo";
+  stories = normalizeItems(fallbackStories).map(story=>({...story, category: district || "District"}));
+ }
+ const latestTitle = document.getElementById("latestTitle");
+ if(latestTitle) latestTitle.textContent = `${district} District News`;
+ lastRefreshAt = new Date();
+ nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
+ refreshCount += 1;
+ render();
+}
+
+async function refreshAllNews(){
+ const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "telangana";
+ if(activeDistrictFilter){
+  await loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district);
+ }else{
+  await loadNews(activeCat);
+ }
+ updateRefreshStatus();
+}
+
+function updateRefreshStatus(){
+ const status = document.getElementById("refreshStatus");
+ const menuStatus = document.getElementById("menuRefreshStatus");
+ const time = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "pending";
+ const secondsLeft = nextRefreshAt ? Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000)) : 0;
+ const countdown = secondsLeft ? `${Math.floor(secondsLeft / 60)}m ${String(secondsLeft % 60).padStart(2,"0")}s` : "starting";
+ const message = `Auto refresh every 5 min • ${newsSourceMode} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}`;
+ if(status) status.textContent = message;
+ if(menuStatus) menuStatus.textContent = message;
+}
+
+function speakTelugu(text){
+ if(!("speechSynthesis" in window)) return;
+ speechSynthesis.cancel();
+ const utterance = new SpeechSynthesisUtterance(text);
+ utterance.lang = "te-IN";
+ utterance.rate = .92;
+ speechSynthesis.speak(utterance);
+}
+
+document.addEventListener("click", event=>{
+ const speak = event.target.closest("[data-speak]");
+ if(speak){ event.preventDefault(); speakTelugu(speak.dataset.speak); }
+ const storyLink = event.target.closest("[data-story-id]");
+ if(storyLink){
+  event.preventDefault();
+  openStoryDetail(storyLink.dataset.storyId);
+ }
+ const heroDot = event.target.closest("[data-hero-index]");
+ if(heroDot){
+  heroIndex = Number(heroDot.dataset.heroIndex);
+  renderHeroSlide();
+ }
+});
+
+function findStoryById(id){
+ return [...stories, ...districtStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
+}
+
+function openStoryDetail(id){
+ const story = findStoryById(id);
+ if(!story) return;
+ document.getElementById("storyModalImage").src = story.image;
+ document.getElementById("storyModalImage").alt = story.title;
+ document.getElementById("storyModalCategory").textContent = story.category || "News";
+ document.getElementById("storyModalTitle").textContent = story.title;
+ const brief = `${makeSummary(story.title)} ఈ కథనంలో తాజా పరిస్థితి, నేపథ్యం, స్థానిక ప్రభావం, తదుపరి అప్డేట్ గురించి సంక్షిప్తంగా చదవండి.`;
+ document.getElementById("storyModalSummary").textContent = brief;
+ document.getElementById("storyModalCopy").textContent = `NewsNeta Desk: ${story.title} అంశంపై తాజా సమాచారం ప్రకారం సంబంధిత పరిణామాలు వేగంగా మారుతున్నాయి. ప్రజలపై ప్రభావం, స్థానిక స్పందన, అధికారిక ప్రకటనలు, తదుపరి నిర్ణయాలపై NewsNeta నిరంతరం అప్డేట్లు అందిస్తుంది. మరిన్ని వివరాలు అందుబాటులోకి వచ్చిన వెంటనే ఈ కథనం నవీకరించబడుతుంది.`;
+ document.getElementById("storyModalFacts").innerHTML = `
+  <div class="dash-row"><span>Desk</span><b>NewsNeta</b></div>
+  <div class="dash-row"><span>Category</span><b>${story.category || "News"}</b></div>
+  <div class="dash-row"><span>Updated</span><b>${lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "Loading"}</b></div>
+  <div class="dash-row"><span>Fact check</span><b>Verified</b></div>
+ `;
+ document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${makeSummary(story.title)}`);
+ document.getElementById("storyBackdrop").classList.add("open");
+}
+
+document.getElementById("closeStory").addEventListener("click",()=>document.getElementById("storyBackdrop").classList.remove("open"));
+document.getElementById("storyBackdrop").addEventListener("click",event=>{
+ if(event.target.id === "storyBackdrop") document.getElementById("storyBackdrop").classList.remove("open");
+});
+
+document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${document.getElementById("heroTitle").textContent}. ${document.getElementById("heroSummary").textContent}`));
+document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
+document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
+document.getElementById("themeBtn").addEventListener("click",()=>{
+ const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+ document.documentElement.dataset.theme = next;
+ localStorage.setItem("newsneta-theme", next);
+});
+document.getElementById("aiButton").addEventListener("click",()=>document.getElementById("aiPanel").classList.toggle("open"));
+document.getElementById("closeAi").addEventListener("click",()=>document.getElementById("aiPanel").classList.remove("open"));
+document.getElementById("adminLoginBtn").addEventListener("click",()=>document.getElementById("loginBackdrop").classList.add("open"));
+document.getElementById("closeLogin").addEventListener("click",()=>document.getElementById("loginBackdrop").classList.remove("open"));
+document.getElementById("loginBackdrop").addEventListener("click",event=>{
+ if(event.target.id === "loginBackdrop") document.getElementById("loginBackdrop").classList.remove("open");
+});
+document.getElementById("roleSelect").addEventListener("change",event=>{
+ const role = event.target.value;
+ const permissions = {
+  admin: ["Publish / unpublish news","Manage reporters, reviewers, districts","Ads, analytics, sources, push alerts"],
+  reporter: ["Create district drafts","Upload media and sources","Submit stories for review"],
+  reviewer: ["Approve or reject stories","Edit SEO, summary, and trust score","Send approved stories to publish queue"]
+ };
+ document.getElementById("cmsPreview").innerHTML = `<strong>${role[0].toUpperCase()+role.slice(1)} permissions preview</strong>` +
+  permissions[role].map(item=>`<div><span>${item}</span><b>Allowed</b></div>`).join("");
+});
+document.getElementById("loginForm").addEventListener("submit",event=>{
+ event.preventDefault();
+ const role = document.getElementById("roleSelect").value;
+ document.getElementById("cmsPreview").innerHTML += `<div><span>Demo session</span><b>${role} dashboard opened</b></div>`;
+});
+document.getElementById("summarizeBtn").addEventListener("click",()=>{
+ const text = document.getElementById("summaryInput").value.trim();
+ const words = text ? text.split(/\s+/).slice(0,28).join(" ") : "ఈ వార్తలోని ప్రధాన అంశాలు, నేపథ్యం, ప్రజలపై ప్రభావం";
+ document.getElementById("summaryOutput").textContent = `News Brief: ${words}${text.split(/\s+/).length > 28 ? "..." : ""} - కీలక నిర్ణయం, ప్రభావం, తదుపరి అప్డేట్‌ను సంక్షిప్తంగా చూపించాం.`;
+});
+document.getElementById("searchInput").addEventListener("input", event=>{
+ const q = event.target.value.trim().toLowerCase();
+ if(!q){ render(); return; }
+ const filtered = stories.filter(s=>s.title.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+ document.getElementById("latestGrid").innerHTML = (filtered.length ? filtered : stories).map(storyCard).join("");
+});
+
+document.getElementById("allowNotify").addEventListener("click",()=>{
+ document.getElementById("notify").classList.remove("show");
+ if("Notification" in window) Notification.requestPermission();
+});
+document.getElementById("skipNotify").addEventListener("click",()=>document.getElementById("notify").classList.remove("show"));
+
+if(localStorage.getItem("newsneta-theme")==="dark") document.documentElement.dataset.theme = "dark";
+setupNav();
+setupDistricts();
+refreshAllNews();
+window.newsnetaHeroTimer = setInterval(()=>moveHeroSlide(1), 6500);
+window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
+window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
+setTimeout(()=>document.getElementById("notify").classList.add("show"),2200);
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>

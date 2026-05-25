@@ -1,0 +1,11 @@
+{
+  "name": "newsneta",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "netlify dev",
+    "check": "node --check netlify/functions/news.js"
+  },
+  "dependencies": {
+    "rss-parser": "^3.13.0"
+  }
+}

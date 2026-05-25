@@ -184,6 +184,12 @@ button{cursor:pointer}
 .ticker-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:9px 16px}
 .ticker-label{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;background:var(--brand);padding:7px 9px;border-radius:999px;white-space:nowrap}
 .ticker-track{white-space:nowrap;animation:marquee 34s linear infinite;color:#f8fafc;font-size:14px}
+.edition-strip{border-bottom:1px solid var(--line);background:var(--surface)}
+.edition-inner{max-width:1240px;margin:0 auto;padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.quick-editions,.reader-tools{display:flex;gap:8px;overflow:auto;scrollbar-width:none}
+.quick-editions::-webkit-scrollbar,.reader-tools::-webkit-scrollbar{display:none}
+.quick-pill{flex:0 0 auto;border:1px solid var(--line);background:rgba(127,139,160,.08);color:var(--ink);border-radius:999px;padding:8px 12px;font:800 13px/1 Inter,sans-serif}
+.quick-pill.live{background:var(--brand);border-color:var(--brand);color:#fff}
 .page{max-width:1240px;margin:0 auto;padding:18px 16px 96px}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.8fr);gap:16px;align-items:stretch}
 .hero{
@@ -367,6 +373,17 @@ button{cursor:pointer}
  outline:none;
 }
 .summary-output{margin-top:10px;padding:12px;border-radius:var(--radius);background:rgba(14,165,168,.12);color:var(--ink)}
+.newsroom-desk{background:linear-gradient(135deg,rgba(215,25,32,.08),rgba(14,165,168,.08)),var(--surface)}
+.desk-lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.desk-lane{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px;display:grid;gap:8px}
+.desk-lane small{color:var(--muted);font-weight:800}
+.desk-lane strong{font-size:18px}
+.reader-stack{display:grid;gap:10px}
+.reader-row{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:10px}
+.reader-row:last-child{border-bottom:0;padding-bottom:0}
+.reader-row img{width:90px;aspect-ratio:4/3;object-fit:cover;border-radius:6px}
+.reader-row h3{margin:0;font-size:15px;line-height:1.3}
+.reader-row small{color:var(--muted);font-weight:800}
 .layout-doc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .permission-list{display:grid;gap:7px;margin-top:10px;color:var(--muted);font-size:13px}
@@ -463,6 +480,10 @@ button{cursor:pointer}
 .story-modal-body h2{font-size:clamp(24px,4vw,38px);line-height:1.16;margin:8px 0 12px}
 .story-modal-body p{color:var(--muted);font-size:16px}
 .story-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.article-meta-line{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font:800 12px/1 Inter,sans-serif;margin:0 0 12px}
+.article-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.article-toolbar .pill-btn{height:38px;min-width:38px;padding:0 12px}
+.story-detail-copy.reader-large{font-size:18px}
 .story-detail-copy{
  margin-top:14px;
  padding:14px;
@@ -493,6 +514,10 @@ button{cursor:pointer}
 .cms-preview{border-top:1px solid var(--line);padding:14px 16px;background:rgba(127,139,160,.1)}
 .cms-preview strong{display:block;margin-bottom:8px}
 .cms-preview div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;color:var(--muted);font-size:13px}
+.publish-board{display:grid;gap:10px;margin-top:12px}
+.publish-step{border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:var(--surface)}
+.publish-step b{display:block;color:var(--ink);margin-bottom:4px}
+.publish-step small{color:var(--muted);font-weight:800}
 .bottom-nav{
  display:none;
  position:fixed;
@@ -514,6 +539,8 @@ button{cursor:pointer}
  .header{grid-template-columns:auto auto;gap:10px}
  .search-wrap{grid-column:1/-1;order:3}
  .hero-grid,.grid-2,.wide-grid{grid-template-columns:1fr}
+ .desk-lanes{grid-template-columns:repeat(2,1fr)}
+ .edition-inner{grid-template-columns:1fr}
  .story-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .category-grid{grid-template-columns:repeat(3,1fr)}
  .layout-doc,.role-grid{grid-template-columns:1fr 1fr}
@@ -532,6 +559,10 @@ button{cursor:pointer}
  .ticker-inner{padding:8px 12px}
  .hero{min-height:470px;border-radius:0;margin-left:-12px;margin-right:-12px}
  .hero-content{padding:22px 18px}
+ .desk-lanes{grid-template-columns:1fr}
+ .reader-row{grid-template-columns:76px 1fr}
+ .reader-row img{width:76px}
+ .reader-row small:last-child{grid-column:2}
  .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:82vw}
@@ -579,6 +610,23 @@ button{cursor:pointer}
   <div class="ticker-inner">
    <div class="ticker-label"><span class="live-dot"></span>BREAKING</div>
    <div class="ticker-track" id="tickerTrack">తాజా వార్తలు లోడ్ అవుతున్నాయి...</div>
+ </div>
+</div>
+
+ <div class="edition-strip" aria-label="NewsNeta quick services">
+  <div class="edition-inner">
+   <div class="quick-editions">
+    <a class="quick-pill live" href="#latestGrid">Latest</a>
+    <a class="quick-pill" href="#reels">Videos</a>
+    <a class="quick-pill" href="#photoNews">Photo Stories</a>
+    <a class="quick-pill" href="#epaper">E-Paper</a>
+    <a class="quick-pill" href="#opinionDesk">Editorial</a>
+    <a class="quick-pill" href="#publishingDesk">Newsroom Desk</a>
+   </div>
+   <div class="reader-tools">
+    <button class="quick-pill" id="openLiveTv" type="button">Live TV</button>
+    <button class="quick-pill" id="openEdition" type="button">Today Edition</button>
+   </div>
   </div>
  </div>
 
@@ -631,14 +679,24 @@ button{cursor:pointer}
     <div class="story-grid" id="recommendedGrid"></div>
    </div>
    <div class="section">
-    <div class="section-title"><h2>Most Viewed Stories</h2><span class="chip">24h</span></div>
-    <div id="mostViewed"></div>
+    <div class="section-title"><h2>Most Read Now</h2><span class="chip">Live readers</span></div>
+    <div id="mostViewed" class="reader-stack"></div>
    </div>
   </section>
 
   <section class="section">
    <div class="section-title"><h2>Category-wise Telugu News</h2><span class="chip">Auto-tagged</span></div>
    <div class="category-grid" id="categoryGrid"></div>
+  </section>
+
+  <section class="section newsroom-desk" id="publishingDesk">
+   <div class="section-title"><h2>Newsroom Publishing Desk</h2><span class="chip">CMS Workflow</span></div>
+   <div class="desk-lanes">
+    <div class="desk-lane"><small>REPORTING</small><strong>District drafts</strong><span>Reporter files copy, images, tags, and location.</span></div>
+    <div class="desk-lane"><small>REVIEW</small><strong>Fact check queue</strong><span>Reviewer verifies claims, sentiment, SEO, and trust score.</span></div>
+    <div class="desk-lane"><small>PUBLISH</small><strong>Live story desk</strong><span>Admin schedules, publishes, updates, or pushes alerts.</span></div>
+    <div class="desk-lane"><small>READING</small><strong>Reader experience</strong><span>Voice read, share, font size, related articles, and live refresh.</span></div>
+   </div>
   </section>
 
   <section class="section">
@@ -680,7 +738,7 @@ button{cursor:pointer}
     <button class="pill-btn" id="summarizeBtn" type="button" style="margin-top:10px;background:var(--ink);color:var(--bg)">సారాంశం రూపొందించండి</button>
     <div class="summary-output" id="summaryOutput">AI సారాంశం ఇక్కడ కనిపిస్తుంది.</div>
    </article>
-   <article class="section">
+   <article class="section" id="epaper">
     <div class="section-title"><h2>Live TV / YouTube</h2><span class="chip">Embed-ready</span></div>
     <div style="aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#111;display:grid;place-items:center;color:#fff;text-align:center;padding:20px">
      <div>
@@ -701,7 +759,7 @@ button{cursor:pointer}
   </section>
 
   <section class="wide-grid">
-   <article class="mini-card">
+   <article class="mini-card" id="photoNews">
     <div class="panel-title"><h3>Photo News</h3><span class="tag">Gallery</span></div>
     <p class="summary">రోజు ముఖ్య ఘటనలను ఫోటోలు, క్యాప్షన్‌లు, చిన్న వివరాలతో చూడండి.</p>
     <div class="dashboard-table">
@@ -710,7 +768,7 @@ button{cursor:pointer}
      <div class="dash-row"><span>Movie event highlights</span><b>15 photos</b></div>
     </div>
    </article>
-   <article class="mini-card">
+   <article class="mini-card" id="opinionDesk">
     <div class="panel-title"><h3>Opinion & Analysis</h3><span class="tag">Columns</span></div>
     <p class="summary">ప్రస్తుత రాజకీయాలు, పాలసీలు, ప్రజా సమస్యలపై విశ్లేషణాత్మక కథనాలు.</p>
     <button class="poll-option" type="button"><span>Editorial</span><b>Read</b></button>
@@ -776,10 +834,15 @@ button{cursor:pointer}
    </form>
    <div class="cms-preview" id="cmsPreview">
     <strong>Admin permissions preview</strong>
-    <div><span>Publish / unpublish news</span><b>Allowed</b></div>
-    <div><span>Manage reporters, reviewers, districts</span><b>Allowed</b></div>
-    <div><span>Ads, analytics, sources, push alerts</span><b>Allowed</b></div>
+   <div><span>Publish / unpublish news</span><b>Allowed</b></div>
+   <div><span>Manage reporters, reviewers, districts</span><b>Allowed</b></div>
+   <div><span>Ads, analytics, sources, push alerts</span><b>Allowed</b></div>
+   <div class="publish-board">
+    <div class="publish-step"><b>Reporter draft</b><small>District, category, media, tags, summary</small></div>
+    <div class="publish-step"><b>Reviewer approval</b><small>Fact check, rewrite headline, SEO, trust score</small></div>
+    <div class="publish-step"><b>Admin publish</b><small>Schedule, breaking ticker, push notification, homepage slot</small></div>
    </div>
+  </div>
   </div>
  </div>
 
@@ -790,11 +853,20 @@ button{cursor:pointer}
    <div class="story-modal-body">
     <span class="tag" id="storyModalCategory">News</span>
     <h2 id="storyModalTitle">Story title</h2>
-   <p id="storyModalSummary">Story summary</p>
+    <div class="article-meta-line" id="storyModalMeta">NewsNeta Desk</div>
+    <p id="storyModalSummary">Story summary</p>
+    <div class="article-toolbar">
+     <button class="pill-btn" id="storyModalListen" type="button">Listen</button>
+     <button class="pill-btn" id="storyFontToggle" type="button">A+</button>
+     <button class="pill-btn" id="storyShare" type="button">Share</button>
+     <button class="pill-btn" id="storySave" type="button">Save</button>
+    </div>
     <div class="story-detail-copy" id="storyModalCopy">Full story details will appear here.</div>
     <div class="dashboard-table" id="storyModalFacts"></div>
+    <h3 style="margin:18px 0 10px">Related Stories</h3>
+    <div class="reader-stack" id="storyRelated"></div>
     <div class="story-modal-actions">
-     <button class="pill-btn" id="storyModalListen" type="button">Listen</button>
+     <button class="pill-btn" id="storyContinue" type="button">Continue Reading</button>
     </div>
    </div>
   </article>
@@ -902,8 +974,17 @@ function normalizeItems(items){
   trust:item.trust || Math.floor(82 + Math.random()*14),
   image:item.image || fallbackStories[index % fallbackStories.length].image,
   link:item.link || "#",
-  pubDate:item.pubDate || new Date().toISOString()
+ pubDate:item.pubDate || new Date().toISOString()
  }));
+}
+
+function readMinutes(story){
+ return Math.max(1, Math.round(((story.title || "").length + 520) / 750));
+}
+
+function formatStoryDate(dateText){
+ const date = new Date(dateText || Date.now());
+ return Number.isNaN(date.getTime()) ? "Updated now" : date.toLocaleString([], {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"});
 }
 
 function storyCard(story){
@@ -919,7 +1000,7 @@ function storyCard(story){
   <div class="card-body">
    <a href="#" data-story-id="${storyId}"><h3>${story.title}</h3></a>
    <p class="summary">${makeSummary(story.title)}</p>
-   <div class="meta"><span>${Intl.NumberFormat("en-IN").format(story.views)} views</span><button class="voice-btn" type="button" data-speak="${story.title}">Listen</button></div>
+   <div class="meta"><span>${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views)} views</span><button class="voice-btn" type="button" data-speak="${story.title}">Listen</button></div>
    <div class="refresh-note">Checked at ${refreshedAt}</div>
   </div>
  </article>`;
@@ -935,7 +1016,7 @@ function render(){
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(s=>`<article class="reel"><img loading="lazy" src="${s.image}" alt="${s.title}"><div class="reel-content"><span class="tag">${icon(s.category)} ${s.category}</span><h3>${s.title}</h3><p>${makeSummary(s.title)}</p><div class="reel-actions"><button class="round" data-speak="${s.title}" type="button">▶</button><button class="round" type="button">↗</button><button class="round" type="button">♡</button></div></div></article>`).join("");
  document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");
  document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,9).map(storyCard).join("");
- document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<div class="counter-row"><strong>${s.title}</strong><span>${Intl.NumberFormat("en-IN").format(s.views)}</span></div>`).join("");
+ document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${s.id || s.link || s.title}"><img loading="lazy" src="${s.image}" alt=""><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
  const counts = categories.map(([,label],i)=>({label,count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
  document.getElementById("categoryGrid").innerHTML = counts.map(c=>`<a class="category-tile" href="#latestGrid"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">stories today</small></a>`).join("");
  animateCounters();
@@ -1087,10 +1168,15 @@ function findStoryById(id){
 function openStoryDetail(id){
  const story = findStoryById(id);
  if(!story) return;
+ const related = stories
+  .filter(item => item.title !== story.title && item.category === story.category)
+  .concat(stories.filter(item => item.title !== story.title))
+  .slice(0,3);
  document.getElementById("storyModalImage").src = story.image;
  document.getElementById("storyModalImage").alt = story.title;
  document.getElementById("storyModalCategory").textContent = story.category || "News";
  document.getElementById("storyModalTitle").textContent = story.title;
+ document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views || 0)} views`;
  const brief = `${makeSummary(story.title)} ఈ కథనంలో తాజా పరిస్థితి, నేపథ్యం, స్థానిక ప్రభావం, తదుపరి అప్డేట్ గురించి సంక్షిప్తంగా చదవండి.`;
  document.getElementById("storyModalSummary").textContent = brief;
  document.getElementById("storyModalCopy").textContent = `NewsNeta Desk: ${story.title} అంశంపై తాజా సమాచారం ప్రకారం సంబంధిత పరిణామాలు వేగంగా మారుతున్నాయి. ప్రజలపై ప్రభావం, స్థానిక స్పందన, అధికారిక ప్రకటనలు, తదుపరి నిర్ణయాలపై NewsNeta నిరంతరం అప్డేట్లు అందిస్తుంది. మరిన్ని వివరాలు అందుబాటులోకి వచ్చిన వెంటనే ఈ కథనం నవీకరించబడుతుంది.`;
@@ -1101,17 +1187,62 @@ function openStoryDetail(id){
   <div class="dash-row"><span>Fact check</span><b>Verified</b></div>
  `;
  document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${makeSummary(story.title)}`);
- document.getElementById("storyBackdrop").classList.add("open");
+document.getElementById("storyBackdrop").classList.add("open");
 }
 
-document.getElementById("closeStory").addEventListener("click",()=>document.getElementById("storyBackdrop").classList.remove("open"));
+function openStoryDetail(id){
+ const story = findStoryById(id);
+ if(!story) return;
+ const related = stories
+  .filter(item => item.title !== story.title && item.category === story.category)
+  .concat(stories.filter(item => item.title !== story.title))
+  .slice(0,3);
+ const copy = `NewsNeta Desk: ${story.title} అంశంపై తాజా సమాచారం ప్రకారం సంబంధిత పరిణామాలు వేగంగా మారుతున్నాయి. ప్రజలపై ప్రభావం, స్థానిక స్పందన, అధికారిక ప్రకటనలు, తదుపరి నిర్ణయాలపై NewsNeta నిరంతరం అప్డేట్లు అందిస్తుంది. మరిన్ని వివరాలు అందుబాటులోకి వచ్చిన వెంటనే ఈ కథనం నవీకరించబడుతుంది.`;
+ document.getElementById("storyModalImage").src = story.image;
+ document.getElementById("storyModalImage").alt = story.title;
+ document.getElementById("storyModalCategory").textContent = story.category || "News";
+ document.getElementById("storyModalTitle").textContent = story.title;
+ document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views || 0)} views`;
+ document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} ఈ కథనంలో తాజా పరిస్థితి, నేపథ్యం, స్థానిక ప్రభావం, తదుపరి అప్డేట్ గురించి చదవండి.`;
+ document.getElementById("storyModalCopy").classList.remove("reader-large");
+ document.getElementById("storyModalCopy").textContent = copy;
+ document.getElementById("storyModalFacts").innerHTML = `
+  <div class="dash-row"><span>Desk</span><b>NewsNeta</b></div>
+  <div class="dash-row"><span>Category</span><b>${story.category || "News"}</b></div>
+  <div class="dash-row"><span>Updated</span><b>${formatStoryDate(story.pubDate || lastRefreshAt)}</b></div>
+  <div class="dash-row"><span>Trust score</span><b>${story.trust || 91}%</b></div>
+  <div class="dash-row"><span>Reader mode</span><b>Voice, share, save</b></div>
+ `;
+ document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${item.id || item.link || item.title}"><img src="${item.image}" alt=""><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
+ document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${makeSummary(story.title)}`);
+ document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
+ document.getElementById("storyShare").onclick = async ()=>{
+  const shareData = {title: story.title, text: makeSummary(story.title), url: location.href};
+  if(navigator.share) await navigator.share(shareData).catch(()=>{});
+  else navigator.clipboard?.writeText(`${story.title} - ${location.href}`);
+ };
+ document.getElementById("storySave").onclick = ()=>localStorage.setItem("newsneta-saved-story", JSON.stringify({title:story.title, savedAt:new Date().toISOString()}));
+ document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
+ document.getElementById("storyBackdrop").classList.add("open");
+ document.body.classList.add("lock");
+}
+
+document.getElementById("closeStory").addEventListener("click",()=>{
+ document.getElementById("storyBackdrop").classList.remove("open");
+ document.body.classList.remove("lock");
+});
 document.getElementById("storyBackdrop").addEventListener("click",event=>{
- if(event.target.id === "storyBackdrop") document.getElementById("storyBackdrop").classList.remove("open");
+ if(event.target.id === "storyBackdrop"){
+  document.getElementById("storyBackdrop").classList.remove("open");
+  document.body.classList.remove("lock");
+ }
 });
 
 document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${document.getElementById("heroTitle").textContent}. ${document.getElementById("heroSummary").textContent}`));
 document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
 document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
+document.getElementById("openLiveTv").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("openEdition").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
 document.getElementById("themeBtn").addEventListener("click",()=>{
  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
  document.documentElement.dataset.theme = next;
@@ -1128,11 +1259,16 @@ document.getElementById("roleSelect").addEventListener("change",event=>{
  const role = event.target.value;
  const permissions = {
   admin: ["Publish / unpublish news","Manage reporters, reviewers, districts","Ads, analytics, sources, push alerts"],
-  reporter: ["Create district drafts","Upload media and sources","Submit stories for review"],
-  reviewer: ["Approve or reject stories","Edit SEO, summary, and trust score","Send approved stories to publish queue"]
+ reporter: ["Create district drafts","Upload media and sources","Submit stories for review"],
+ reviewer: ["Approve or reject stories","Edit SEO, summary, and trust score","Send approved stories to publish queue"]
  };
  document.getElementById("cmsPreview").innerHTML = `<strong>${role[0].toUpperCase()+role.slice(1)} permissions preview</strong>` +
-  permissions[role].map(item=>`<div><span>${item}</span><b>Allowed</b></div>`).join("");
+  permissions[role].map(item=>`<div><span>${item}</span><b>Allowed</b></div>`).join("") +
+  `<div class="publish-board">
+    <div class="publish-step"><b>Draft</b><small>Reporter creates story with district, category, tags, and images.</small></div>
+    <div class="publish-step"><b>Review</b><small>Reviewer checks facts, headline, SEO, and trust score.</small></div>
+    <div class="publish-step"><b>Publish</b><small>Admin sends to homepage, ticker, push alert, and archive.</small></div>
+   </div>`;
 });
 document.getElementById("loginForm").addEventListener("submit",event=>{
  event.preventDefault();

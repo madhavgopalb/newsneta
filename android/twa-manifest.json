@@ -1,0 +1,52 @@
+{
+  "packageId": "com.newsneta.twa",
+  "host": "newsneta.com",
+  "name": "NewsNeta - Telugu News",
+  "launcherName": "NewsNeta",
+  "display": "standalone",
+  "themeColor": "#d71920",
+  "themeColorDark": "#080b12",
+  "navigationColor": "#d71920",
+  "navigationColorDark": "#080b12",
+  "navigationDividerColor": "#d71920",
+  "navigationDividerColorDark": "#080b12",
+  "backgroundColor": "#f7f8fb",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "scope": "/",
+  "orientation": "portrait",
+  "iconUrl": "https://newsneta.com/assets/newsneta-logo.jpg",
+  "maskableIconUrl": "https://newsneta.com/assets/newsneta-logo.jpg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android/newsneta-release.keystore",
+    "alias": "newsneta"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Latest News",
+      "short_name": "Latest",
+      "url": "/#latestGrid"
+    },
+    {
+      "name": "District News",
+      "short_name": "Districts",
+      "url": "/#categoryNav"
+    },
+    {
+      "name": "Short News Reels",
+      "short_name": "Reels",
+      "url": "/#reels"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://newsneta.com/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    }
+  }
+}

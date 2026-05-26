@@ -8,13 +8,16 @@ Modern Telugu-first AI news platform prototype with a premium mobile-first UI, P
 - `netlify/functions/news.js` - RSS ingestion API with category and district support, caching headers, trust/sentiment metadata, and fallback handling.
 - `sw.js` - PWA app shell and API cache.
 - `manifest.json` - installable app manifest.
+- `android/twa-manifest.json` - Android Trusted Web Activity configuration for Play Store packaging.
 - `docs/architecture.md` - production-ready UI, API, database, AI, SEO, recommendation, admin CMS, and deployment blueprint.
+- `docs/play-store.md` - Android build and Google Play submission checklist.
 
 ## New newsroom features
 
 - District news for both Telangana and Andhra Pradesh using state + district selectors.
 - Auto refresh every 5 minutes for active category and selected district feeds.
 - Three newsroom roles: Admin, Reporter, Reviewer, with RBAC permissions documented in the architecture blueprint.
+- Mobile app-ready PWA shell with safe-area layout, bottom navigation, install metadata, and Android TWA configuration.
 
 ## Run locally
 

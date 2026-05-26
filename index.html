@@ -6,12 +6,18 @@
 <title>NewsNeta - Telugu News, Breaking News, District News</title>
 <meta name="description" content="NewsNeta is a Telugu-first news website with breaking news, district updates, short news videos, live feeds, polls, cricket scores, voice readouts, and personalized recommendations."/>
 <meta name="theme-color" content="#d71920"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="NewsNeta"/>
+<meta name="format-detection" content="telephone=no"/>
 <meta property="og:title" content="NewsNeta - Telugu News, Breaking News, District News"/>
 <meta property="og:description" content="Premium Telugu news with short updates, live coverage, district news, voice readouts, and smart recommendations."/>
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="te_IN"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="assets/newsneta-logo.jpg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -44,7 +50,7 @@
  color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
  margin:0;
  background:
@@ -57,6 +63,7 @@ body{
 }
 body.lock{overflow:hidden}
 a{color:inherit;text-decoration:none}
+img{max-width:100%}
 button,input,select{font:inherit}
 button{cursor:pointer}
 .app-shell{min-height:100vh}
@@ -67,6 +74,7 @@ button{cursor:pointer}
  backdrop-filter:blur(18px);
  background:var(--surface-2);
  border-bottom:1px solid var(--line);
+ padding-top:env(safe-area-inset-top);
 }
 .header{
  display:grid;
@@ -140,6 +148,7 @@ button{cursor:pointer}
  border-radius:999px;
  font-weight:700;
  font-size:14px;
+ touch-action:manipulation;
 }
 .nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .nav-districts{
@@ -530,7 +539,7 @@ button{cursor:pointer}
  border-top:1px solid var(--line);
  padding:8px 8px max(8px,env(safe-area-inset-bottom));
 }
-.bottom-nav a{flex:1;text-align:center;color:var(--muted);font-size:11px;font-weight:800}
+.bottom-nav a{flex:1;text-align:center;color:var(--muted);font-size:11px;font-weight:800;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .bottom-nav span{display:block;font-size:20px;margin-bottom:2px}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-55%)}}
 @keyframes pulse{50%{opacity:.45;transform:scale(.9)}}
@@ -547,31 +556,65 @@ button{cursor:pointer}
  .ticker{top:124px}
 }
 @media (max-width:640px){
- .page{padding:12px 12px 86px}
- .header{padding:10px 12px}
- .brand-logo{width:210px;height:58px}
+ .app-shell{overflow-x:hidden}
+ .page{padding:12px 12px calc(90px + env(safe-area-inset-bottom))}
+ .topbar{position:sticky}
+ .header{grid-template-columns:1fr auto;padding:8px 12px;gap:8px}
+ .brand{max-width:calc(100vw - 136px)}
+ .brand-logo{width:min(56vw,230px);height:auto;max-height:62px;object-fit:contain}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
+ .header-actions{gap:6px}
+ .icon-btn,.pill-btn{min-width:40px;height:40px}
  .pill-btn .label{display:none}
- .nav{padding:0 12px 10px}
+ .search-wrap input{height:42px;font-size:16px}
+ .nav{padding:0 12px 10px;gap:7px}
+ .nav a,.chip{font-size:13px;padding:8px 11px}
  .nav-districts{grid-template-columns:1fr;padding:0 12px 10px}
- .ticker{top:121px}
+ .menu-select{min-height:40px;font-size:14px}
+ .menu-refresh{min-width:100%}
+ .refresh-inline{padding:0 12px 8px;font-size:11px;line-height:1.35}
+ .ticker{position:relative;top:auto}
  .ticker-inner{padding:8px 12px}
- .hero{min-height:470px;border-radius:0;margin-left:-12px;margin-right:-12px}
+ .ticker-track{font-size:13px}
+ .hero{min-height:calc(100svh - 250px);max-height:560px;border-radius:0;margin-left:-12px;margin-right:-12px}
  .hero-content{padding:22px 18px}
+ .hero h2{font-size:clamp(27px,9vw,42px)}
+ .hero p{font-size:15px}
+ .hero-carousel-controls{left:12px;right:12px;bottom:12px}
  .desk-lanes{grid-template-columns:1fr}
  .reader-row{grid-template-columns:76px 1fr}
  .reader-row img{width:76px}
  .reader-row small:last-child{grid-column:2}
  .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
- .reels{grid-auto-columns:82vw}
+ .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
+ .reel{min-height:70svh}
+ .news-card:hover{transform:none}
  .bottom-nav{display:flex}
- .floating-ai{bottom:74px;right:12px}
- .ai-panel{bottom:132px;right:12px}
+ .floating-ai{bottom:calc(78px + env(safe-area-inset-bottom));right:12px;padding:10px 12px;font-size:13px}
+ .ai-panel{bottom:calc(132px + env(safe-area-inset-bottom));right:12px}
  .story-modal{max-height:92vh}
  .story-modal-body{padding:14px}
  .story-modal-actions .pill-btn{width:100%}
+ .notify{bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px}
+}
+@media (max-width:430px){
+ .brand{max-width:calc(100vw - 108px)}
+ .brand-logo{width:min(61vw,220px);max-height:58px}
+ .admin-login-btn{display:none}
+ .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
+ .story-grid{gap:12px}
+ .card-body h3{font-size:16px}
+ .summary{font-size:13px}
+}
+@media (max-width:360px){
+ .brand-logo{width:190px;max-height:52px}
+ .header-actions{gap:4px}
+ .icon-btn,.pill-btn{min-width:38px;height:38px}
+ .nav a,.chip{font-size:12px;padding:8px 10px}
+ .hero{min-height:440px}
+ .hero h2{font-size:25px}
 }
 </style>
 </head>

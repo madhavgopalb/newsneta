@@ -1,4 +1,4 @@
-const CACHE_NAME = "newsneta-pwa-v15";
+const CACHE_NAME = "newsneta-pwa-v16";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -23,6 +23,12 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
+  const url = new URL(request.url);
+
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
 
   if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
     event.respondWith(

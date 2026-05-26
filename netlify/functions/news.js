@@ -273,7 +273,7 @@ async function commonsImage(query, fallback) {
 
   try {
     const response = await fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`, {
-      headers: { "User-Agent": "NewsNeta/1.0 (+https://newsneta-telugu-news.netlify.app)" }
+      headers: { "User-Agent": "NewsNeta/1.0 (+https://newsneta.com)" }
     });
     if (!response.ok) return fallback;
 

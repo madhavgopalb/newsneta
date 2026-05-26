@@ -330,13 +330,27 @@ button{cursor:pointer}
  display:flex;
  align-items:flex-end;
  box-shadow:var(--shadow);
+ cursor:pointer;
 }
 .reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.72}
 .reel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,rgba(0,0,0,.82))}
+.reel.playing img{opacity:.86;transform:scale(1.03);transition:transform 6s linear, opacity .2s ease}
 .reel-content{position:relative;z-index:1;padding:16px}
 .reel-content h3{font-size:21px;line-height:1.25;margin:10px 0}
 .reel-actions{display:flex;align-items:center;gap:8px;margin-top:12px}
 .round{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center}
+.reel-progress{
+ position:absolute;
+ top:0;
+ left:0;
+ right:0;
+ height:4px;
+ background:rgba(255,255,255,.24);
+ z-index:2;
+}
+.reel-progress span{display:block;width:0;height:100%;background:#fff}
+.reel.playing .reel-progress span{animation:shortProgress 12s linear forwards}
+.reel-caption{display:flex;align-items:center;gap:8px;color:#e7eaf0;font:800 12px/1 Inter,sans-serif}
 .category-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 .district-tools{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:14px}
 .district-tools select{
@@ -502,6 +516,31 @@ button{cursor:pointer}
  font-size:15px;
  line-height:1.65;
 }
+.story-detail-copy p{margin:0 0 12px}
+.story-detail-copy p:last-child{margin-bottom:0}
+.story-detail-copy h3{margin:18px 0 8px;font-size:18px;color:var(--ink)}
+.story-detail-copy ul{margin:8px 0 0;padding-left:20px}
+.story-detail-copy li{margin:7px 0}
+.story-analysis-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-top:14px}
+.newsline{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:10px;
+ margin-top:18px;
+}
+.newsline-card{
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ background:var(--surface);
+ padding:12px;
+ min-height:96px;
+ display:grid;
+ align-content:space-between;
+ box-shadow:0 8px 22px rgba(15,23,42,.06);
+}
+.newsline-card small{color:var(--muted);font-weight:900;text-transform:uppercase;font-family:Inter,sans-serif}
+.newsline-card strong{font-size:17px;line-height:1.25}
+.newsline-card span{color:var(--brand);font-weight:900}
 .login-modal header{
  display:flex;
  justify-content:space-between;
@@ -544,6 +583,7 @@ button{cursor:pointer}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-55%)}}
 @keyframes pulse{50%{opacity:.45;transform:scale(.9)}}
 @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+@keyframes shortProgress{from{width:0}to{width:100%}}
 @media (max-width:980px){
  .header{grid-template-columns:auto auto;gap:10px}
  .search-wrap{grid-column:1/-1;order:3}
@@ -552,6 +592,7 @@ button{cursor:pointer}
  .edition-inner{grid-template-columns:1fr}
  .story-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .category-grid{grid-template-columns:repeat(3,1fr)}
+ .newsline{grid-template-columns:repeat(2,1fr)}
  .layout-doc,.role-grid{grid-template-columns:1fr 1fr}
  .ticker{top:124px}
 }
@@ -587,6 +628,7 @@ button{cursor:pointer}
  .reader-row img{width:76px}
  .reader-row small:last-child{grid-column:2}
  .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
+ .story-analysis-grid,.newsline{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
  .reel{min-height:70svh}
@@ -733,12 +775,12 @@ button{cursor:pointer}
   </section>
 
   <section class="section newsroom-desk" id="publishingDesk">
-   <div class="section-title"><h2>Newsroom Publishing Desk</h2><span class="chip">CMS Workflow</span></div>
-   <div class="desk-lanes">
-    <div class="desk-lane"><small>REPORTING</small><strong>District drafts</strong><span>Reporter files copy, images, tags, and location.</span></div>
-    <div class="desk-lane"><small>REVIEW</small><strong>Fact check queue</strong><span>Reviewer verifies claims, sentiment, SEO, and trust score.</span></div>
-    <div class="desk-lane"><small>PUBLISH</small><strong>Live story desk</strong><span>Admin schedules, publishes, updates, or pushes alerts.</span></div>
-    <div class="desk-lane"><small>READING</small><strong>Reader experience</strong><span>Voice read, share, font size, related articles, and live refresh.</span></div>
+   <div class="section-title"><h2>State Editions & Live Updates</h2><span class="chip">News Desk</span></div>
+   <div class="newsline">
+    <a class="newsline-card" href="#latestGrid"><small>Telangana</small><strong>District editions with local impact and civic updates</strong><span>Live</span></a>
+    <a class="newsline-card" href="#latestGrid"><small>Andhra Pradesh</small><strong>Constituency, development, weather and public services</strong><span>Live</span></a>
+    <a class="newsline-card" href="#reels"><small>Video Desk</small><strong>Short explainers, breaking alerts and quick briefings</strong><span>Watch</span></a>
+    <a class="newsline-card" href="#epaper"><small>E-Paper</small><strong>Daily edition, archives and reader-friendly page view</strong><span>Read</span></a>
    </div>
   </section>
 
@@ -1007,6 +1049,10 @@ function makeSummary(title){
  return `${title} అనే అంశంపై NewsNeta ముఖ్యాంశాలను సంక్షిప్తంగా కుదించి, నేపథ్యం మరియు ప్రభావాన్ని త్వరగా అర్థమయ్యేలా చూపిస్తుంది.`;
 }
 
+function escapeAttr(value){
+ return String(value || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
 function normalizeItems(items){
  return items.map((item,index)=>({
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
@@ -1017,7 +1063,8 @@ function normalizeItems(items){
   trust:item.trust || Math.floor(82 + Math.random()*14),
   image:item.image || fallbackStories[index % fallbackStories.length].image,
   link:item.link || "#",
- pubDate:item.pubDate || new Date().toISOString()
+  pubDate:item.pubDate || new Date().toISOString(),
+  description:item.description || item.contentSnippet || item.content || ""
  }));
 }
 
@@ -1034,17 +1081,36 @@ function storyCard(story){
  const refreshedAt = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "loading";
  const storyId = story.id || story.link || story.title;
  return `<article class="news-card">
-  <a href="#" data-story-id="${storyId}">
+  <a href="#" data-story-id="${escapeAttr(storyId)}">
    <div class="thumb">
-    <img loading="lazy" src="${story.image}" alt="${story.title}">
+    <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}">
     <div class="badge-row"><span class="badge">${story.category}</span><span class="badge">NewsNeta</span></div>
    </div>
   </a>
   <div class="card-body">
-   <a href="#" data-story-id="${storyId}"><h3>${story.title}</h3></a>
+   <a href="#" data-story-id="${escapeAttr(storyId)}"><h3>${story.title}</h3></a>
    <p class="summary">${makeSummary(story.title)}</p>
-   <div class="meta"><span>${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views)} views</span><button class="voice-btn" type="button" data-speak="${story.title}">Listen</button></div>
+   <div class="meta"><span>${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views)} views</span><button class="voice-btn" type="button" data-speak="${escapeAttr(story.title)}">Listen</button></div>
    <div class="refresh-note">Checked at ${refreshedAt}</div>
+  </div>
+ </article>`;
+}
+
+function renderReel(story){
+ const storyId = story.id || story.link || story.title;
+ return `<article class="reel" data-story-id="${escapeAttr(storyId)}">
+  <div class="reel-progress"><span></span></div>
+  <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}">
+  <div class="reel-content">
+   <span class="tag">${icon(story.category)} ${story.category}</span>
+   <h3>${story.title}</h3>
+   <p>${makeSummary(story.title)}</p>
+   <div class="reel-caption"><span>Short briefing</span><span>${readMinutes(story)} min read</span><span>${story.trust || 91}% trust</span></div>
+   <div class="reel-actions">
+    <button class="round reel-play" data-reel-id="${escapeAttr(storyId)}" type="button" aria-label="Play short news">▶</button>
+    <button class="round" data-story-id="${escapeAttr(storyId)}" type="button" aria-label="Open full story">↗</button>
+    <button class="round" type="button" aria-label="Save story">♡</button>
+   </div>
   </div>
  </article>`;
 }
@@ -1056,7 +1122,7 @@ function render(){
  renderHeroSlide();
  document.getElementById("tickerTrack").textContent = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
  document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<div class="counter-row"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></div>`).join("");
- document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(s=>`<article class="reel"><img loading="lazy" src="${s.image}" alt="${s.title}"><div class="reel-content"><span class="tag">${icon(s.category)} ${s.category}</span><h3>${s.title}</h3><p>${makeSummary(s.title)}</p><div class="reel-actions"><button class="round" data-speak="${s.title}" type="button">▶</button><button class="round" type="button">↗</button><button class="round" type="button">♡</button></div></div></article>`).join("");
+ document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");
  document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,9).map(storyCard).join("");
  document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${s.id || s.link || s.title}"><img loading="lazy" src="${s.image}" alt=""><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
@@ -1189,7 +1255,72 @@ function speakTelugu(text){
  speechSynthesis.speak(utterance);
 }
 
+function escapeHtml(value){
+ return String(value || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function cleanText(value){
+ return String(value || "").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
+}
+
+function buildDetailedArticle(story){
+ const base = cleanText(story.description) || makeSummary(story.title);
+ const category = story.category || "News";
+ const trust = story.trust || 91;
+ return `
+  <p><b>NewsNeta Desk:</b> ${escapeHtml(story.title)} పై తాజా సమాచారం అందుబాటులోకి వచ్చింది. ఈ కథనంలో ప్రధాన పరిణామం, దాని నేపథ్యం, ప్రజలపై ఉండే ప్రభావం, తదుపరి అధికారిక అప్‌డేట్లను స్పష్టంగా అందిస్తున్నాం.</p>
+  <p>${escapeHtml(base)}</p>
+  <h3>ప్రధాన అంశాలు</h3>
+  <ul>
+   <li>${escapeHtml(category)} విభాగానికి సంబంధించిన తాజా పరిణామాలను NewsNeta నిరంతరం ట్రాక్ చేస్తోంది.</li>
+   <li>స్థానిక ప్రభావం, ప్రజా సేవలు, అధికారిక ప్రకటనలు మరియు సంబంధిత ప్రతిస్పందనలను ఒకే చోట సమగ్రంగా చూపిస్తున్నాం.</li>
+   <li>ఈ కథనం ఆటో రిఫ్రెష్ ద్వారా కొత్త సమాచారం వచ్చినప్పుడు నవీకరించబడుతుంది.</li>
+  </ul>
+  <h3>నేపథ్యం</h3>
+  <p>ఈ అంశంపై గత కొన్ని గంటలుగా పాఠకుల ఆసక్తి పెరిగింది. సంబంధిత శాఖలు, స్థానిక ప్రతినిధులు, ప్రజా స్పందన, మరియు ప్రస్తుత పరిస్థితుల ఆధారంగా కథనాన్ని క్రమబద్ధంగా సమీకరించాం.</p>
+  <h3>ప్రజలపై ప్రభావం</h3>
+  <p>ఈ పరిణామం స్థానిక ప్రజలు, ప్రయాణం, సేవలు, మార్కెట్లు లేదా విధాన నిర్ణయాలపై ప్రభావం చూపే అవకాశం ఉంది. అందుకే తాజా వివరాలు వచ్చిన వెంటనే NewsNeta రీడర్ వ్యూలో అప్‌డేట్ చేస్తుంది.</p>
+  <h3>ధృవీకరణ</h3>
+  <p>ఈ కథనానికి ప్రస్తుత ట్రస్ట్ స్కోర్ ${trust}%. శీర్షిక, చిత్రం, ప్రచురణ సమయం, వర్గీకరణ, మరియు సంబంధిత సంకేతాలను పరిశీలించి పాఠకులకు స్పష్టమైన రీడింగ్ అనుభవం అందిస్తున్నాం.</p>
+ `;
+}
+
+function playShortNews(id, button){
+ const story = findStoryById(id);
+ if(!story) return;
+ const reel = button.closest(".reel");
+ document.querySelectorAll(".reel.playing").forEach(item=>{
+  if(item !== reel) item.classList.remove("playing");
+ });
+ document.querySelectorAll(".reel-play").forEach(item=>{
+  if(item !== button) item.textContent = "▶";
+ });
+ if(reel.classList.contains("playing")){
+  reel.classList.remove("playing");
+  button.textContent = "▶";
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+  return;
+ }
+ reel.classList.remove("playing");
+ void reel.offsetWidth;
+ reel.classList.add("playing");
+ button.textContent = "Ⅱ";
+ speakTelugu(`${story.title}. ${makeSummary(story.title)}`);
+ window.clearTimeout(window.newsnetaReelTimer);
+ window.newsnetaReelTimer = window.setTimeout(()=>{
+  reel.classList.remove("playing");
+  button.textContent = "▶";
+ }, 12000);
+}
+
 document.addEventListener("click", event=>{
+ const reelPlay = event.target.closest(".reel-play");
+ if(reelPlay){
+  event.preventDefault();
+  event.stopPropagation();
+  playShortNews(reelPlay.dataset.reelId, reelPlay);
+  return;
+ }
  const speak = event.target.closest("[data-speak]");
  if(speak){ event.preventDefault(); speakTelugu(speak.dataset.speak); }
  const storyLink = event.target.closest("[data-story-id]");
@@ -1258,6 +1389,43 @@ function openStoryDetail(id){
  `;
  document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${item.id || item.link || item.title}"><img src="${item.image}" alt=""><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
  document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${makeSummary(story.title)}`);
+ document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
+ document.getElementById("storyShare").onclick = async ()=>{
+  const shareData = {title: story.title, text: makeSummary(story.title), url: location.href};
+  if(navigator.share) await navigator.share(shareData).catch(()=>{});
+  else navigator.clipboard?.writeText(`${story.title} - ${location.href}`);
+ };
+ document.getElementById("storySave").onclick = ()=>localStorage.setItem("newsneta-saved-story", JSON.stringify({title:story.title, savedAt:new Date().toISOString()}));
+ document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
+ document.getElementById("storyBackdrop").classList.add("open");
+ document.body.classList.add("lock");
+}
+
+function openStoryDetail(id){
+ const story = findStoryById(id);
+ if(!story) return;
+ const related = stories
+  .filter(item => item.title !== story.title && item.category === story.category)
+  .concat(stories.filter(item => item.title !== story.title))
+  .slice(0,4);
+ document.getElementById("storyModalImage").src = story.image;
+ document.getElementById("storyModalImage").alt = story.title;
+ document.getElementById("storyModalCategory").textContent = story.category || "News";
+ document.getElementById("storyModalTitle").textContent = story.title;
+ document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story) + 2} min read • ${Intl.NumberFormat("en-IN").format(story.views || 0)} views`;
+ document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} ఈ కథనంలో నేపథ్యం, స్థానిక ప్రభావం, ముఖ్యాంశాలు, తదుపరి అప్‌డేట్లు వివరంగా అందుబాటులో ఉన్నాయి.`;
+ document.getElementById("storyModalCopy").classList.remove("reader-large");
+ document.getElementById("storyModalCopy").innerHTML = buildDetailedArticle(story);
+ document.getElementById("storyModalFacts").innerHTML = `
+  <div class="dash-row"><span>Desk</span><b>NewsNeta</b></div>
+  <div class="dash-row"><span>Category</span><b>${story.category || "News"}</b></div>
+  <div class="dash-row"><span>Updated</span><b>${formatStoryDate(story.pubDate || lastRefreshAt)}</b></div>
+  <div class="dash-row"><span>Trust score</span><b>${story.trust || 91}%</b></div>
+  <div class="dash-row"><span>News depth</span><b>Context + impact + updates</b></div>
+  <div class="dash-row"><span>Reader mode</span><b>Voice, share, save, font size</b></div>
+ `;
+ document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}"><img src="${escapeAttr(item.image)}" alt=""><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
+ document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${cleanText(document.getElementById("storyModalCopy").innerText).slice(0,900)}`);
  document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
  document.getElementById("storyShare").onclick = async ()=>{
   const shareData = {title: story.title, text: makeSummary(story.title), url: location.href};

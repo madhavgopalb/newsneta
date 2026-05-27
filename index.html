@@ -227,6 +227,7 @@ button{cursor:pointer}
 .live-time{font:900 12px/1 Inter,sans-serif;color:var(--brand);min-width:48px}
 .live-item strong{font-size:15px;line-height:1.35}
 .live-item small{color:var(--muted);font-weight:800}
+.weather-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .weather-card{
  border:1px solid var(--line);
@@ -238,6 +239,8 @@ button{cursor:pointer}
 }
 .weather-card b{font:900 28px/1 Inter,sans-serif;color:var(--brand)}
 .weather-card span{color:var(--muted);font-size:13px;font-weight:800}
+.weather-card small{color:var(--muted);font-weight:800}
+.weather-updated{color:var(--muted);font:800 12px/1.3 Inter,sans-serif}
 .edition-card{
  margin-top:12px;
  border:1px solid var(--line);
@@ -529,13 +532,30 @@ button{cursor:pointer}
 }
 .modal-backdrop.open{display:grid}
 .login-modal{
- width:min(460px,100%);
+ width:min(920px,100%);
  border:1px solid var(--line);
  border-radius:var(--radius);
  background:var(--surface);
  box-shadow:var(--shadow);
  overflow:hidden;
 }
+.login-content{display:grid;grid-template-columns:minmax(280px,380px) 1fr}
+.role-dashboard{border-left:1px solid var(--line);padding:16px;background:rgba(127,139,160,.08)}
+.role-dashboard[hidden]{display:none}
+.dashboard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
+.dashboard-head h3{margin:0;font-size:20px}
+.dashboard-head p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.dashboard-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.metric-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px}
+.metric-card span{display:block;color:var(--muted);font:800 12px/1 Inter,sans-serif}
+.metric-card b{font:900 24px/1.1 Inter,sans-serif;color:var(--brand)}
+.dashboard-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.dashboard-action{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px;text-align:left;color:var(--ink)}
+.dashboard-action strong{display:block;margin-bottom:5px}
+.dashboard-action small{color:var(--muted);font-weight:800}
+.queue-list{display:grid;gap:8px}
+.queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line)}
+.queue-item small{color:var(--muted);font-weight:800}
 .story-modal{
  width:min(760px,100%);
  max-height:min(86vh,820px);
@@ -677,6 +697,9 @@ button{cursor:pointer}
  .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
  .story-analysis-grid,.newsline{grid-template-columns:1fr}
  .weather-grid{grid-template-columns:1fr}
+ .login-content{grid-template-columns:1fr}
+ .role-dashboard{border-left:0;border-top:1px solid var(--line)}
+ .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
  .reel{min-height:70svh}
@@ -773,8 +796,12 @@ button{cursor:pointer}
     <div class="live-list" id="homeLiveList"></div>
    </div>
    <aside class="home-panel" id="todayEdition">
-    <div class="section-title"><h2>Weather & Forecast</h2><span class="chip">Today</span></div>
+    <div class="weather-head">
+     <div class="section-title" style="margin:0"><h2>Weather & Forecast</h2><span class="chip">Live</span></div>
+     <button class="pill-btn" id="weatherRefreshNow" type="button">Refresh</button>
+    </div>
     <div class="weather-grid" id="weatherGrid"></div>
+    <div class="weather-updated" id="weatherUpdated">Weather loading...</div>
     <div class="edition-card">
      <strong>Today's NewsNeta Edition</strong>
      <p id="todayEditionText">Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.</p>
@@ -964,36 +991,43 @@ button{cursor:pointer}
     </div>
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
-   <form id="loginForm">
-    <label>
-     Email
-     <input type="email" value="admin@newsneta.in" autocomplete="email"/>
-    </label>
-    <label>
-     Password
-     <input type="password" value="newsneta-demo" autocomplete="current-password"/>
-    </label>
-    <label>
-     Role
-     <select id="roleSelect">
-      <option value="admin">Admin - full access</option>
-      <option value="reporter">Reporter - create district news</option>
-      <option value="reviewer">Reviewer - approve and fact-check</option>
-     </select>
-    </label>
-    <button class="pill-btn admin-login-btn" type="submit">Open dashboard</button>
-   </form>
-   <div class="cms-preview" id="cmsPreview">
-    <strong>Admin permissions preview</strong>
-   <div><span>Publish / unpublish news</span><b>Allowed</b></div>
-   <div><span>Manage reporters, reviewers, districts</span><b>Allowed</b></div>
-   <div><span>Ads, analytics, sources, push alerts</span><b>Allowed</b></div>
-   <div class="publish-board">
-    <div class="publish-step"><b>Reporter draft</b><small>District, category, media, tags, summary</small></div>
-    <div class="publish-step"><b>Reviewer approval</b><small>Fact check, rewrite headline, SEO, trust score</small></div>
-    <div class="publish-step"><b>Admin publish</b><small>Schedule, breaking ticker, push notification, homepage slot</small></div>
+   <div class="login-content">
+    <div>
+     <form id="loginForm">
+      <label>
+       Email
+       <input id="loginEmail" type="email" value="admin@newsneta.in" autocomplete="email"/>
+      </label>
+      <label>
+       Password
+       <input id="loginPassword" type="password" value="newsneta-demo" autocomplete="current-password"/>
+      </label>
+      <label>
+       Role
+       <select id="roleSelect">
+        <option value="admin">Admin - full access</option>
+        <option value="reporter">Reporter - create district news</option>
+        <option value="reviewer">Reviewer - approve and fact-check</option>
+       </select>
+      </label>
+      <button class="pill-btn admin-login-btn" type="submit">Open dashboard</button>
+     </form>
+     <div class="cms-preview" id="cmsPreview">
+      <strong>Admin permissions preview</strong>
+      <div><span>Publish / unpublish news</span><b>Allowed</b></div>
+      <div><span>Manage reporters, reviewers, districts</span><b>Allowed</b></div>
+      <div><span>Ads, analytics, sources, push alerts</span><b>Allowed</b></div>
+      <div class="publish-board">
+       <div class="publish-step"><b>Reporter draft</b><small>District, category, media, tags, summary</small></div>
+       <div class="publish-step"><b>Reviewer approval</b><small>Fact check, rewrite headline, SEO, trust score</small></div>
+       <div class="publish-step"><b>Admin publish</b><small>Schedule, breaking ticker, push notification, homepage slot</small></div>
+      </div>
+     </div>
+    </div>
+    <section class="role-dashboard" id="roleDashboard" hidden>
+     <div id="roleDashboardContent"></div>
+    </section>
    </div>
-  </div>
   </div>
  </div>
 
@@ -1270,22 +1304,65 @@ function renderHomeDesk(sorted){
  }
 }
 
-function renderWeather(){
+const weatherLocations = [
+ {city:"Hyderabad", lat:17.385, lon:78.4867},
+ {city:"Vijayawada", lat:16.5062, lon:80.648},
+ {city:"Visakhapatnam", lat:17.6868, lon:83.2185},
+ {city:"Warangal", lat:17.9689, lon:79.5941}
+];
+
+function weatherCodeLabel(code){
+ if([0].includes(code)) return "Clear";
+ if([1,2,3].includes(code)) return "Partly cloudy";
+ if([45,48].includes(code)) return "Fog";
+ if([51,53,55,61,63,65,80,81,82].includes(code)) return "Rain likely";
+ if([95,96,99].includes(code)) return "Thunderstorm";
+ return "Forecast";
+}
+
+async function renderWeather(){
  const weatherGrid = document.getElementById("weatherGrid");
  if(!weatherGrid) return;
- const hour = new Date().getHours();
- const warmer = hour >= 11 && hour <= 16;
- const forecasts = [
-  {city:"Hyderabad", temp:warmer ? "34°C" : "29°C", note:"Partly cloudy • evening breeze", rain:"18% rain"},
-  {city:"Vijayawada", temp:warmer ? "36°C" : "30°C", note:"Humid • coastal heat watch", rain:"22% rain"},
-  {city:"Visakhapatnam", temp:warmer ? "32°C" : "28°C", note:"Sea breeze • cloudy intervals", rain:"28% rain"},
-  {city:"Warangal", temp:warmer ? "35°C" : "29°C", note:"Dry heat • late cloud cover", rain:"12% rain"}
- ];
+ const updated = document.getElementById("weatherUpdated");
+ const refreshButton = document.getElementById("weatherRefreshNow");
+ if(refreshButton){ refreshButton.disabled = true; refreshButton.textContent = "Updating..."; }
+ weatherGrid.innerHTML = weatherLocations.map(item=>`<div class="weather-card"><span>${item.city}</span><b>--°C</b><strong>Loading forecast</strong><small>Please wait</small></div>`).join("");
+ let forecasts = [];
+ try{
+  forecasts = await Promise.all(weatherLocations.map(async location=>{
+   const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FKolkata&forecast_days=1`;
+   const response = await fetch(url, {cache:"no-store"});
+   if(!response.ok) throw new Error("weather api failed");
+   const data = await response.json();
+   return {
+    city:location.city,
+    temp:Math.round(data.current.temperature_2m),
+    condition:weatherCodeLabel(data.current.weather_code),
+    humidity:Math.round(data.current.relative_humidity_2m),
+    wind:Math.round(data.current.wind_speed_10m),
+    rain:Math.round(data.daily.precipitation_probability_max?.[0] || 0),
+    high:Math.round(data.daily.temperature_2m_max?.[0] || data.current.temperature_2m),
+    low:Math.round(data.daily.temperature_2m_min?.[0] || data.current.temperature_2m)
+   };
+  }));
+  if(updated) updated.textContent = `Live forecast updated ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
+ }catch(error){
+  forecasts = [
+   {city:"Hyderabad", temp:32, condition:"Partly cloudy", humidity:52, wind:12, rain:18, high:35, low:26},
+   {city:"Vijayawada", temp:34, condition:"Humid", humidity:61, wind:14, rain:22, high:37, low:27},
+   {city:"Visakhapatnam", temp:30, condition:"Sea breeze", humidity:68, wind:18, rain:28, high:32, low:26},
+   {city:"Warangal", temp:33, condition:"Warm", humidity:47, wind:10, rain:12, high:36, low:25}
+  ];
+  if(updated) updated.textContent = `Forecast fallback shown ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
+ }finally{
+  if(refreshButton){ refreshButton.disabled = false; refreshButton.textContent = "Refresh"; }
+ }
  weatherGrid.innerHTML = forecasts.map(item=>`<div class="weather-card">
   <span>${item.city}</span>
-  <b>${item.temp}</b>
-  <strong>${item.note}</strong>
-  <span>${item.rain}</span>
+  <b>${item.temp}°C</b>
+  <strong>${item.condition}</strong>
+  <small>High ${item.high}° / Low ${item.low}°</small>
+  <span>Rain ${item.rain}% • Humidity ${item.humidity}% • Wind ${item.wind} km/h</span>
  </div>`).join("");
 }
 
@@ -1378,6 +1455,7 @@ function setupDistricts(){
  apMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("ap", event.target.value));
  document.getElementById("menuRefreshNow").addEventListener("click",refreshAllNews);
  document.getElementById("homeRefreshNow")?.addEventListener("click",refreshAllNews);
+ document.getElementById("weatherRefreshNow")?.addEventListener("click",renderWeather);
  populate();
 }
 
@@ -1674,10 +1752,78 @@ document.getElementById("roleSelect").addEventListener("change",event=>{
     <div class="publish-step"><b>Publish</b><small>Admin sends to homepage, ticker, push alert, and archive.</small></div>
    </div>`;
 });
+
+function dashboardConfig(role){
+ const config = {
+  admin:{
+   title:"Admin Dashboard",
+   subtitle:"Full newsroom control for publishing, users, ads, alerts, analytics and editions.",
+   metrics:[["Live stories","48"],["Pending approvals","12"],["Active reporters","18"]],
+   actions:[
+    ["Publish breaking news","Push to home, ticker, app alert and today's edition."],
+    ["Manage users","Create admin, reporter and reviewer access."],
+    ["Ad management","Control sponsored slots, display ads and video inventory."],
+    ["Analytics","Track top stories, districts, reader source and engagement."]
+   ],
+   queue:[["Urgent","Approve home hero story"],["Schedule","Today's evening edition"],["Review","District reporter access request"]]
+  },
+  reporter:{
+   title:"Reporter Dashboard",
+   subtitle:"Create district reports, upload media, tag categories and submit stories for review.",
+   metrics:[["Drafts","7"],["Submitted","4"],["Districts","3"]],
+   actions:[
+    ["Create district story","Add headline, summary, district, images and tags."],
+    ["Upload media","Attach photos, video links and field notes."],
+    ["Submit for review","Send copy to reviewer with source notes."],
+    ["My assignments","Track field reports and deadlines."]
+   ],
+   queue:[["Draft","Hyderabad civic update"],["Assignment","Warangal weather follow-up"],["Submitted","Vijayawada traffic story"]]
+  },
+  reviewer:{
+   title:"Reviewer Dashboard",
+   subtitle:"Review facts, edit headlines, adjust trust score and approve stories for publishing.",
+   metrics:[["In review","9"],["Approved","21"],["Flagged","3"]],
+   actions:[
+    ["Fact-check story","Verify claims, dates, location and image relevance."],
+    ["Edit SEO headline","Improve title, summary and discover metadata."],
+    ["Approve publish queue","Move verified stories to admin publish queue."],
+    ["Reject with notes","Send corrections back to reporter."]
+   ],
+   queue:[["Review","AP investment story"],["Flagged","Viral video claim"],["Approved","Telangana district update"]]
+  }
+ };
+ return config[role] || config.admin;
+}
+
+function openRoleDashboard(role){
+ const dashboard = document.getElementById("roleDashboard");
+ const content = document.getElementById("roleDashboardContent");
+ const data = dashboardConfig(role);
+ dashboard.hidden = false;
+ content.innerHTML = `
+  <div class="dashboard-head">
+   <div><h3>${data.title}</h3><p>${data.subtitle}</p></div>
+   <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
+  </div>
+  <div class="dashboard-metrics">
+   ${data.metrics.map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}
+  </div>
+  <div class="dashboard-actions">
+   ${data.actions.map(([title,desc])=>`<button class="dashboard-action" type="button"><strong>${title}</strong><small>${desc}</small></button>`).join("")}
+  </div>
+  <div class="queue-list">
+   ${data.queue.map(([status,title])=>`<div class="queue-item"><span>${title}<br><small>${status}</small></span><b>Open</b></div>`).join("")}
+  </div>
+ `;
+ document.getElementById("dashboardLogout").addEventListener("click",()=>{
+  dashboard.hidden = true;
+ });
+}
+
 document.getElementById("loginForm").addEventListener("submit",event=>{
  event.preventDefault();
  const role = document.getElementById("roleSelect").value;
- document.getElementById("cmsPreview").innerHTML += `<div><span>Demo session</span><b>${role} dashboard opened</b></div>`;
+ openRoleDashboard(role);
 });
 document.getElementById("summarizeBtn").addEventListener("click",()=>{
  const text = document.getElementById("summaryInput").value.trim();

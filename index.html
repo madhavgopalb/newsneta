@@ -200,6 +200,53 @@ button{cursor:pointer}
 .quick-pill{flex:0 0 auto;border:1px solid var(--line);background:rgba(127,139,160,.08);color:var(--ink);border-radius:999px;padding:8px 12px;font:800 13px/1 Inter,sans-serif}
 .quick-pill.live{background:var(--brand);border-color:var(--brand);color:#fff}
 .page{max-width:1240px;margin:0 auto;padding:18px 16px 96px}
+.home-desk{
+ display:grid;
+ grid-template-columns:1.2fr .8fr;
+ gap:16px;
+ margin-bottom:18px;
+}
+.home-panel{
+ border:1px solid var(--line);
+ background:var(--surface-2);
+ backdrop-filter:blur(18px);
+ border-radius:var(--radius);
+ box-shadow:0 10px 34px rgba(15,23,42,.08);
+ padding:16px;
+}
+.live-list{display:grid;gap:10px}
+.live-item{
+ display:grid;
+ grid-template-columns:auto 1fr auto;
+ gap:10px;
+ align-items:center;
+ border-bottom:1px solid var(--line);
+ padding-bottom:10px;
+}
+.live-item:last-child{border-bottom:0;padding-bottom:0}
+.live-time{font:900 12px/1 Inter,sans-serif;color:var(--brand);min-width:48px}
+.live-item strong{font-size:15px;line-height:1.35}
+.live-item small{color:var(--muted);font-weight:800}
+.weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.weather-card{
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ background:var(--surface);
+ padding:12px;
+ display:grid;
+ gap:8px;
+}
+.weather-card b{font:900 28px/1 Inter,sans-serif;color:var(--brand)}
+.weather-card span{color:var(--muted);font-size:13px;font-weight:800}
+.edition-card{
+ margin-top:12px;
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ padding:12px;
+ background:linear-gradient(135deg,rgba(215,25,32,.08),rgba(14,165,168,.08));
+}
+.edition-card strong{display:block;font-size:17px;margin-bottom:6px}
+.edition-card p{margin:0;color:var(--muted);font-size:14px}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.8fr);gap:16px;align-items:stretch}
 .hero{
  min-height:430px;
@@ -587,7 +634,7 @@ button{cursor:pointer}
 @media (max-width:980px){
  .header{grid-template-columns:auto auto;gap:10px}
  .search-wrap{grid-column:1/-1;order:3}
- .hero-grid,.grid-2,.wide-grid{grid-template-columns:1fr}
+ .home-desk,.hero-grid,.grid-2,.wide-grid{grid-template-columns:1fr}
  .desk-lanes{grid-template-columns:repeat(2,1fr)}
  .edition-inner{grid-template-columns:1fr}
  .story-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -629,6 +676,7 @@ button{cursor:pointer}
  .reader-row small:last-child{grid-column:2}
  .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
  .story-analysis-grid,.newsline{grid-template-columns:1fr}
+ .weather-grid{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
  .reel{min-height:70svh}
@@ -710,12 +758,30 @@ button{cursor:pointer}
    </div>
    <div class="reader-tools">
     <button class="quick-pill" id="openLiveTv" type="button">Live TV</button>
-    <button class="quick-pill" id="openEdition" type="button">Today Edition</button>
+    <button class="quick-pill" id="openEdition" type="button">Today's Edition</button>
    </div>
   </div>
  </div>
 
  <main class="page">
+  <section class="home-desk" id="homeDesk" aria-label="Home live news desk">
+   <div class="home-panel">
+    <div class="section-title">
+     <h2>Home: Latest & Live News</h2>
+     <button class="pill-btn" id="homeRefreshNow" type="button">Refresh now</button>
+    </div>
+    <div class="live-list" id="homeLiveList"></div>
+   </div>
+   <aside class="home-panel" id="todayEdition">
+    <div class="section-title"><h2>Weather & Forecast</h2><span class="chip">Today</span></div>
+    <div class="weather-grid" id="weatherGrid"></div>
+    <div class="edition-card">
+     <strong>Today's NewsNeta Edition</strong>
+     <p id="todayEditionText">Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.</p>
+    </div>
+   </aside>
+  </section>
+
   <section class="hero-grid" aria-label="Top stories">
    <article class="hero" id="hero">
     <div class="hero-content">
@@ -1053,6 +1119,76 @@ function escapeAttr(value){
  return String(value || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+const imageLibrary = {
+ politics:[
+  "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1541872705-1f73c6400ec9?auto=format&fit=crop&w=900&q=75"
+ ],
+ telangana:[
+  "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=900&q=75"
+ ],
+ ap:[
+  "https://images.unsplash.com/photo-1598091383021-15ddea10925d?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=75"
+ ],
+ national:[
+  "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=900&q=75"
+ ],
+ international:[
+  "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=75"
+ ],
+ cinema:[
+  "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=900&q=75"
+ ],
+ sports:[
+  "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=900&q=75"
+ ],
+ technology:[
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=75"
+ ],
+ business:[
+  "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=75"
+ ],
+ weather:[
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1561484930-998b6a7b22e8?auto=format&fit=crop&w=900&q=75"
+ ],
+ viral:[
+  "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1611162616475-46b635cb6868?auto=format&fit=crop&w=900&q=75"
+ ]
+};
+
+function imageKeyFor(story){
+ const text = `${story.title || ""} ${story.category || ""}`.toLowerCase();
+ if(/weather|rain|forecast|cyclone|storm|వర్ష|వాతావరణ|తుఫాను|వరద/.test(text)) return "weather";
+ if(/cricket|ipl|sport|match|క్రికెట్|మ్యాచ్/.test(text)) return "sports";
+ if(/cinema|movie|film|box|సినిమా|బాక్సాఫీస్/.test(text)) return "cinema";
+ if(/tech|ai|digital|cyber|టెక్|సైబర్/.test(text)) return "technology";
+ if(/business|market|stock|startup|పెట్టుబడి|మార్కెట్/.test(text)) return "business";
+ if(/andhra|ap|vijayawada|visakhapatnam|ఆంధ్ర/.test(text)) return "ap";
+ if(/telangana|hyderabad|warangal|తెలంగాణ|హైదరాబాద్/.test(text)) return "telangana";
+ if(/national|india|delhi|జాతీయ|దేశ/.test(text)) return "national";
+ if(/world|global|international|ప్రపంచ|అంతర్జాతీయ/.test(text)) return "international";
+ if(/viral|social|వైరల్|సోషల్/.test(text)) return "viral";
+ if(/politic|election|minister|రాజకీయ|ఎన్నిక/.test(text)) return "politics";
+ return "national";
+}
+
+function chooseRelevantImage(story,index=0){
+ const key = imageKeyFor(story);
+ const options = imageLibrary[key] || imageLibrary.national;
+ const seed = Array.from(`${story.title || ""}${story.category || ""}`).reduce((sum,ch)=>sum + ch.charCodeAt(0), index);
+ return options[seed % options.length];
+}
+
 function normalizeItems(items){
  return items.map((item,index)=>({
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
@@ -1061,7 +1197,7 @@ function normalizeItems(items){
   views:item.views || Math.floor(42000 + Math.random()*68000),
   sentiment:item.sentiment || ["Positive","Neutral","Mixed"][index % 3],
   trust:item.trust || Math.floor(82 + Math.random()*14),
-  image:item.image || fallbackStories[index % fallbackStories.length].image,
+  image:chooseRelevantImage(item,index),
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
   description:item.description || item.contentSnippet || item.content || ""
@@ -1115,11 +1251,51 @@ function renderReel(story){
  </article>`;
 }
 
+function renderHomeDesk(sorted){
+ const list = document.getElementById("homeLiveList");
+ if(!list) return;
+ const top = sorted.slice(0,6);
+ list.innerHTML = top.map((story,index)=>{
+  const time = index === 0 ? "LIVE" : `${Math.max(2,index * 7)}m`;
+  return `<a class="live-item" href="#" data-story-id="${escapeAttr(story.id || story.link || story.title)}">
+   <span class="live-time">${time}</span>
+   <strong>${story.title}</strong>
+   <small>${story.category || "News"}</small>
+  </a>`;
+ }).join("");
+ const today = document.getElementById("todayEditionText");
+ if(today){
+  const count = sorted.length + fallbackStories.length;
+  today.textContent = `${count} stories in today's edition • ${lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "loading"} refresh • Telangana, Andhra Pradesh, National, Weather and Live updates.`;
+ }
+}
+
+function renderWeather(){
+ const weatherGrid = document.getElementById("weatherGrid");
+ if(!weatherGrid) return;
+ const hour = new Date().getHours();
+ const warmer = hour >= 11 && hour <= 16;
+ const forecasts = [
+  {city:"Hyderabad", temp:warmer ? "34°C" : "29°C", note:"Partly cloudy • evening breeze", rain:"18% rain"},
+  {city:"Vijayawada", temp:warmer ? "36°C" : "30°C", note:"Humid • coastal heat watch", rain:"22% rain"},
+  {city:"Visakhapatnam", temp:warmer ? "32°C" : "28°C", note:"Sea breeze • cloudy intervals", rain:"28% rain"},
+  {city:"Warangal", temp:warmer ? "35°C" : "29°C", note:"Dry heat • late cloud cover", rain:"12% rain"}
+ ];
+ weatherGrid.innerHTML = forecasts.map(item=>`<div class="weather-card">
+  <span>${item.city}</span>
+  <b>${item.temp}</b>
+  <strong>${item.note}</strong>
+  <span>${item.rain}</span>
+ </div>`).join("");
+}
+
 function render(){
  const sorted = [...stories].sort((a,b)=>b.views-a.views);
  heroStories = normalizeItems([...globalTopStories, ...sorted]).slice(0,8);
  if(heroIndex >= heroStories.length) heroIndex = 0;
  renderHeroSlide();
+ renderHomeDesk(sorted);
+ renderWeather();
  document.getElementById("tickerTrack").textContent = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
  document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<div class="counter-row"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></div>`).join("");
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
@@ -1201,6 +1377,7 @@ function setupDistricts(){
  telanganaMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("telangana", event.target.value));
  apMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("ap", event.target.value));
  document.getElementById("menuRefreshNow").addEventListener("click",refreshAllNews);
+ document.getElementById("homeRefreshNow")?.addEventListener("click",refreshAllNews);
  populate();
 }
 
@@ -1226,11 +1403,24 @@ async function loadDistrictNews(state, district){
 }
 
 async function refreshAllNews(){
+ const buttons = [document.getElementById("menuRefreshNow"), document.getElementById("homeRefreshNow")].filter(Boolean);
+ buttons.forEach(button=>{
+  button.disabled = true;
+  button.dataset.originalText = button.dataset.originalText || button.textContent;
+  button.textContent = "Refreshing...";
+ });
  const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "telangana";
- if(activeDistrictFilter){
-  await loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district);
- }else{
-  await loadNews(activeCat);
+ try{
+  if(activeDistrictFilter){
+   await loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district);
+  }else{
+   await loadNews(activeCat);
+  }
+ }finally{
+  buttons.forEach(button=>{
+   button.disabled = false;
+   button.textContent = button.dataset.originalText || "Refresh news";
+  });
  }
  updateRefreshStatus();
 }
@@ -1452,8 +1642,11 @@ document.getElementById("storyBackdrop").addEventListener("click",event=>{
 document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${document.getElementById("heroTitle").textContent}. ${document.getElementById("heroSummary").textContent}`));
 document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
 document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
-document.getElementById("openLiveTv").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
-document.getElementById("openEdition").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("openLiveTv").addEventListener("click",()=>document.getElementById("reels").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("openEdition").addEventListener("click",async ()=>{
+ await refreshAllNews();
+ document.getElementById("todayEdition").scrollIntoView({behavior:"smooth", block:"start"});
+});
 document.getElementById("themeBtn").addEventListener("click",()=>{
  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
  document.documentElement.dataset.theme = next;

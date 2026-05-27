@@ -129,14 +129,21 @@ button{cursor:pointer}
 .pill-btn{padding:0 14px;font-weight:800}
 .admin-login-btn{background:var(--brand);color:#fff;border-color:var(--brand)}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 6px rgba(215,25,32,.16);animation:pulse 1.4s infinite}
-.nav{
+.nav-menu-row{
  max-width:1240px;
  margin:0 auto;
+ display:grid;
+ grid-template-columns:minmax(0,1fr) auto auto auto;
+ gap:8px;
+ align-items:center;
+ padding:0 16px 12px;
+}
+.nav{
  display:flex;
  gap:8px;
  overflow:auto;
- padding:0 16px 12px;
  scrollbar-width:none;
+ min-width:0;
 }
 .nav::-webkit-scrollbar{display:none}
 .nav a,.chip{
@@ -152,12 +159,7 @@ button{cursor:pointer}
 }
 .nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .nav-districts{
- max-width:1240px;
- margin:0 auto;
- display:grid;
- grid-template-columns:1fr 1fr auto;
- gap:10px;
- padding:0 16px 12px;
+ display:contents;
 }
 .menu-select{
  min-height:42px;
@@ -214,6 +216,8 @@ button{cursor:pointer}
  box-shadow:0 10px 34px rgba(15,23,42,.08);
  padding:16px;
 }
+.weather-rail{position:relative}
+.side-stack .weather-grid{grid-template-columns:1fr 1fr}
 .live-list{display:grid;gap:10px}
 .live-item{
  display:grid;
@@ -556,6 +560,24 @@ button{cursor:pointer}
 .queue-list{display:grid;gap:8px}
 .queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line)}
 .queue-item small{color:var(--muted);font-weight:800}
+.cms-form{display:grid;gap:10px;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.cms-form label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:800}
+.cms-form input,.cms-form select,.cms-form textarea{
+ width:100%;
+ min-height:40px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:var(--surface);
+ color:var(--ink);
+ padding:9px 10px;
+ outline:none;
+}
+.cms-form textarea{min-height:86px;resize:vertical}
+.cms-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compliance-checks{display:grid;gap:7px;margin-top:4px}
+.compliance-checks label{display:flex;align-items:flex-start;gap:8px;color:var(--ink);font-weight:700}
+.compliance-checks input{width:auto;min-height:0;margin-top:3px}
+.workflow-note{padding:10px;border-radius:8px;background:rgba(22,163,74,.12);color:var(--ink);font-weight:800}
 .story-modal{
  width:min(760px,100%);
  max-height:min(86vh,820px);
@@ -662,6 +684,8 @@ button{cursor:pointer}
  .newsline{grid-template-columns:repeat(2,1fr)}
  .layout-doc,.role-grid{grid-template-columns:1fr 1fr}
  .ticker{top:124px}
+ .nav-menu-row{grid-template-columns:1fr 1fr;gap:8px}
+ .nav{grid-column:1/-1}
 }
 @media (max-width:640px){
  .app-shell{overflow-x:hidden}
@@ -676,9 +700,9 @@ button{cursor:pointer}
  .icon-btn,.pill-btn{min-width:40px;height:40px}
  .pill-btn .label{display:none}
  .search-wrap input{height:42px;font-size:16px}
- .nav{padding:0 12px 10px;gap:7px}
+ .nav-menu-row{grid-template-columns:1fr;padding:0 12px 10px;gap:8px}
+ .nav{gap:7px}
  .nav a,.chip{font-size:13px;padding:8px 11px}
- .nav-districts{grid-template-columns:1fr;padding:0 12px 10px}
  .menu-select{min-height:40px;font-size:14px}
  .menu-refresh{min-width:100%}
  .refresh-inline{padding:0 12px 8px;font-size:11px;line-height:1.35}
@@ -753,11 +777,13 @@ button{cursor:pointer}
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
    </div>
   </header>
-  <nav class="nav" aria-label="News categories" id="categoryNav"></nav>
-  <div class="nav-districts" aria-label="District news menu">
-   <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>
-   <select class="menu-select" id="apMenuSelect" aria-label="Andhra Pradesh district news"></select>
-   <button class="pill-btn menu-refresh" id="menuRefreshNow" type="button">Refresh news</button>
+  <div class="nav-menu-row" aria-label="Main menu">
+   <nav class="nav" aria-label="News categories" id="categoryNav"></nav>
+   <div class="nav-districts" aria-label="District news menu">
+    <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>
+    <select class="menu-select" id="apMenuSelect" aria-label="Andhra Pradesh district news"></select>
+    <button class="pill-btn menu-refresh" id="menuRefreshNow" type="button">Refresh news</button>
+   </div>
   </div>
   <div class="refresh-inline"><span class="live-dot"></span><span id="menuRefreshStatus">News refresh starts after page load</span></div>
  </div>
@@ -786,29 +812,7 @@ button{cursor:pointer}
   </div>
  </div>
 
- <main class="page">
-  <section class="home-desk" id="homeDesk" aria-label="Home live news desk">
-   <div class="home-panel">
-    <div class="section-title">
-     <h2>Home: Latest & Live News</h2>
-     <button class="pill-btn" id="homeRefreshNow" type="button">Refresh now</button>
-    </div>
-    <div class="live-list" id="homeLiveList"></div>
-   </div>
-   <aside class="home-panel" id="todayEdition">
-    <div class="weather-head">
-     <div class="section-title" style="margin:0"><h2>Weather & Forecast</h2><span class="chip">Live</span></div>
-     <button class="pill-btn" id="weatherRefreshNow" type="button">Refresh</button>
-    </div>
-    <div class="weather-grid" id="weatherGrid"></div>
-    <div class="weather-updated" id="weatherUpdated">Weather loading...</div>
-    <div class="edition-card">
-     <strong>Today's NewsNeta Edition</strong>
-     <p id="todayEditionText">Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.</p>
-    </div>
-   </aside>
-  </section>
-
+ <main class="page" id="home">
   <section class="hero-grid" aria-label="Top stories">
    <article class="hero" id="hero">
     <div class="hero-content">
@@ -829,6 +833,18 @@ button{cursor:pointer}
    </article>
 
    <div class="side-stack">
+    <aside class="home-panel weather-rail" id="todayEdition">
+     <div class="weather-head">
+      <div class="section-title" style="margin:0"><h2>Weather & Forecast</h2><span class="chip">Auto</span></div>
+      <button class="pill-btn" id="weatherRefreshNow" type="button">Refresh</button>
+     </div>
+     <div class="weather-grid" id="weatherGrid"></div>
+     <div class="weather-updated" id="weatherUpdated">Weather loading...</div>
+     <div class="edition-card">
+      <strong>Today's NewsNeta Edition</strong>
+      <p id="todayEditionText">Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.</p>
+     </div>
+    </aside>
     <aside class="glass-panel">
      <div class="panel-title"><h3>Trending Telugu News</h3><span class="tag">Live</span></div>
      <div class="counter-list" id="trendingList"></div>
@@ -841,6 +857,24 @@ button{cursor:pointer}
      </div>
     </aside>
    </div>
+  </section>
+
+  <section class="home-desk" id="homeDesk" aria-label="Home live news desk">
+   <div class="home-panel">
+    <div class="section-title">
+     <h2>Home: Latest & Live News</h2>
+     <button class="pill-btn" id="homeRefreshNow" type="button">Refresh now</button>
+    </div>
+    <div class="live-list" id="homeLiveList"></div>
+   </div>
+   <aside class="home-panel">
+    <div class="section-title"><h2>Legal & Editorial Compliance</h2><span class="chip">Checklist</span></div>
+    <div class="dashboard-table" id="compliancePanel">
+     <div class="dash-row"><span>Source and claim verification</span><b>Required</b></div>
+     <div class="dash-row"><span>Defamation, privacy and takedown review</span><b>Required</b></div>
+     <div class="dash-row"><span>Corrections and grievance workflow</span><b>Enabled</b></div>
+    </div>
+   </aside>
   </section>
 
   <section class="section" id="reels">
@@ -1130,10 +1164,20 @@ function icon(name){
 
 function setupNav(){
  const nav = document.getElementById("categoryNav");
- nav.innerHTML = categories.map(([id,label],i)=>`<a href="#latestGrid" data-cat="${id}" class="${i===0?"active":""}">${label}</a>`).join("");
+ nav.innerHTML = `<a href="#home" data-home="true" class="active" aria-label="Home">⌂ Home</a>` + categories.map(([id,label])=>`<a href="#latestGrid" data-cat="${id}">${label}</a>`).join("");
  nav.addEventListener("click", event=>{
   const link = event.target.closest("a");
   if(!link) return;
+  if(link.dataset.home){
+   event.preventDefault();
+   nav.querySelectorAll("a").forEach(a=>a.classList.remove("active"));
+   link.classList.add("active");
+   activeDistrictFilter = null;
+   document.getElementById("telanganaMenuSelect").value = "";
+   document.getElementById("apMenuSelect").value = "";
+   document.getElementById("home").scrollIntoView({behavior:"smooth", block:"start"});
+   return;
+  }
   activeDistrictFilter = null;
   const telanganaMenuSelect = document.getElementById("telanganaMenuSelect");
   const apMenuSelect = document.getElementById("apMenuSelect");
@@ -1795,6 +1839,58 @@ function dashboardConfig(role){
  return config[role] || config.admin;
 }
 
+function cmsWorkflowForm(role){
+ const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option>${d}</option>`).join("");
+ const compliance = `
+  <div class="compliance-checks">
+   <label><input type="checkbox" checked> Source/contact note added</label>
+   <label><input type="checkbox" checked> Defamation and privacy risk checked</label>
+   <label><input type="checkbox" checked> Image/video rights and caption checked</label>
+   <label><input type="checkbox" checked> Correction/grievance path available</label>
+  </div>`;
+ if(role === "reporter"){
+  return `<form class="cms-form" id="storyUploadForm">
+   <strong>Upload District News</strong>
+   <div class="cms-form-grid">
+    <label>District<select>${districtOptions}</select></label>
+    <label>Category<select>${categories.map(([,label])=>`<option>${label}</option>`).join("")}</select></label>
+   </div>
+   <label>Headline<input value="Hyderabad civic update: field report"></label>
+   <label>Story copy<textarea>Reporter field notes, official response, local impact, and next update details.</textarea></label>
+   <label>Image / video URL<input placeholder="https://..."></label>
+   ${compliance}
+   <button class="pill-btn admin-login-btn" type="submit">Submit for review</button>
+   <div class="workflow-note" id="cmsWorkflowNote">Draft ready for reporter submission.</div>
+  </form>`;
+ }
+ if(role === "reviewer"){
+  return `<form class="cms-form" id="storyUploadForm">
+   <strong>Review and Approve News</strong>
+   <label>Review queue<select><option>AP investment story</option><option>Viral video claim</option><option>Telangana district update</option></select></label>
+   <label>Reviewer notes<textarea>Fact check complete. Headline tightened. Trust score updated.</textarea></label>
+   <div class="cms-form-grid">
+    <label>Trust score<input type="number" value="91"></label>
+    <label>Status<select><option>Approve</option><option>Send back to reporter</option><option>Reject</option></select></label>
+   </div>
+   ${compliance}
+   <button class="pill-btn admin-login-btn" type="submit">Approve for publish queue</button>
+   <div class="workflow-note" id="cmsWorkflowNote">Story ready for reviewer decision.</div>
+  </form>`;
+ }
+ return `<form class="cms-form" id="storyUploadForm">
+  <strong>Publish News</strong>
+  <label>Publish queue<select><option>Approved Telangana district story</option><option>Approved AP business story</option><option>Breaking weather alert</option></select></label>
+  <div class="cms-form-grid">
+   <label>Homepage slot<select><option>Top carousel</option><option>Latest live</option><option>District lead</option></select></label>
+   <label>Schedule<select><option>Publish now</option><option>Today's edition</option><option>Breaking ticker only</option></select></label>
+  </div>
+  <label>Push alert copy<input value="Breaking update from NewsNeta"></label>
+  ${compliance}
+  <button class="pill-btn admin-login-btn" type="submit">Approve and publish</button>
+  <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition.</div>
+ </form>`;
+}
+
 function openRoleDashboard(role){
  const dashboard = document.getElementById("roleDashboard");
  const content = document.getElementById("roleDashboardContent");
@@ -1814,9 +1910,15 @@ function openRoleDashboard(role){
   <div class="queue-list">
    ${data.queue.map(([status,title])=>`<div class="queue-item"><span>${title}<br><small>${status}</small></span><b>Open</b></div>`).join("")}
   </div>
+  ${cmsWorkflowForm(role)}
  `;
  document.getElementById("dashboardLogout").addEventListener("click",()=>{
   dashboard.hidden = true;
+ });
+ document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
+  event.preventDefault();
+  const verbs = {admin:"Published to home, ticker and today's edition.", reporter:"Submitted to reviewer queue.", reviewer:"Approved for admin publish queue."};
+  document.getElementById("cmsWorkflowNote").textContent = verbs[role] || "Workflow updated.";
  });
 }
 
@@ -1850,6 +1952,7 @@ refreshAllNews();
 window.newsnetaHeroTimer = setInterval(()=>moveHeroSlide(1), 6500);
 window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
+window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
 setTimeout(()=>document.getElementById("notify").classList.add("show"),2200);
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>

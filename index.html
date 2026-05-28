@@ -548,31 +548,31 @@ button{cursor:pointer}
 }
 .modal-backdrop.open{display:grid}
 .login-modal{
- width:min(980px,100%);
- max-height:92vh;
+ width:min(1180px,100%);
+ max-height:94vh;
  border:1px solid var(--line);
  border-radius:var(--radius);
  background:var(--surface);
  box-shadow:var(--shadow);
- overflow:auto;
+ overflow:hidden;
 }
 .login-modal:not(.authenticated){width:min(520px,100%)}
 .login-modal:not(.authenticated) .cms-tabs{display:none}
 .login-modal:not(.authenticated) .login-content{display:block;min-height:auto;background:#fff}
 .login-modal:not(.authenticated) .login-panel{border-right:0}
 .login-modal.authenticated .login-panel{display:none}
-.login-modal.authenticated .login-content{display:block;background:#f4f6f8}
+.login-modal.authenticated .login-content{display:block;background:#f4f6f8;max-height:calc(94vh - 119px);overflow:hidden}
 .login-content{display:grid;grid-template-columns:320px 1fr;min-height:560px;background:#fff}
 .login-panel{border-right:1px solid var(--line);background:#fff}
 .role-dashboard{padding:0;background:#f4f6f8;overflow:auto}
 .role-dashboard[hidden]{display:none}
-.cms-shell{display:grid;grid-template-columns:230px 1fr;min-height:560px}
+.cms-shell{display:grid;grid-template-columns:220px minmax(0,1fr);height:calc(94vh - 119px);min-height:560px}
 .cms-sidebar{background:#202733;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
 .cms-sidebar strong{display:block;font-size:16px;margin-bottom:4px}
 .cms-sidebar small{display:block;color:#b8c2d2;font-weight:800;margin-bottom:10px}
 .cms-menu-btn{border:0;border-radius:6px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font-weight:900}
 .cms-menu-btn.active{background:var(--brand)}
-.cms-workspace{padding:16px;display:grid;gap:12px}
+.cms-workspace{padding:16px;display:grid;gap:12px;align-content:start;overflow:auto}
 .cms-screen{display:grid;gap:12px}
 .cms-screen-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
 .cms-screen-head strong{font-size:18px}
@@ -584,6 +584,7 @@ button{cursor:pointer}
 .dashboard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px}
 .dashboard-head h3{margin:0;font-size:20px}
 .dashboard-head p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.dashboard-head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .dashboard-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 .metric-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px}
 .metric-card span{display:block;color:var(--muted);font:800 12px/1 Inter,sans-serif}
@@ -603,6 +604,8 @@ button{cursor:pointer}
 .queue-item:last-child{border-bottom:0}
 .queue-item small{color:var(--muted);font-weight:800}
 .cms-form{display:grid;gap:14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:16px}
+.cms-form.two-column{grid-template-columns:1fr 1fr;align-items:start}
+.cms-form.two-column > strong,.cms-form.two-column > .cms-ai-box,.cms-form.two-column > .cms-full,.cms-form.two-column > .cms-form-actions,.cms-form.two-column > .workflow-note{grid-column:1/-1}
 .cms-form label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:800}
 .cms-form input,.cms-form select,.cms-form textarea{
  width:100%;
@@ -622,6 +625,9 @@ button{cursor:pointer}
 .cms-ai-title span{border-radius:6px;background:#c70b2f;color:#fff;padding:4px 8px;font:900 11px/1 Inter,sans-serif}
 .cms-ai-actions{display:flex;gap:8px;flex-wrap:wrap}
 .cms-ai-actions button{border:1px solid rgba(199,11,47,.22);background:#fff;color:#c70b2f;border-radius:999px;min-height:34px;padding:0 12px;font-weight:800}
+.cms-form-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;position:sticky;bottom:0;background:linear-gradient(180deg,rgba(255,255,255,.88),#fff);border-top:1px solid var(--line);padding-top:12px;z-index:2}
+.cms-form-actions .pill-btn{min-width:170px}
+.cms-secondary-btn{border-color:var(--line);background:#fff;color:var(--ink)}
 .compliance-checks{display:grid;gap:7px;margin-top:4px}
 .compliance-checks label{display:flex;align-items:flex-start;gap:8px;color:var(--ink);font-weight:700}
 .compliance-checks input{width:auto;min-height:0;margin-top:3px}
@@ -713,7 +719,7 @@ button{cursor:pointer}
 .login-modal header .summary{color:rgba(255,255,255,.86) !important;font-weight:800}
 .login-modal header .icon-btn{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.22);color:#fff}
 .cms-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);background:#fff}
-.cms-tab{min-height:44px;border:0;border-bottom:2px solid transparent;background:#fff;color:var(--muted);font-weight:900}
+.cms-tab{min-height:44px;border:0;border-bottom:2px solid transparent;background:#fff;color:var(--muted);font-weight:900;cursor:pointer}
 .cms-tab.active{color:#c70b2f;border-bottom-color:#c70b2f}
 .login-kicker{padding:16px 16px 0}
 .login-kicker strong{display:block;font-size:18px}
@@ -818,12 +824,21 @@ button{cursor:pointer}
  .story-analysis-grid,.newsline{grid-template-columns:1fr}
  .weather-grid{grid-template-columns:1fr}
  .login-content{grid-template-columns:1fr;max-height:86vh;overflow:auto}
+ .login-modal{width:100%;max-height:96vh;border-radius:10px}
+ .login-modal.authenticated .login-content{max-height:calc(96vh - 119px);overflow:auto}
  .login-panel{border-right:0}
  .role-dashboard{border-top:1px solid var(--line)}
- .cms-shell{grid-template-columns:1fr}
- .cms-sidebar{grid-template-columns:1fr 1fr;align-items:start}
+ .cms-shell{grid-template-columns:1fr;height:auto;min-height:0}
+ .cms-sidebar{grid-template-columns:1fr 1fr;align-items:start;position:sticky;top:0;z-index:3}
  .cms-sidebar strong,.cms-sidebar small{grid-column:1/-1}
+ .cms-workspace{padding:12px;overflow:visible}
+ .dashboard-head{display:grid}
+ .dashboard-head-actions{justify-content:stretch}
+ .dashboard-head-actions .pill-btn{flex:1}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
+ .cms-form.two-column,.cms-form-grid{grid-template-columns:1fr}
+ .cms-form-actions{display:grid;grid-template-columns:1fr;position:static}
+ .cms-form-actions .pill-btn{width:100%}
  .cms-feature-grid{grid-template-columns:1fr}
  .workflow-lane{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
@@ -2091,7 +2106,7 @@ function cmsWorkflowForm(role){
    <label><input type="checkbox" checked> Correction/grievance path available</label>
  </div>`;
  if(role === "reporter"){
-  return `<form class="cms-form" id="storyUploadForm">
+  return `<form class="cms-form two-column" id="storyUploadForm">
    <strong>Upload News Article</strong>
    ${aiTools}
    <label>Telugu Headline *<textarea placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">Hyderabad civic update: field report</textarea></label>
@@ -2105,12 +2120,12 @@ function cmsWorkflowForm(role){
    <label>Full Article<textarea class="article-body" placeholder="పూర్తి వార్త వివరాలు..."></textarea></label>
    <label>Image / Video URL<input placeholder="https://..."></label>
    ${compliance}
-   <button class="pill-btn admin-login-btn" type="submit">Submit for Review</button>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Queue</button><button class="pill-btn admin-login-btn" type="submit">Upload and Submit for Review</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Draft ready for reporter submission.</div>
   </form>`;
  }
  if(role === "reviewer"){
-  return `<form class="cms-form" id="storyUploadForm">
+  return `<form class="cms-form two-column" id="storyUploadForm">
    <strong>Review and Approve News</strong>
    ${aiTools}
    <label>Review queue<select><option>AP investment story</option><option>Viral video claim</option><option>Telangana district update</option></select></label>
@@ -2120,11 +2135,11 @@ function cmsWorkflowForm(role){
     <label>Status<select><option>Approve</option><option>Send back to reporter</option><option>Reject</option></select></label>
    </div>
    ${compliance}
-   <button class="pill-btn admin-login-btn" type="submit">Approve for publish queue</button>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Review Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve for Publish Queue</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Story ready for reviewer decision.</div>
   </form>`;
  }
- return `<form class="cms-form" id="storyUploadForm">
+ return `<form class="cms-form two-column" id="storyUploadForm">
   <strong>Publish News</strong>
   ${aiTools}
   <label>Publish queue<select><option>Approved Telangana district story</option><option>Approved AP business story</option><option>Breaking weather alert</option></select></label>
@@ -2134,7 +2149,7 @@ function cmsWorkflowForm(role){
   </div>
   <label>Push alert copy<input value="Breaking update from NewsNeta"></label>
   ${compliance}
-  <button class="pill-btn admin-login-btn" type="submit">Approve and publish</button>
+  <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
   <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition.</div>
  </form>`;
 }
@@ -2155,7 +2170,7 @@ function cmsWorkflowLane(role){
 function cmsVideoScreen(role){
  return `<div class="cms-screen">
   <div class="cms-screen-head"><div><strong>Video Upload</strong><small>Shorts, live clips, thumbnails and publishing controls.</small></div><span class="chip">Video</span></div>
-  <form class="cms-form" id="storyUploadForm">
+  <form class="cms-form two-column" id="storyUploadForm">
    <strong>Upload Video News</strong>
    <div class="cms-ai-box">
     <div class="cms-ai-title">AI Video Assistant <span>CLAUDE AI</span></div>
@@ -2169,7 +2184,7 @@ function cmsVideoScreen(role){
    <label>Video URL / Upload Path<input placeholder="https://... or storage path"></label>
    <label>Thumbnail URL<input placeholder="https://..."></label>
    <label>Description<textarea>Short video summary, source notes, and publish instructions.</textarea></label>
-   <button class="pill-btn admin-login-btn" type="submit">${role === "reviewer" ? "Approve Video" : role === "admin" ? "Publish Video" : "Submit Video"}</button>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Video Queue</button><button class="pill-btn admin-login-btn" type="submit">${role === "reviewer" ? "Approve Video" : role === "admin" ? "Publish Video" : "Submit Video"}</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Video workspace ready.</div>
   </form>
  </div>`;
@@ -2225,11 +2240,15 @@ function bindCmsScreen(role){
   const verbs = {admin:"Published to home, ticker and today's edition.", reporter:"Submitted to reviewer queue.", reviewer:"Approved for admin publish queue."};
   document.getElementById("cmsWorkflowNote").textContent = verbs[role] || "Workflow updated.";
  });
+ document.querySelectorAll("[data-cms-screen-jump]").forEach(button=>{
+  button.addEventListener("click",()=>switchCmsScreen(button.dataset.cmsScreenJump));
+ });
 }
 
 function switchCmsScreen(screen){
  if(!currentCmsUser) return;
  document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === screen));
+ document.querySelectorAll(".cms-menu-btn").forEach(button=>button.classList.toggle("active", button.dataset.cmsScreen === screen));
  const host = document.getElementById("cmsScreenHost");
  if(host){
   host.innerHTML = cmsScreenMarkup(currentCmsUser.role, screen);
@@ -2247,12 +2266,19 @@ function openRoleDashboard(role, user = currentCmsUser){
    <aside class="cms-sidebar">
     <strong>NewsNeta CMS</strong>
     <small>${user ? `${user.name} • ${user.location.city}` : "Newsroom"} workspace</small>
-    ${data.actions.map(([title],index)=>`<button class="cms-menu-btn ${index === 0 ? "active" : ""}" type="button">${title}</button>`).join("")}
+    <button class="cms-menu-btn active" type="button" data-cms-screen="article">Article Upload / Publish</button>
+    <button class="cms-menu-btn" type="button" data-cms-screen="video">Video Upload</button>
+    <button class="cms-menu-btn" type="button" data-cms-screen="manage">Manage Queue</button>
+    <button class="cms-menu-btn" type="button" data-cms-screen="analytics">Analytics</button>
    </aside>
    <div class="cms-workspace">
   <div class="dashboard-head">
    <div><h3>${data.title}</h3><p>${user ? `${user.name} • ${user.location.city} desk • ` : ""}${data.subtitle}</p></div>
-   <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
+   <div class="dashboard-head-actions">
+    <button class="pill-btn admin-login-btn" type="button" data-cms-screen-jump="article">${role === "admin" ? "Publish News" : role === "reviewer" ? "Review News" : "Upload News"}</button>
+    <button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="video">Upload Video</button>
+    <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
+   </div>
   </div>
   <div class="dashboard-metrics">
    ${data.metrics.map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}
@@ -2274,14 +2300,16 @@ function openRoleDashboard(role, user = currentCmsUser){
   document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
   renderWeather();
  });
- content.querySelectorAll(".dashboard-action,.cms-menu-btn").forEach(button=>{
+ content.querySelectorAll(".dashboard-action").forEach(button=>{
   button.addEventListener("click",()=>{
-   content.querySelectorAll(".cms-menu-btn").forEach(item=>item.classList.toggle("active", item === button));
    const title = button.querySelector("strong")?.textContent || button.textContent.trim() || "Action";
    const note = document.getElementById("cmsWorkflowNote");
    if(note) note.textContent = `${title} workspace is ready. Complete the form below to continue the publishing workflow.`;
    button.scrollIntoView({behavior:"smooth", block:"nearest"});
   });
+ });
+ content.querySelectorAll("[data-cms-screen]").forEach(button=>{
+  button.addEventListener("click",()=>switchCmsScreen(button.dataset.cmsScreen));
  });
  bindCmsScreen(role);
 }

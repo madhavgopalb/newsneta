@@ -548,7 +548,7 @@ button{cursor:pointer}
 }
 .modal-backdrop.open{display:grid}
 .login-modal{
- width:min(1180px,100%);
+ width:min(980px,100%);
  max-height:92vh;
  border:1px solid var(--line);
  border-radius:var(--radius);
@@ -556,7 +556,7 @@ button{cursor:pointer}
  box-shadow:var(--shadow);
  overflow:auto;
 }
-.login-content{display:grid;grid-template-columns:300px 1fr;min-height:560px;background:#f4f6f8}
+.login-content{display:grid;grid-template-columns:320px 1fr;min-height:560px;background:#fff}
 .login-panel{border-right:1px solid var(--line);background:#fff}
 .role-dashboard{padding:0;background:#f4f6f8;overflow:auto}
 .role-dashboard[hidden]{display:none}
@@ -588,7 +588,7 @@ button{cursor:pointer}
 .queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border-radius:0;background:var(--surface);border:0;border-bottom:1px solid var(--line)}
 .queue-item:last-child{border-bottom:0}
 .queue-item small{color:var(--muted);font-weight:800}
-.cms-form{display:grid;gap:10px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:14px}
+.cms-form{display:grid;gap:14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:16px}
 .cms-form label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:800}
 .cms-form input,.cms-form select,.cms-form textarea{
  width:100%;
@@ -600,8 +600,14 @@ button{cursor:pointer}
  padding:9px 10px;
  outline:none;
 }
-.cms-form textarea{min-height:86px;resize:vertical}
+.cms-form textarea{min-height:90px;resize:vertical}
+.cms-form textarea.article-body{min-height:160px}
 .cms-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cms-ai-box{border:1px solid rgba(199,11,47,.28);border-radius:14px;background:linear-gradient(135deg,rgba(199,11,47,.08),rgba(255,255,255,.9));padding:14px;display:grid;gap:10px}
+.cms-ai-title{display:flex;align-items:center;gap:8px;font-weight:900;color:#c70b2f}
+.cms-ai-title span{border-radius:6px;background:#c70b2f;color:#fff;padding:4px 8px;font:900 11px/1 Inter,sans-serif}
+.cms-ai-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cms-ai-actions button{border:1px solid rgba(199,11,47,.22);background:#fff;color:#c70b2f;border-radius:999px;min-height:34px;padding:0 12px;font-weight:800}
 .compliance-checks{display:grid;gap:7px;margin-top:4px}
 .compliance-checks label{display:flex;align-items:flex-start;gap:8px;color:var(--ink);font-weight:700}
 .compliance-checks input{width:auto;min-height:0;margin-top:3px}
@@ -684,15 +690,26 @@ button{cursor:pointer}
  display:flex;
  justify-content:space-between;
  align-items:center;
- padding:16px;
- border-bottom:1px solid var(--line);
+ padding:20px 22px;
+ border-bottom:0;
+ background:#c70b2f;
+ color:#fff;
 }
+.login-modal header strong{font-size:25px;line-height:1.1}
+.login-modal header .summary{color:rgba(255,255,255,.86) !important;font-weight:800}
+.login-modal header .icon-btn{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.22);color:#fff}
+.cms-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);background:#fff}
+.cms-tab{min-height:44px;border:0;border-bottom:2px solid transparent;background:#fff;color:var(--muted);font-weight:900}
+.cms-tab.active{color:#c70b2f;border-bottom-color:#c70b2f}
+.login-kicker{padding:16px 16px 0}
+.login-kicker strong{display:block;font-size:18px}
+.login-kicker small{display:block;color:var(--muted);font-weight:800;margin-top:3px}
 .login-modal form{display:grid;gap:12px;padding:16px}
 .login-modal label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:800}
 .login-modal input,.login-modal select{
  min-height:44px;
  border:1px solid var(--line);
- border-radius:999px;
+ border-radius:8px;
  background:var(--bg);
  color:var(--ink);
  padding:0 14px;
@@ -700,7 +717,7 @@ button{cursor:pointer}
 }
 .login-error{display:none;margin:0 16px 14px;padding:10px 12px;border-radius:10px;background:rgba(215,25,32,.12);color:var(--brand);font-weight:900;font-size:13px}
 .login-error.show{display:block}
-.cms-preview{border-top:1px solid var(--line);padding:14px 16px;background:rgba(127,139,160,.1)}
+.cms-preview{border-top:1px solid var(--line);padding:14px 16px;background:#fff7f8}
 .cms-preview strong{display:block;margin-bottom:8px}
 .cms-preview div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;color:var(--muted);font-size:13px}
 .cms-preview .account-row{grid-template-columns:1fr;gap:3px;border-top:1px solid var(--line)}
@@ -1096,13 +1113,23 @@ button{cursor:pointer}
   <div class="login-modal">
    <header>
     <div>
-     <strong id="loginTitle">NewsNeta CMS Login</strong>
-     <p class="summary" style="margin:4px 0 0">Admin, Reporter, and Reviewer access</p>
+     <strong id="loginTitle">Upload News</strong>
+     <p class="summary" style="margin:4px 0 0">NewsNeta AI Content System</p>
     </div>
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
+   <div class="cms-tabs" aria-label="CMS sections">
+    <button class="cms-tab active" type="button">Article</button>
+    <button class="cms-tab" type="button">Video</button>
+    <button class="cms-tab" type="button">Manage</button>
+    <button class="cms-tab" type="button">Analytics</button>
+   </div>
    <div class="login-content">
     <div class="login-panel">
+     <div class="login-kicker">
+      <strong>Login to continue</strong>
+      <small>Select the matching newsroom role before opening the upload desk.</small>
+     </div>
      <form id="loginForm">
       <label>
        Email
@@ -2025,31 +2052,45 @@ function dashboardConfig(role){
 
 function cmsWorkflowForm(role){
  const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option>${d}</option>`).join("");
+ const aiTools = `<div class="cms-ai-box">
+  <div class="cms-ai-title">AI Writing Assistant <span>CLAUDE AI</span></div>
+  <div class="cms-ai-actions">
+   <button type="button">Generate Headlines</button>
+   <button type="button">Write Article</button>
+   <button type="button">Fact Check</button>
+   <button type="button">Translate</button>
+  </div>
+ </div>`;
  const compliance = `
   <div class="compliance-checks">
    <label><input type="checkbox" checked> Source/contact note added</label>
    <label><input type="checkbox" checked> Defamation and privacy risk checked</label>
    <label><input type="checkbox" checked> Image/video rights and caption checked</label>
    <label><input type="checkbox" checked> Correction/grievance path available</label>
-  </div>`;
+ </div>`;
  if(role === "reporter"){
   return `<form class="cms-form" id="storyUploadForm">
-   <strong>Upload District News</strong>
+   <strong>Upload News Article</strong>
+   ${aiTools}
+   <label>Telugu Headline *<textarea placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">Hyderabad civic update: field report</textarea></label>
+   <label>English Headline<input placeholder="English headline (optional)"></label>
    <div class="cms-form-grid">
-    <label>District<select>${districtOptions}</select></label>
     <label>Category<select>${categories.map(([,label])=>`<option>${label}</option>`).join("")}</select></label>
+    <label>State<select><option>Telangana</option><option>Andhra Pradesh</option><option>National</option><option>International</option></select></label>
    </div>
-   <label>Headline<input value="Hyderabad civic update: field report"></label>
-   <label>Story copy<textarea>Reporter field notes, official response, local impact, and next update details.</textarea></label>
-   <label>Image / video URL<input placeholder="https://..."></label>
+   <label>District *<select>${districtOptions}</select></label>
+   <label>Summary *<textarea placeholder="2-3 వాక్యాల సారాంశం...">Reporter field notes, official response, local impact, and next update details.</textarea></label>
+   <label>Full Article<textarea class="article-body" placeholder="పూర్తి వార్త వివరాలు..."></textarea></label>
+   <label>Image / Video URL<input placeholder="https://..."></label>
    ${compliance}
-   <button class="pill-btn admin-login-btn" type="submit">Submit for review</button>
+   <button class="pill-btn admin-login-btn" type="submit">Submit for Review</button>
    <div class="workflow-note" id="cmsWorkflowNote">Draft ready for reporter submission.</div>
   </form>`;
  }
  if(role === "reviewer"){
   return `<form class="cms-form" id="storyUploadForm">
    <strong>Review and Approve News</strong>
+   ${aiTools}
    <label>Review queue<select><option>AP investment story</option><option>Viral video claim</option><option>Telangana district update</option></select></label>
    <label>Reviewer notes<textarea>Fact check complete. Headline tightened. Trust score updated.</textarea></label>
    <div class="cms-form-grid">
@@ -2063,6 +2104,7 @@ function cmsWorkflowForm(role){
  }
  return `<form class="cms-form" id="storyUploadForm">
   <strong>Publish News</strong>
+  ${aiTools}
   <label>Publish queue<select><option>Approved Telangana district story</option><option>Approved AP business story</option><option>Breaking weather alert</option></select></label>
   <div class="cms-form-grid">
    <label>Homepage slot<select><option>Top carousel</option><option>Latest live</option><option>District lead</option></select></label>

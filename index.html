@@ -548,25 +548,33 @@ button{cursor:pointer}
 }
 .modal-backdrop.open{display:grid}
 .login-modal{
- width:min(1040px,100%);
+ width:min(1180px,100%);
+ max-height:92vh;
  border:1px solid var(--line);
  border-radius:var(--radius);
  background:var(--surface);
  box-shadow:var(--shadow);
- overflow:hidden;
+ overflow:auto;
 }
-.login-content{display:grid;grid-template-columns:minmax(300px,360px) 1fr;min-height:520px}
-.login-panel{border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(215,25,32,.06),rgba(14,165,168,.06))}
-.role-dashboard{padding:16px;background:rgba(127,139,160,.08);overflow:auto}
+.login-content{display:grid;grid-template-columns:300px 1fr;min-height:560px;background:#f4f6f8}
+.login-panel{border-right:1px solid var(--line);background:#fff}
+.role-dashboard{padding:0;background:#f4f6f8;overflow:auto}
 .role-dashboard[hidden]{display:none}
-.dashboard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
+.cms-shell{display:grid;grid-template-columns:230px 1fr;min-height:560px}
+.cms-sidebar{background:#202733;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
+.cms-sidebar strong{display:block;font-size:16px;margin-bottom:4px}
+.cms-sidebar small{display:block;color:#b8c2d2;font-weight:800;margin-bottom:10px}
+.cms-menu-btn{border:0;border-radius:6px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font-weight:900}
+.cms-menu-btn.active{background:var(--brand)}
+.cms-workspace{padding:16px;display:grid;gap:12px}
+.dashboard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px}
 .dashboard-head h3{margin:0;font-size:20px}
 .dashboard-head p{margin:5px 0 0;color:var(--muted);font-size:13px}
 .dashboard-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 .metric-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px}
 .metric-card span{display:block;color:var(--muted);font:800 12px/1 Inter,sans-serif}
 .metric-card b{font:900 24px/1.1 Inter,sans-serif;color:var(--brand)}
-.dashboard-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.dashboard-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:0}
 .dashboard-action{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px;text-align:left;color:var(--ink)}
 .dashboard-action strong{display:block;margin-bottom:5px}
 .dashboard-action small{color:var(--muted);font-weight:800}
@@ -576,10 +584,11 @@ button{cursor:pointer}
 .workflow-stage strong{display:block;font-size:14px}
 .workflow-stage small{display:block;color:var(--muted);font-weight:800;line-height:1.35;margin-top:4px}
 .workflow-stage.active{border-color:var(--brand);box-shadow:0 10px 28px rgba(215,25,32,.12)}
-.queue-list{display:grid;gap:8px}
-.queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line)}
+.queue-list{display:grid;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff}
+.queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border-radius:0;background:var(--surface);border:0;border-bottom:1px solid var(--line)}
+.queue-item:last-child{border-bottom:0}
 .queue-item small{color:var(--muted);font-weight:800}
-.cms-form{display:grid;gap:10px;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.cms-form{display:grid;gap:10px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:14px}
 .cms-form label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:800}
 .cms-form input,.cms-form select,.cms-form textarea{
  width:100%;
@@ -780,6 +789,9 @@ button{cursor:pointer}
  .login-content{grid-template-columns:1fr;max-height:86vh;overflow:auto}
  .login-panel{border-right:0}
  .role-dashboard{border-top:1px solid var(--line)}
+ .cms-shell{grid-template-columns:1fr}
+ .cms-sidebar{grid-template-columns:1fr 1fr;align-items:start}
+ .cms-sidebar strong,.cms-sidebar small{grid-column:1/-1}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
  .workflow-lane{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
@@ -2082,6 +2094,13 @@ function openRoleDashboard(role, user = currentCmsUser){
  const data = dashboardConfig(role);
  dashboard.hidden = false;
  content.innerHTML = `
+  <div class="cms-shell">
+   <aside class="cms-sidebar">
+    <strong>NewsNeta CMS</strong>
+    <small>${user ? `${user.name} • ${user.location.city}` : "Newsroom"} workspace</small>
+    ${data.actions.map(([title],index)=>`<button class="cms-menu-btn ${index === 0 ? "active" : ""}" type="button">${title}</button>`).join("")}
+   </aside>
+   <div class="cms-workspace">
   <div class="dashboard-head">
    <div><h3>${data.title}</h3><p>${user ? `${user.name} • ${user.location.city} desk • ` : ""}${data.subtitle}</p></div>
    <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
@@ -2097,6 +2116,8 @@ function openRoleDashboard(role, user = currentCmsUser){
    ${data.queue.map(([status,title])=>`<div class="queue-item"><span>${title}<br><small>${status}</small></span><b>Open</b></div>`).join("")}
   </div>
   ${cmsWorkflowForm(role)}
+   </div>
+  </div>
  `;
  document.getElementById("dashboardLogout").addEventListener("click",()=>{
   dashboard.hidden = true;
@@ -2104,9 +2125,10 @@ function openRoleDashboard(role, user = currentCmsUser){
   sessionStorage.removeItem("newsneta-cms-user");
   renderWeather();
  });
- content.querySelectorAll(".dashboard-action").forEach(button=>{
+ content.querySelectorAll(".dashboard-action,.cms-menu-btn").forEach(button=>{
   button.addEventListener("click",()=>{
-   const title = button.querySelector("strong")?.textContent || "Action";
+   content.querySelectorAll(".cms-menu-btn").forEach(item=>item.classList.toggle("active", item === button));
+   const title = button.querySelector("strong")?.textContent || button.textContent.trim() || "Action";
    const note = document.getElementById("cmsWorkflowNote");
    if(note) note.textContent = `${title} workspace is ready. Complete the form below to continue the publishing workflow.`;
    button.scrollIntoView({behavior:"smooth", block:"nearest"});

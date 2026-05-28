@@ -566,6 +566,12 @@ button{cursor:pointer}
 .dashboard-action{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px;text-align:left;color:var(--ink)}
 .dashboard-action strong{display:block;margin-bottom:5px}
 .dashboard-action small{color:var(--muted);font-weight:800}
+.workflow-lane{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 12px}
+.workflow-stage{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px;min-height:98px}
+.workflow-stage span{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:var(--brand);color:#fff;font:900 13px/1 Inter,sans-serif;margin-bottom:8px}
+.workflow-stage strong{display:block;font-size:14px}
+.workflow-stage small{display:block;color:var(--muted);font-weight:800;line-height:1.35;margin-top:4px}
+.workflow-stage.active{border-color:var(--brand);box-shadow:0 10px 28px rgba(215,25,32,.12)}
 .queue-list{display:grid;gap:8px}
 .queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line)}
 .queue-item small{color:var(--muted);font-weight:800}
@@ -619,6 +625,28 @@ button{cursor:pointer}
 .story-detail-copy h3{margin:18px 0 8px;font-size:18px;color:var(--ink)}
 .story-detail-copy ul{margin:8px 0 0;padding-left:20px}
 .story-detail-copy li{margin:7px 0}
+.top-arrow{
+ position:fixed;
+ right:18px;
+ bottom:calc(92px + env(safe-area-inset-bottom));
+ z-index:45;
+ width:46px;
+ height:46px;
+ border-radius:999px;
+ border:1px solid var(--line);
+ background:var(--ink);
+ color:var(--bg);
+ box-shadow:var(--shadow);
+ display:grid;
+ place-items:center;
+ font-size:22px;
+ font-weight:900;
+ opacity:0;
+ pointer-events:none;
+ transform:translateY(10px);
+ transition:.2s ease;
+}
+.top-arrow.show{opacity:1;pointer-events:auto;transform:translateY(0)}
 .story-analysis-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-top:14px}
 .newsline{
  display:grid;
@@ -743,6 +771,7 @@ button{cursor:pointer}
  .login-panel{border-right:0}
  .role-dashboard{border-top:1px solid var(--line)}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
+ .workflow-lane{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
  .reel{min-height:70svh}
@@ -759,6 +788,7 @@ button{cursor:pointer}
  .brand{max-width:calc(100vw - 108px)}
  .brand-logo{width:min(61vw,220px);max-height:58px}
  .header-actions .admin-login-btn{padding:0 10px;font-size:12px}
+ .header-actions .admin-login-btn .label{display:inline}
  .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
  .story-grid{gap:12px}
  .card-body h3{font-size:16px}
@@ -791,7 +821,7 @@ button{cursor:pointer}
     <span class="spark-icon">Smart</span>
    </label>
    <div class="header-actions">
-    <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button"><span class="label">Admin Login</span></button>
+    <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open CMS login"><span class="label">CMS Login</span></button>
     <button class="pill-btn" id="liveBtn" type="button"><span class="live-dot"></span><span class="label">LIVE</span></button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
    </div>
@@ -1029,6 +1059,7 @@ button{cursor:pointer}
   </div>
  </div>
  <button class="floating-ai" id="aiButton" type="button">News Assistant</button>
+ <button class="top-arrow" id="topArrow" type="button" aria-label="Back to top">↑</button>
 
  <div class="notify" id="notify">
   <strong>బ్రేకింగ్ న్యూస్ అలర్ట్స్ ఆన్ చేయాలా?</strong>
@@ -1092,7 +1123,7 @@ button{cursor:pointer}
  <div class="modal-backdrop" id="storyBackdrop" role="dialog" aria-modal="true" aria-labelledby="storyModalTitle">
   <article class="story-modal">
    <button class="icon-btn" id="closeStory" type="button" aria-label="Close story" style="position:absolute;right:24px;top:24px;z-index:2;background:rgba(255,255,255,.92)">×</button>
-   <img id="storyModalImage" src="assets/newsneta-logo.jpg" alt="">
+   <img id="storyModalImage" src="assets/newsneta-logo.jpg" alt="" onerror="imageFallback(event)">
    <div class="story-modal-body">
     <span class="tag" id="storyModalCategory">News</span>
     <h2 id="storyModalTitle">Story title</h2>
@@ -1250,8 +1281,8 @@ const imageLibrary = {
   "https://images.unsplash.com/photo-1541872705-1f73c6400ec9?auto=format&fit=crop&w=900&q=75"
  ],
  telangana:[
-  "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75",
-  "https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=900&q=75"
+ "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=900&q=75"
  ],
  ap:[
   "https://images.unsplash.com/photo-1598091383021-15ddea10925d?auto=format&fit=crop&w=900&q=75",
@@ -1339,6 +1370,13 @@ function chooseRelevantImage(story,index=0){
  return options[seed % options.length];
 }
 
+function imageFallback(event){
+ const img = event.target;
+ img.onerror = null;
+ img.src = "assets/newsneta-logo.jpg";
+ img.alt = "NewsNeta";
+}
+
 function normalizeItems(items){
  return items.map((item,index)=>({
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
@@ -1369,7 +1407,7 @@ function storyCard(story){
  return `<article class="news-card">
   <a href="#" data-story-id="${escapeAttr(storyId)}">
    <div class="thumb">
-    <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}">
+    <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}" onerror="imageFallback(event)">
     <div class="badge-row"><span class="badge">${story.category}</span><span class="badge">NewsNeta</span></div>
    </div>
   </a>
@@ -1386,7 +1424,7 @@ function renderReel(story){
  const storyId = story.id || story.link || story.title;
  return `<article class="reel" data-story-id="${escapeAttr(storyId)}">
   <div class="reel-progress"><span></span></div>
-  <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}">
+  <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}" onerror="imageFallback(event)">
   <div class="reel-content">
    <span class="tag">${icon(story.category)} ${story.category}</span>
    <h3>${story.title}</h3>
@@ -1445,7 +1483,16 @@ async function renderWeather(){
  if(refreshButton){ refreshButton.disabled = true; refreshButton.textContent = "Updating..."; }
  weatherGrid.innerHTML = activeWeatherLocations.map(item=>`<div class="weather-card"><span>${item.city}</span><b>--°C</b><strong>Loading forecast</strong><small>${currentCmsUser ? "Login location" : "Public home edition"}</small></div>`).join("");
  let forecasts = [];
+ const fallbackByCity = {
+  Hyderabad:{city:"Hyderabad", temp:32, condition:"Partly cloudy", humidity:52, wind:12, rain:18, high:35, low:26},
+  Vijayawada:{city:"Vijayawada", temp:34, condition:"Humid", humidity:61, wind:14, rain:22, high:37, low:27},
+  Visakhapatnam:{city:"Visakhapatnam", temp:30, condition:"Sea breeze", humidity:68, wind:18, rain:28, high:32, low:26},
+  Warangal:{city:"Warangal", temp:33, condition:"Warm", humidity:47, wind:10, rain:12, high:36, low:25}
+ };
  try{
+  if(["localhost","127.0.0.1","::1"].includes(location.hostname)){
+   throw new Error("local weather fallback");
+  }
   forecasts = await Promise.all(activeWeatherLocations.map(async location=>{
    const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FKolkata&forecast_days=1`;
    const response = await fetch(url, {cache:"no-store"});
@@ -1464,12 +1511,6 @@ async function renderWeather(){
   }));
   if(updated) updated.textContent = `${currentCmsUser ? `${currentCmsUser.name} login weather` : "Home edition weather"} updated ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
  }catch(error){
-  const fallbackByCity = {
-   Hyderabad:{city:"Hyderabad", temp:32, condition:"Partly cloudy", humidity:52, wind:12, rain:18, high:35, low:26},
-   Vijayawada:{city:"Vijayawada", temp:34, condition:"Humid", humidity:61, wind:14, rain:22, high:37, low:27},
-   Visakhapatnam:{city:"Visakhapatnam", temp:30, condition:"Sea breeze", humidity:68, wind:18, rain:28, high:32, low:26},
-   Warangal:{city:"Warangal", temp:33, condition:"Warm", humidity:47, wind:10, rain:12, high:36, low:25}
-  };
   forecasts = activeWeatherLocations.map(location=>fallbackByCity[location.city] || {...fallbackByCity.Hyderabad, city:location.city});
   if(updated) updated.textContent = `Forecast fallback shown ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
  }finally{
@@ -1496,9 +1537,12 @@ function render(){
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");
  document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,9).map(storyCard).join("");
- document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${s.id || s.link || s.title}"><img loading="lazy" src="${s.image}" alt=""><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
+ document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><img loading="lazy" src="${escapeAttr(s.image)}" alt="" onerror="imageFallback(event)"><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
  const counts = categories.map(([,label],i)=>({label,count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
- document.getElementById("categoryGrid").innerHTML = counts.map(c=>`<a class="category-tile" href="#latestGrid"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">stories today</small></a>`).join("");
+ document.getElementById("categoryGrid").innerHTML = counts.map(c=>{
+  const categoryId = categories.find(([,label])=>label === c.label)?.[0] || "telangana";
+  return `<a class="category-tile" href="#latestGrid" data-category-tile="${categoryId}"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">stories today</small></a>`;
+ }).join("");
  animateCounters();
  updateRefreshStatus();
 }
@@ -1506,6 +1550,7 @@ function render(){
 function renderHeroSlide(){
  const heroStory = heroStories[heroIndex] || fallbackStories[0];
  document.getElementById("hero").style.setProperty("--hero-image", `url("${heroStory.image}")`);
+ document.getElementById("hero").dataset.storyId = heroStory.id || heroStory.link || heroStory.title;
  document.getElementById("heroTitle").textContent = heroStory.title;
  document.getElementById("heroSummary").textContent = makeSummary(heroStory.title);
  document.getElementById("heroSource").textContent = `${heroStory.category || "Top Story"} • ${Intl.NumberFormat("en-IN").format(heroStory.views || 0)} reads`;
@@ -1709,10 +1754,21 @@ document.addEventListener("click", event=>{
  }
  const speak = event.target.closest("[data-speak]");
  if(speak){ event.preventDefault(); speakTelugu(speak.dataset.speak); }
+ const categoryTile = event.target.closest("[data-category-tile]");
+ if(categoryTile){
+  event.preventDefault();
+  activeDistrictFilter = null;
+  document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("active", a.dataset.cat === categoryTile.dataset.categoryTile));
+  loadNews(categoryTile.dataset.categoryTile);
+  document.getElementById("latestGrid").scrollIntoView({behavior:"smooth", block:"start"});
+  return;
+ }
  const storyLink = event.target.closest("[data-story-id]");
  if(storyLink){
+  if(event.target.closest(".hero-arrow,[data-hero-index],.hero-actions")) return;
   event.preventDefault();
   openStoryDetail(storyLink.dataset.storyId);
+  return;
  }
  const heroDot = event.target.closest("[data-hero-index]");
  if(heroDot){
@@ -1810,7 +1866,7 @@ function openStoryDetail(id){
   <div class="dash-row"><span>News depth</span><b>Context + impact + updates</b></div>
   <div class="dash-row"><span>Reader mode</span><b>Voice, share, save, font size</b></div>
  `;
- document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}"><img src="${escapeAttr(item.image)}" alt=""><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
+ document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}"><img src="${escapeAttr(item.image)}" alt="" onerror="imageFallback(event)"><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
  document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${cleanText(document.getElementById("storyModalCopy").innerText).slice(0,900)}`);
  document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
  document.getElementById("storyShare").onclick = async ()=>{
@@ -1843,6 +1899,10 @@ document.getElementById("openEdition").addEventListener("click",async ()=>{
  await refreshAllNews();
  document.getElementById("todayEdition").scrollIntoView({behavior:"smooth", block:"start"});
 });
+document.getElementById("topArrow").addEventListener("click",()=>document.getElementById("home").scrollIntoView({behavior:"smooth", block:"start"}));
+window.addEventListener("scroll",()=>{
+ document.getElementById("topArrow").classList.toggle("show", window.scrollY > 520);
+},{passive:true});
 document.getElementById("themeBtn").addEventListener("click",()=>{
  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
  document.documentElement.dataset.theme = next;
@@ -1993,6 +2053,19 @@ function cmsWorkflowForm(role){
  </form>`;
 }
 
+function cmsWorkflowLane(role){
+ const active = {reporter:1, reviewer:2, admin:3}[role] || 1;
+ const stages = [
+  ["Draft","Reporter uploads district story, media and source notes."],
+  ["Review","Reviewer checks facts, rights, headline and trust score."],
+  ["Approve","Approved story moves to admin publish queue."],
+  ["Publish","Admin publishes to homepage, ticker, edition and alerts."]
+ ];
+ return `<div class="workflow-lane" aria-label="News publishing workflow">
+  ${stages.map(([title,desc],index)=>`<div class="workflow-stage ${index + 1 <= active ? "active" : ""}"><span>${index + 1}</span><strong>${title}</strong><small>${desc}</small></div>`).join("")}
+ </div>`;
+}
+
 function openRoleDashboard(role, user = currentCmsUser){
  const dashboard = document.getElementById("roleDashboard");
  const content = document.getElementById("roleDashboardContent");
@@ -2009,6 +2082,7 @@ function openRoleDashboard(role, user = currentCmsUser){
   <div class="dashboard-actions">
    ${data.actions.map(([title,desc])=>`<button class="dashboard-action" type="button"><strong>${title}</strong><small>${desc}</small></button>`).join("")}
   </div>
+  ${cmsWorkflowLane(role)}
   <div class="queue-list">
    ${data.queue.map(([status,title])=>`<div class="queue-item"><span>${title}<br><small>${status}</small></span><b>Open</b></div>`).join("")}
   </div>
@@ -2019,6 +2093,14 @@ function openRoleDashboard(role, user = currentCmsUser){
   currentCmsUser = null;
   sessionStorage.removeItem("newsneta-cms-user");
   renderWeather();
+ });
+ content.querySelectorAll(".dashboard-action").forEach(button=>{
+  button.addEventListener("click",()=>{
+   const title = button.querySelector("strong")?.textContent || "Action";
+   const note = document.getElementById("cmsWorkflowNote");
+   if(note) note.textContent = `${title} workspace is ready. Complete the form below to continue the publishing workflow.`;
+   button.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
  });
  document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
   event.preventDefault();

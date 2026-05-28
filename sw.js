@@ -1,4 +1,4 @@
-const CACHE_NAME = "newsneta-pwa-v22";
+const CACHE_NAME = "newsneta-pwa-v23";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -26,7 +26,11 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
 
   if (url.origin !== self.location.origin) {
-    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    event.respondWith(
+      fetch(request)
+        .catch(() => caches.match(request))
+        .then(response => response || new Response("", { status: 204 }))
+    );
     return;
   }
 
@@ -47,11 +51,15 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       fetch(request, { cache: "no-store" })
         .catch(() => caches.match(request))
+        .then(response => response || new Response(JSON.stringify({ status: "offline", items: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }))
     );
     return;
   }
 
   event.respondWith(
-    caches.match(request).then(cached => cached || fetch(request).catch(() => caches.match("/index.html")))
+    caches.match(request).then(cached => cached || fetch(request).catch(() => caches.match("/index.html"))).then(response => response || new Response("", { status: 204 }))
   );
 });

@@ -556,6 +556,12 @@ button{cursor:pointer}
  box-shadow:var(--shadow);
  overflow:auto;
 }
+.login-modal:not(.authenticated){width:min(520px,100%)}
+.login-modal:not(.authenticated) .cms-tabs{display:none}
+.login-modal:not(.authenticated) .login-content{display:block;min-height:auto;background:#fff}
+.login-modal:not(.authenticated) .login-panel{border-right:0}
+.login-modal.authenticated .login-panel{display:none}
+.login-modal.authenticated .login-content{display:block;background:#f4f6f8}
 .login-content{display:grid;grid-template-columns:320px 1fr;min-height:560px;background:#fff}
 .login-panel{border-right:1px solid var(--line);background:#fff}
 .role-dashboard{padding:0;background:#f4f6f8;overflow:auto}
@@ -567,6 +573,14 @@ button{cursor:pointer}
 .cms-menu-btn{border:0;border-radius:6px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font-weight:900}
 .cms-menu-btn.active{background:var(--brand)}
 .cms-workspace{padding:16px;display:grid;gap:12px}
+.cms-screen{display:grid;gap:12px}
+.cms-screen-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+.cms-screen-head strong{font-size:18px}
+.cms-screen-head small{display:block;color:var(--muted);font-weight:800;margin-top:2px}
+.cms-feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cms-feature-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:12px}
+.cms-feature-card strong{display:block;margin-bottom:5px}
+.cms-feature-card small{color:var(--muted);font-weight:800}
 .dashboard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px}
 .dashboard-head h3{margin:0;font-size:20px}
 .dashboard-head p{margin:5px 0 0;color:var(--muted);font-size:13px}
@@ -810,6 +824,7 @@ button{cursor:pointer}
  .cms-sidebar{grid-template-columns:1fr 1fr;align-items:start}
  .cms-sidebar strong,.cms-sidebar small{grid-column:1/-1}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
+ .cms-feature-grid{grid-template-columns:1fr}
  .workflow-lane{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
@@ -1119,10 +1134,10 @@ button{cursor:pointer}
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
    <div class="cms-tabs" aria-label="CMS sections">
-    <button class="cms-tab active" type="button">Article</button>
-    <button class="cms-tab" type="button">Video</button>
-    <button class="cms-tab" type="button">Manage</button>
-    <button class="cms-tab" type="button">Analytics</button>
+    <button class="cms-tab active" type="button" data-cms-screen="article">Article</button>
+    <button class="cms-tab" type="button" data-cms-screen="video">Video</button>
+    <button class="cms-tab" type="button" data-cms-screen="manage">Manage</button>
+    <button class="cms-tab" type="button" data-cms-screen="analytics">Analytics</button>
    </div>
    <div class="login-content">
     <div class="login-panel">
@@ -1987,11 +2002,18 @@ document.getElementById("aiForm").addEventListener("submit",event=>{
  input.value = "";
  log.scrollTop = log.scrollHeight;
 });
-document.getElementById("adminLoginBtn").addEventListener("click",()=>document.getElementById("loginBackdrop").classList.add("open"));
+document.getElementById("adminLoginBtn").addEventListener("click",()=>{
+ if(!currentCmsUser){
+  document.querySelector(".login-modal")?.classList.remove("authenticated");
+  document.getElementById("loginTitle").textContent = "Upload News";
+ }
+ document.getElementById("loginBackdrop").classList.add("open");
+});
 document.getElementById("closeLogin").addEventListener("click",()=>document.getElementById("loginBackdrop").classList.remove("open"));
 document.getElementById("loginBackdrop").addEventListener("click",event=>{
  if(event.target.id === "loginBackdrop") document.getElementById("loginBackdrop").classList.remove("open");
 });
+document.querySelectorAll(".cms-tab").forEach(tab=>tab.addEventListener("click",()=>switchCmsScreen(tab.dataset.cmsScreen)));
 document.getElementById("roleSelect").addEventListener("change",event=>{
  const role = event.target.value;
  const permissions = {
@@ -2130,6 +2152,91 @@ function cmsWorkflowLane(role){
  </div>`;
 }
 
+function cmsVideoScreen(role){
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Video Upload</strong><small>Shorts, live clips, thumbnails and publishing controls.</small></div><span class="chip">Video</span></div>
+  <form class="cms-form" id="storyUploadForm">
+   <strong>Upload Video News</strong>
+   <div class="cms-ai-box">
+    <div class="cms-ai-title">AI Video Assistant <span>CLAUDE AI</span></div>
+    <div class="cms-ai-actions"><button type="button">Generate Caption</button><button type="button">Create Script</button><button type="button">Fact Check</button></div>
+   </div>
+   <label>Video Title<input value="Breaking short news update"></label>
+   <div class="cms-form-grid">
+    <label>Category<select>${categories.map(([,label])=>`<option>${label}</option>`).join("")}</select></label>
+    <label>Format<select><option>Shorts / Reels</option><option>Live Clip</option><option>Explainer</option></select></label>
+   </div>
+   <label>Video URL / Upload Path<input placeholder="https://... or storage path"></label>
+   <label>Thumbnail URL<input placeholder="https://..."></label>
+   <label>Description<textarea>Short video summary, source notes, and publish instructions.</textarea></label>
+   <button class="pill-btn admin-login-btn" type="submit">${role === "reviewer" ? "Approve Video" : role === "admin" ? "Publish Video" : "Submit Video"}</button>
+   <div class="workflow-note" id="cmsWorkflowNote">Video workspace ready.</div>
+  </form>
+ </div>`;
+}
+
+function cmsManageScreen(role){
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Manage Content</strong><small>Review queues, featured slots, corrections and takedowns.</small></div><span class="chip">Manage</span></div>
+  <div class="cms-feature-grid">
+   <div class="cms-feature-card"><strong>Pending Articles</strong><small>12 stories waiting for review or publish.</small></div>
+   <div class="cms-feature-card"><strong>Breaking Ticker</strong><small>4 active ticker items across homepage and mobile.</small></div>
+   <div class="cms-feature-card"><strong>District Queue</strong><small>Telangana and AP district reports grouped by location.</small></div>
+   <div class="cms-feature-card"><strong>Corrections Desk</strong><small>Track updates, corrections, and reader grievances.</small></div>
+  </div>
+  <div class="queue-list">
+   <div class="queue-item"><span>Hyderabad civic update<br><small>Reporter draft</small></span><b>Open</b></div>
+   <div class="queue-item"><span>AP investment story<br><small>Reviewer approved</small></span><b>Publish</b></div>
+   <div class="queue-item"><span>Weather alert<br><small>Breaking ticker</small></span><b>Edit</b></div>
+  </div>
+ </div>`;
+}
+
+function cmsAnalyticsScreen(){
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Analytics</strong><small>Traffic, districts, engagement, alerts and AI quality.</small></div><span class="chip">Live</span></div>
+  <div class="dashboard-metrics">
+   <div class="metric-card"><span>Today's Reads</span><b>2.8M</b></div>
+   <div class="metric-card"><span>Push Opens</span><b>38%</b></div>
+   <div class="metric-card"><span>Trust Score</span><b>91%</b></div>
+  </div>
+  <div class="cms-feature-grid">
+   <div class="cms-feature-card"><strong>Top District</strong><small>Hyderabad leads readership, followed by Vijayawada.</small></div>
+   <div class="cms-feature-card"><strong>Top Category</strong><small>Weather, politics and cinema are trending.</small></div>
+   <div class="cms-feature-card"><strong>AI Tools</strong><small>Auto-summary, tagging, headline checks and TTS ready.</small></div>
+   <div class="cms-feature-card"><strong>Revenue Slots</strong><small>Sponsored, display and video ad placements available.</small></div>
+  </div>
+ </div>`;
+}
+
+function cmsScreenMarkup(role, screen="article"){
+ if(screen === "video") return cmsVideoScreen(role);
+ if(screen === "manage") return cmsManageScreen(role);
+ if(screen === "analytics") return cmsAnalyticsScreen();
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Article Upload</strong><small>Create, review, approve and publish Telugu news.</small></div><span class="chip">Article</span></div>
+ ${cmsWorkflowForm(role)}
+ </div>`;
+}
+
+function bindCmsScreen(role){
+ document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
+  event.preventDefault();
+  const verbs = {admin:"Published to home, ticker and today's edition.", reporter:"Submitted to reviewer queue.", reviewer:"Approved for admin publish queue."};
+  document.getElementById("cmsWorkflowNote").textContent = verbs[role] || "Workflow updated.";
+ });
+}
+
+function switchCmsScreen(screen){
+ if(!currentCmsUser) return;
+ document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === screen));
+ const host = document.getElementById("cmsScreenHost");
+ if(host){
+  host.innerHTML = cmsScreenMarkup(currentCmsUser.role, screen);
+  bindCmsScreen(currentCmsUser.role);
+ }
+}
+
 function openRoleDashboard(role, user = currentCmsUser){
  const dashboard = document.getElementById("roleDashboard");
  const content = document.getElementById("roleDashboardContent");
@@ -2154,10 +2261,7 @@ function openRoleDashboard(role, user = currentCmsUser){
    ${data.actions.map(([title,desc])=>`<button class="dashboard-action" type="button"><strong>${title}</strong><small>${desc}</small></button>`).join("")}
   </div>
   ${cmsWorkflowLane(role)}
-  <div class="queue-list">
-   ${data.queue.map(([status,title])=>`<div class="queue-item"><span>${title}<br><small>${status}</small></span><b>Open</b></div>`).join("")}
-  </div>
-  ${cmsWorkflowForm(role)}
+  <div id="cmsScreenHost">${cmsScreenMarkup(role, "article")}</div>
    </div>
   </div>
  `;
@@ -2165,6 +2269,9 @@ function openRoleDashboard(role, user = currentCmsUser){
   dashboard.hidden = true;
   currentCmsUser = null;
   sessionStorage.removeItem("newsneta-cms-user");
+  document.querySelector(".login-modal")?.classList.remove("authenticated");
+  document.getElementById("loginTitle").textContent = "Upload News";
+  document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
   renderWeather();
  });
  content.querySelectorAll(".dashboard-action,.cms-menu-btn").forEach(button=>{
@@ -2176,11 +2283,7 @@ function openRoleDashboard(role, user = currentCmsUser){
    button.scrollIntoView({behavior:"smooth", block:"nearest"});
   });
  });
- document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
-  event.preventDefault();
-  const verbs = {admin:"Published to home, ticker and today's edition.", reporter:"Submitted to reviewer queue.", reviewer:"Approved for admin publish queue."};
-  document.getElementById("cmsWorkflowNote").textContent = verbs[role] || "Workflow updated.";
- });
+ bindCmsScreen(role);
 }
 
 document.getElementById("loginForm").addEventListener("submit",event=>{
@@ -2203,6 +2306,9 @@ document.getElementById("loginForm").addEventListener("submit",event=>{
   errorBox.textContent = "";
   errorBox.classList.remove("show");
  }
+ document.querySelector(".login-modal")?.classList.add("authenticated");
+ document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
+ document.getElementById("loginTitle").textContent = "Newsroom Dashboard";
  openRoleDashboard(role, user);
  renderWeather();
 });

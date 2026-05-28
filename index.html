@@ -133,15 +133,16 @@ button{cursor:pointer}
  max-width:1240px;
  margin:0 auto;
  display:grid;
- grid-template-columns:minmax(0,1fr) minmax(170px,210px) minmax(190px,230px) auto;
- gap:8px;
+ grid-template-columns:1fr;
+ gap:10px;
  align-items:center;
  padding:0 16px 12px;
 }
 .nav{
  display:flex;
+ flex-wrap:wrap;
  gap:8px;
- overflow:auto;
+ overflow:visible;
  scrollbar-width:none;
  min-width:0;
 }
@@ -159,7 +160,9 @@ button{cursor:pointer}
 }
 .nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .nav-districts{
- display:contents;
+ display:grid;
+ grid-template-columns:minmax(180px,1fr) minmax(210px,1fr) auto;
+ gap:8px;
 }
 .menu-select{
  min-height:42px;
@@ -255,10 +258,10 @@ button{cursor:pointer}
 }
 .edition-card strong{display:block;font-size:17px;margin-bottom:6px}
 .edition-card p{margin:0;color:var(--muted);font-size:14px}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.8fr);gap:16px;align-items:stretch}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.85fr);gap:16px;align-items:stretch}
 .hero{
- min-height:360px;
- aspect-ratio:16/8.2;
+ min-height:320px;
+ aspect-ratio:16/7.6;
  position:relative;
  overflow:hidden;
  border-radius:var(--radius);
@@ -278,10 +281,10 @@ button{cursor:pointer}
  z-index:-1;
  transition:opacity .35s ease;
 }
-.hero-content{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:28px;max-width:720px;color:#fff}
+.hero-content{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:24px;max-width:680px;color:#fff}
 .kicker{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.08em}
 .tag{display:inline-flex;align-items:center;gap:6px;width:max-content;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:7px 10px;backdrop-filter:blur(12px);font-weight:800;font-size:12px}
-.hero h2{font-size:clamp(26px,3.9vw,48px);line-height:1.1;margin:14px 0 10px;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hero h2{font-size:clamp(24px,3.4vw,42px);line-height:1.1;margin:14px 0 10px;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hero p{font-size:16px;max-width:58ch;color:#e7eaf0;margin:0 0 16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap}
 .hero-carousel-controls{
@@ -541,15 +544,16 @@ button{cursor:pointer}
 }
 .modal-backdrop.open{display:grid}
 .login-modal{
- width:min(920px,100%);
+ width:min(1040px,100%);
  border:1px solid var(--line);
  border-radius:var(--radius);
  background:var(--surface);
  box-shadow:var(--shadow);
  overflow:hidden;
 }
-.login-content{display:grid;grid-template-columns:minmax(280px,380px) 1fr}
-.role-dashboard{border-left:1px solid var(--line);padding:16px;background:rgba(127,139,160,.08)}
+.login-content{display:grid;grid-template-columns:minmax(300px,360px) 1fr;min-height:520px}
+.login-panel{border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(215,25,32,.06),rgba(14,165,168,.06))}
+.role-dashboard{padding:16px;background:rgba(127,139,160,.08);overflow:auto}
 .role-dashboard[hidden]{display:none}
 .dashboard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
 .dashboard-head h3{margin:0;font-size:20px}
@@ -653,11 +657,19 @@ button{cursor:pointer}
  padding:0 14px;
  outline:none;
 }
+.login-error{display:none;margin:0 16px 14px;padding:10px 12px;border-radius:10px;background:rgba(215,25,32,.12);color:var(--brand);font-weight:900;font-size:13px}
+.login-error.show{display:block}
 .cms-preview{border-top:1px solid var(--line);padding:14px 16px;background:rgba(127,139,160,.1)}
 .cms-preview strong{display:block;margin-bottom:8px}
 .cms-preview div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;color:var(--muted);font-size:13px}
+.cms-preview .account-row{grid-template-columns:1fr;gap:3px;border-top:1px solid var(--line)}
+.cms-preview .account-row:first-of-type{border-top:0}
+.cms-preview .account-row b{color:var(--ink)}
+.cms-preview .account-row small{font-weight:800;color:var(--muted)}
 .publish-board{display:grid;gap:10px;margin-top:12px}
+.cms-preview .publish-board{grid-template-columns:1fr}
 .publish-step{border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:var(--surface)}
+.cms-preview .publish-step{display:block}
 .publish-step b{display:block;color:var(--ink);margin-bottom:4px}
 .publish-step small{color:var(--muted);font-weight:800}
 .bottom-nav{
@@ -689,8 +701,7 @@ button{cursor:pointer}
  .newsline{grid-template-columns:repeat(2,1fr)}
  .layout-doc,.role-grid{grid-template-columns:1fr 1fr}
  .ticker{top:124px}
- .nav-menu-row{grid-template-columns:1fr 1fr auto;gap:8px}
- .nav{grid-column:1/-1}
+ .nav-districts{grid-template-columns:1fr 1fr auto}
  .menu-refresh{grid-column:auto}
 }
 @media (max-width:640px){
@@ -707,7 +718,8 @@ button{cursor:pointer}
  .pill-btn .label{display:none}
  .search-wrap input{height:42px;font-size:16px}
  .nav-menu-row{grid-template-columns:1fr;padding:0 12px 10px;gap:8px}
- .nav{gap:7px}
+ .nav{gap:7px;flex-wrap:nowrap;overflow:auto}
+ .nav-districts{grid-template-columns:1fr}
  .nav a,.chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
  .menu-refresh{min-width:100%}
@@ -727,8 +739,9 @@ button{cursor:pointer}
  .story-grid,.category-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
  .story-analysis-grid,.newsline{grid-template-columns:1fr}
  .weather-grid{grid-template-columns:1fr}
- .login-content{grid-template-columns:1fr}
- .role-dashboard{border-left:0;border-top:1px solid var(--line)}
+ .login-content{grid-template-columns:1fr;max-height:86vh;overflow:auto}
+ .login-panel{border-right:0}
+ .role-dashboard{border-top:1px solid var(--line)}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
  .section{padding:14px;margin-top:14px}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
@@ -745,7 +758,7 @@ button{cursor:pointer}
 @media (max-width:430px){
  .brand{max-width:calc(100vw - 108px)}
  .brand-logo{width:min(61vw,220px);max-height:58px}
- .admin-login-btn{display:none}
+ .header-actions .admin-login-btn{padding:0 10px;font-size:12px}
  .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
  .story-grid{gap:12px}
  .card-body h3{font-size:16px}
@@ -1036,7 +1049,7 @@ button{cursor:pointer}
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
    <div class="login-content">
-    <div>
+    <div class="login-panel">
      <form id="loginForm">
       <label>
        Email
@@ -1056,11 +1069,12 @@ button{cursor:pointer}
       </label>
       <button class="pill-btn admin-login-btn" type="submit">Open dashboard</button>
      </form>
+     <div class="login-error" id="loginError" role="alert"></div>
      <div class="cms-preview" id="cmsPreview">
-      <strong>Admin permissions preview</strong>
-      <div><span>Publish / unpublish news</span><b>Allowed</b></div>
-      <div><span>Manage reporters, reviewers, districts</span><b>Allowed</b></div>
-      <div><span>Ads, analytics, sources, push alerts</span><b>Allowed</b></div>
+      <strong>Demo newsroom accounts</strong>
+      <div class="account-row"><b>admin@newsneta.in</b><small>Admin role, Hyderabad desk</small></div>
+      <div class="account-row"><b>reporter@newsneta.in</b><small>Reporter role, Vijayawada desk</small></div>
+      <div class="account-row"><b>reviewer@newsneta.in</b><small>Reviewer role, Visakhapatnam desk</small></div>
       <div class="publish-board">
        <div class="publish-step"><b>Reporter draft</b><small>District, category, media, tags, summary</small></div>
        <div class="publish-step"><b>Reviewer approval</b><small>Fact check, rewrite headline, SEO, trust score</small></div>
@@ -1138,6 +1152,29 @@ const stateLabels = {
  telangana: "Telangana Districts",
  ap: "Andhra Pradesh Districts"
 };
+
+const cmsUsers = {
+ "admin@newsneta.in": {
+  password:"newsneta-demo",
+  role:"admin",
+  name:"Admin Desk",
+  location:{city:"Hyderabad", lat:17.385, lon:78.4867}
+ },
+ "reporter@newsneta.in": {
+  password:"newsneta-demo",
+  role:"reporter",
+  name:"District Reporter",
+  location:{city:"Vijayawada", lat:16.5062, lon:80.648}
+ },
+ "reviewer@newsneta.in": {
+  password:"newsneta-demo",
+  role:"reviewer",
+  name:"Review Desk",
+  location:{city:"Visakhapatnam", lat:17.6868, lon:83.2185}
+ }
+};
+
+let currentCmsUser = null;
 
 const fallbackStories = [
  {title:"తెలంగాణలో కొత్త అభివృద్ధి ప్రణాళికలపై కీలక సమీక్ష", category:"Telangana", views:98240, sentiment:"Positive", trust:94, image:"https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75"},
@@ -1404,11 +1441,12 @@ async function renderWeather(){
  if(!weatherGrid) return;
  const updated = document.getElementById("weatherUpdated");
  const refreshButton = document.getElementById("weatherRefreshNow");
+ const activeWeatherLocations = currentCmsUser?.location ? [currentCmsUser.location] : [weatherLocations[0]];
  if(refreshButton){ refreshButton.disabled = true; refreshButton.textContent = "Updating..."; }
- weatherGrid.innerHTML = weatherLocations.map(item=>`<div class="weather-card"><span>${item.city}</span><b>--°C</b><strong>Loading forecast</strong><small>Please wait</small></div>`).join("");
+ weatherGrid.innerHTML = activeWeatherLocations.map(item=>`<div class="weather-card"><span>${item.city}</span><b>--°C</b><strong>Loading forecast</strong><small>${currentCmsUser ? "Login location" : "Public home edition"}</small></div>`).join("");
  let forecasts = [];
  try{
-  forecasts = await Promise.all(weatherLocations.map(async location=>{
+  forecasts = await Promise.all(activeWeatherLocations.map(async location=>{
    const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FKolkata&forecast_days=1`;
    const response = await fetch(url, {cache:"no-store"});
    if(!response.ok) throw new Error("weather api failed");
@@ -1424,14 +1462,15 @@ async function renderWeather(){
     low:Math.round(data.daily.temperature_2m_min?.[0] || data.current.temperature_2m)
    };
   }));
-  if(updated) updated.textContent = `Live forecast updated ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
+  if(updated) updated.textContent = `${currentCmsUser ? `${currentCmsUser.name} login weather` : "Home edition weather"} updated ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
  }catch(error){
-  forecasts = [
-   {city:"Hyderabad", temp:32, condition:"Partly cloudy", humidity:52, wind:12, rain:18, high:35, low:26},
-   {city:"Vijayawada", temp:34, condition:"Humid", humidity:61, wind:14, rain:22, high:37, low:27},
-   {city:"Visakhapatnam", temp:30, condition:"Sea breeze", humidity:68, wind:18, rain:28, high:32, low:26},
-   {city:"Warangal", temp:33, condition:"Warm", humidity:47, wind:10, rain:12, high:36, low:25}
-  ];
+  const fallbackByCity = {
+   Hyderabad:{city:"Hyderabad", temp:32, condition:"Partly cloudy", humidity:52, wind:12, rain:18, high:35, low:26},
+   Vijayawada:{city:"Vijayawada", temp:34, condition:"Humid", humidity:61, wind:14, rain:22, high:37, low:27},
+   Visakhapatnam:{city:"Visakhapatnam", temp:30, condition:"Sea breeze", humidity:68, wind:18, rain:28, high:32, low:26},
+   Warangal:{city:"Warangal", temp:33, condition:"Warm", humidity:47, wind:10, rain:12, high:36, low:25}
+  };
+  forecasts = activeWeatherLocations.map(location=>fallbackByCity[location.city] || {...fallbackByCity.Hyderabad, city:location.city});
   if(updated) updated.textContent = `Forecast fallback shown ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
  }finally{
   if(refreshButton){ refreshButton.disabled = false; refreshButton.textContent = "Refresh"; }
@@ -1954,14 +1993,14 @@ function cmsWorkflowForm(role){
  </form>`;
 }
 
-function openRoleDashboard(role){
+function openRoleDashboard(role, user = currentCmsUser){
  const dashboard = document.getElementById("roleDashboard");
  const content = document.getElementById("roleDashboardContent");
  const data = dashboardConfig(role);
  dashboard.hidden = false;
  content.innerHTML = `
   <div class="dashboard-head">
-   <div><h3>${data.title}</h3><p>${data.subtitle}</p></div>
+   <div><h3>${data.title}</h3><p>${user ? `${user.name} • ${user.location.city} desk • ` : ""}${data.subtitle}</p></div>
    <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
   </div>
   <div class="dashboard-metrics">
@@ -1977,6 +2016,9 @@ function openRoleDashboard(role){
  `;
  document.getElementById("dashboardLogout").addEventListener("click",()=>{
   dashboard.hidden = true;
+  currentCmsUser = null;
+  sessionStorage.removeItem("newsneta-cms-user");
+  renderWeather();
  });
  document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
   event.preventDefault();
@@ -1987,8 +2029,26 @@ function openRoleDashboard(role){
 
 document.getElementById("loginForm").addEventListener("submit",event=>{
  event.preventDefault();
+ const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+ const password = document.getElementById("loginPassword").value;
  const role = document.getElementById("roleSelect").value;
- openRoleDashboard(role);
+ const errorBox = document.getElementById("loginError");
+ const user = cmsUsers[email];
+ if(!user || user.password !== password || user.role !== role){
+  if(errorBox){
+   errorBox.textContent = "Login failed. Please use the correct email, password, and matching role.";
+   errorBox.classList.add("show");
+  }
+  return;
+ }
+ currentCmsUser = user;
+ sessionStorage.setItem("newsneta-cms-user", email);
+ if(errorBox){
+  errorBox.textContent = "";
+  errorBox.classList.remove("show");
+ }
+ openRoleDashboard(role, user);
+ renderWeather();
 });
 document.getElementById("summarizeBtn").addEventListener("click",()=>{
  const text = document.getElementById("summaryInput").value.trim();

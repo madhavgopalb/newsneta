@@ -1519,11 +1519,60 @@ const imageLibrary = {
  agriculture:[
   "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=75",
   "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=75"
+ ],
+ finance:[
+  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1642790106117-e829e14a795f?auto=format&fit=crop&w=900&q=75"
+ ],
+ jobs:[
+  "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=75"
+ ],
+ realestate:[
+  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=75"
+ ],
+ energy:[
+  "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=900&q=75"
+ ],
+ governance:[
+  "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=75"
+ ],
+ local:[
+  "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=900&q=75",
+  "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=900&q=75"
  ]
 };
 
+const imageRules = [
+ ["weather", /weather|rain|forecast|cyclone|storm|flood|heatwave|monsoon|imd|warning|alert|వర్ష|వాతావరణ|తుఫాను|వరద|ఎండ|హెచ్చరిక/],
+ ["sports", /cricket|ipl|sport|match|score|wicket|stadium|t20|test|క్రికెట్|మ్యాచ్|స్కోర్|క్రీడ|వికెట్/],
+ ["cinema", /cinema|movie|film|box office|actor|actress|trailer|ott|release|సినిమా|మూవీ|నటుడు|నటి|ట్రైలర్|బాక్సాఫీస్/],
+ ["technology", /tech|ai|digital|cyber|software|mobile|data|robot|టెక్|సైబర్|డిజిటల్|సాఫ్ట్‌వేర్|మొబైల్|ఏఐ/],
+ ["finance", /stock|market|sensex|nifty|bank|rupee|rbi|finance|shares|ipo|స్టాక్|నిఫ్టీ|సెన్సెక్స్|బ్యాంక్|రూపాయి|షేర్లు/],
+ ["business", /business|industry|investment|company|startup|economy|trade|factory|పెట్టుబడి|మార్కెట్|వ్యాపార|పరిశ్రమ|ఆర్థిక/],
+ ["crime", /crime|police|arrest|court|case|murder|fraud|ncb|ed|cbi|fir|నేర|పోలీస్|కోర్టు|అరెస్ట్|కేసు|హత్య|మోసం/],
+ ["education", /school|college|exam|education|student|teacher|university|results|విద్య|పరీక్ష|స్కూల్|కాలేజీ|విద్యార్థి|ఫలితాలు/],
+ ["health", /health|hospital|doctor|medical|virus|fever|vaccine|ఆరోగ్య|ఆస్పత్రి|డాక్టర్|వైద్య|జ్వరం|వ్యాక్సిన్/],
+ ["traffic", /traffic|metro|road|rail|train|bus|airport|highway|ట్రాఫిక్|రోడ్డు|మెట్రో|రైలు|బస్సు|విమానాశ్రయం/],
+ ["agriculture", /farm|crop|agri|farmer|paddy|cotton|వ్యవసాయ|రైతు|పంట|ధాన్యం|పత్తి/],
+ ["jobs", /job|career|recruitment|hiring|employee|salary|ఉద్యోగ|నియామక|జాబ్|వేతనం/],
+ ["realestate", /real estate|housing|land|property|construction|apartment|house|ఇల్లు|స్థలం|భూమి|నిర్మాణ|అపార్ట్‌మెంట్/],
+ ["energy", /power|electricity|solar|fuel|petrol|diesel|gas|current|విద్యుత్|సోలార్|పెట్రోల్|డీజిల్|గ్యాస్|కరెంట్/],
+ ["governance", /government|minister|assembly|policy|scheme|cabinet|election|vote|ప్రభుత్వ|మంత్రి|అసెంబ్లీ|పథకం|ఎన్నిక|ఓటు/],
+ ["ap", /andhra|vijayawada|visakhapatnam|guntur|tirupati|kurnool|nellore|kadapa|ఆంధ్ర|విజయవాడ|విశాఖ|గుంటూరు|తిరుపతి/],
+ ["telangana", /telangana|hyderabad|warangal|karimnagar|khammam|nizamabad|హైదరాబాద్|తెలంగాణ|వరంగల్|కరీంనగర్|ఖమ్మం/],
+ ["international", /world|global|international|usa|china|russia|europe|united nations|ప్రపంచ|అంతర్జాతీయ|అమెరికా|చైనా|రష్యా/],
+ ["viral", /viral|social|facebook|instagram|youtube|x\.com|whatsapp|వైరల్|సోషల్|వీడియో/],
+ ["politics", /politic|party|leader|mla|mp|cm|pm|రాజకీయ|పార్టీ|ఎమ్మెల్యే|ఎంపీ|సీఎం|పీఎం/]
+];
+
 function imageKeyFor(story){
- const text = `${story.title || ""} ${story.category || ""}`.toLowerCase();
+ const text = `${story.title || ""} ${story.category || ""} ${story.description || ""} ${story.contentSnippet || ""}`.toLowerCase();
+ const ruleMatch = imageRules.find(([,pattern])=>pattern.test(text));
+ if(ruleMatch) return ruleMatch[0];
  if(/crime|police|arrest|court|case|murder|fraud|ncb|ed|cbi|చోరీ|నేర|పోలీస్|కోర్టు|అరెస్ట్/.test(text)) return "crime";
  if(/school|college|exam|education|student|teacher|విద్య|పరీక్ష|స్కూల్|కాలేజ్|విద్యార్థి/.test(text)) return "education";
  if(/health|hospital|doctor|medical|virus|fever|హెల్త్|ఆరోగ్య|ఆస్పత్రి|డాక్టర్|వైద్య/.test(text)) return "health";
@@ -1543,7 +1592,22 @@ function imageKeyFor(story){
  return "national";
 }
 
+function extractSourceImage(item){
+ const candidates = [
+  item.image,
+  item.imageUrl,
+  item.thumbnail,
+  item.enclosure?.url,
+  item.enclosure?.link,
+  item.media?.content?.url,
+  item.media?.thumbnail?.url
+ ].filter(Boolean);
+ return candidates.find(url=>/^https?:\/\//i.test(url) && !/logo|avatar|icon|sprite|1x1|pixel/i.test(url));
+}
+
 function chooseRelevantImage(story,index=0){
+ const sourceImage = extractSourceImage(story);
+ if(sourceImage) return sourceImage;
  const key = imageKeyFor(story);
  const options = imageLibrary[key] || imageLibrary.national;
  const seed = Array.from(`${story.title || ""}${story.category || ""}`).reduce((sum,ch)=>sum + ch.charCodeAt(0), index);

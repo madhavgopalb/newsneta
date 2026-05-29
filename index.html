@@ -85,16 +85,18 @@ button{cursor:pointer}
  margin:0 auto;
  padding:12px 16px;
 }
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden}
 .brand-logo{
- width:300px;
- height:78px;
+ width:350px;
+ height:92px;
  border-radius:8px;
  object-fit:cover;
  object-position:center;
  background:#fff;
  padding:0;
  box-shadow:0 8px 20px rgba(15,23,42,.08);
+ transform:scale(1.22);
+ transform-origin:center;
 }
 .brand h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .brand small{display:none}
@@ -813,8 +815,8 @@ button{cursor:pointer}
  .page{padding:12px 12px calc(90px + env(safe-area-inset-bottom))}
  .topbar{position:sticky}
  .header{grid-template-columns:1fr auto;padding:8px 12px;gap:8px}
- .brand{max-width:calc(100vw - 136px)}
- .brand-logo{width:min(56vw,230px);height:auto;max-height:62px;object-fit:contain}
+ .brand{max-width:calc(100vw - 136px);height:68px}
+ .brand-logo{width:min(62vw,260px);height:68px;max-height:68px;object-fit:cover;transform:scale(1.2)}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
  .header-actions{gap:6px}
@@ -877,8 +879,8 @@ button{cursor:pointer}
  .notify{bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px}
 }
 @media (max-width:430px){
- .brand{max-width:calc(100vw - 108px)}
- .brand-logo{width:min(61vw,220px);max-height:58px}
+ .brand{max-width:calc(100vw - 108px);height:62px}
+ .brand-logo{width:min(66vw,238px);height:62px;max-height:62px}
  .header-actions .admin-login-btn{padding:0 10px;font-size:12px}
  .header-actions .admin-login-btn .label{display:inline}
  .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
@@ -887,7 +889,7 @@ button{cursor:pointer}
  .summary{font-size:13px}
 }
 @media (max-width:360px){
- .brand-logo{width:190px;max-height:52px}
+ .brand-logo{width:210px;height:56px;max-height:56px}
  .header-actions{gap:4px}
  .icon-btn,.pill-btn{min-width:38px;height:38px}
  .nav a,.chip{font-size:12px;padding:8px 10px}
@@ -2250,7 +2252,9 @@ document.getElementById("aiButton").addEventListener("click",()=>document.getEle
 document.getElementById("closeAi").addEventListener("click",()=>document.getElementById("aiPanel").classList.remove("open"));
 function assistantReply(query){
  const q = query.toLowerCase();
- const ranked = [...stories].sort((a,b)=>b.views-a.views);
+ const ranked = [...stories, ...fallbackStories, ...globalTopStories].sort((a,b)=>(b.views || 0)-(a.views || 0));
+ const compactStories = (items,emptyText)=>items.slice(0,4).map((s,i)=>`${i+1}. ${s.title} (${s.category || "News"})`).join(" ") || emptyText;
+ const topicStories = pattern => ranked.filter(s=>pattern.test(`${s.category || ""} ${s.title || ""} ${s.description || ""}`));
  if(/weather|forecast|rain|వాతావరణ|వర్ష/.test(q)){
   return document.getElementById("weatherGrid")?.innerText?.split("\n").slice(0,8).join(" • ") || "Weather is refreshing now.";
  }
@@ -2266,13 +2270,46 @@ function assistantReply(query){
  }
  return ranked.slice(0,3).map((s,i)=>`${i+1}. ${s.title}`).join(" ");
 }
+
+function assistantReplySmart(query){
+ const q = query.toLowerCase();
+ const ranked = [...stories, ...fallbackStories, ...globalTopStories].sort((a,b)=>(b.views || 0)-(a.views || 0));
+ const compactStories = (items,emptyText)=>items.slice(0,4).map((s,i)=>`${i+1}. ${s.title} (${s.category || "News"})`).join(" ") || emptyText;
+ const topicStories = pattern => ranked.filter(s=>pattern.test(`${s.category || ""} ${s.title || ""} ${s.description || ""}`));
+ if(/weather|forecast|rain|వాతావరణ|వర్ష/.test(q)){
+  return document.getElementById("weatherGrid")?.innerText?.split("\n").slice(0,8).join(" • ") || "Weather is refreshing now.";
+ }
+ if(/sport|sports|cricket|ipl|score|match|క్రికెట్|క్రీడ|మ్యాచ్|స్కోర్/.test(q)){
+  return compactStories(topicStories(/sports|sport|cricket|ipl|score|match|wicket|క్రికెట్|క్రీడ|మ్యాచ్|స్కోర్/i), "Sports news is loading. Open the Sports tab or refresh news for cricket and match updates.");
+ }
+ if(/cinema|movie|film|actor|trailer|ott|సినిమా|మూవీ|ట్రైలర్/.test(q)){
+  return compactStories(topicStories(/cinema|movie|film|actor|trailer|ott|box office|సినిమా|మూవీ|ట్రైలర్/i), "Cinema news is loading. Open the Cinema tab for movie, OTT and box-office updates.");
+ }
+ if(/business|market|stock|finance|sensex|nifty|bank|బిజినెస్|మార్కెట్|స్టాక్|నిఫ్టీ/.test(q)){
+  return compactStories(topicStories(/business|market|stock|finance|sensex|nifty|bank|investment|బిజినెస్|మార్కెట్|స్టాక్|పెట్టుబడి/i), "Business news is loading. Open the Business tab for market and investment updates.");
+ }
+ if(/tech|technology|ai|digital|cyber|టెక్|ఏఐ|డిజిటల్|సైబర్/.test(q)){
+  return compactStories(topicStories(/technology|tech|ai|digital|cyber|software|టెక్|ఏఐ|డిజిటల్|సైబర్/i), "Technology news is loading. Open the Technology tab for AI, cyber and digital updates.");
+ }
+ if(/district|telangana|andhra|hyderabad|vijayawada|జిల్లా|తెలంగాణ|ఆంధ్ర/.test(q)){
+  return compactStories(topicStories(/telangana|andhra|hyderabad|vijayawada|district|తెలంగాణ|ఆంధ్ర|హైదరాబాద్/i), "Select a district from the main menu for local news.");
+ }
+ if(/politic|election|రాజకీయ|ఎన్నిక/.test(q)){
+  return compactStories(topicStories(/politic|election|minister|రాజకీయ|ఎన్నిక/i), "Politics stories are available under the Politics tab.");
+ }
+ if(/summary|summarize|brief|సారాంశ/.test(q)){
+  const top = ranked[0] || fallbackStories[0];
+  return `${top.title} - ${makeSummary(top.title)}`;
+ }
+ return compactStories(ranked, "Ask for sports, politics, cinema, business, technology, weather, district news, or a quick summary.");
+}
 document.getElementById("aiForm").addEventListener("submit",event=>{
  event.preventDefault();
  const input = document.getElementById("aiInput");
  const query = input.value.trim();
  if(!query) return;
  const log = document.getElementById("aiChatLog");
- log.insertAdjacentHTML("beforeend", `<div class="bubble user">${escapeHtml(query)}</div><div class="bubble">${escapeHtml(assistantReply(query))}</div>`);
+ log.insertAdjacentHTML("beforeend", `<div class="bubble user">${escapeHtml(query)}</div><div class="bubble">${escapeHtml(assistantReplySmart(query))}</div>`);
  input.value = "";
  log.scrollTop = log.scrollHeight;
 });

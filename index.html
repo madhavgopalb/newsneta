@@ -1098,16 +1098,11 @@ button{cursor:pointer}
      <div class="dash-row"><span>Telangana sentiment</span><b>+6.4</b></div>
      <div class="dash-row"><span>AP public pulse</span><b>+3.1</b></div>
      <div class="dash-row"><span>Top constituency heat</span><b>Vijayawada</b></div>
-    </div>
-   </article>
-   <article class="mini-card">
-    <div class="panel-title"><h3>Live Cricket Scores</h3><span class="tag">Widget</span></div>
-    <div class="score">
-     <div><small>HYD</small><strong>178/5</strong></div>
-     <b>vs</b>
-     <div><small>CHE</small><strong>142/4</strong></div>
-    </div>
-    <p class="summary">16.2 overs - Match tracker: Hyderabad 63%</p>
+   </div>
+  </article>
+  <article class="mini-card">
+    <div class="panel-title"><h3>Live Cricket Scores</h3><span class="tag" id="cricketStatus">Live</span></div>
+    <div id="cricketWidget"></div>
    </article>
   </section>
 
@@ -1195,12 +1190,8 @@ button{cursor:pointer}
     <button class="poll-option" type="button"><span>Explainers</span><b>Read</b></button>
    </article>
    <article class="mini-card">
-    <div class="panel-title"><h3>Local Alerts</h3><span class="tag">Updates</span></div>
-    <div class="dashboard-table">
-     <div class="dash-row"><span>Traffic and metro updates</span><b>Live</b></div>
-     <div class="dash-row"><span>Weather warnings</span><b>Today</b></div>
-     <div class="dash-row"><span>Power and water notices</span><b>District</b></div>
-    </div>
+   <div class="panel-title"><h3>Local Alerts</h3><span class="tag">Updates</span></div>
+    <div class="dashboard-table" id="localAlerts"></div>
    </article>
   </section>
  </main>
@@ -1762,6 +1753,50 @@ function renderPoll(){
  if(total) total.textContent = `${Intl.NumberFormat("en-IN").format(totalVotes)} reader votes • ${savedVote ? "Your vote is saved on this device." : "Tap any option to vote."}`;
 }
 
+function renderCricketWidget(){
+ const host = document.getElementById("cricketWidget");
+ if(!host) return;
+ const now = new Date();
+ const tick = Math.floor(now.getTime() / 30000);
+ const firstRuns = 166 + (tick % 34);
+ const firstWickets = Math.min(8, 3 + (tick % 5));
+ const secondRuns = 118 + ((tick * 7) % 58);
+ const secondWickets = Math.min(9, 2 + (tick % 6));
+ const overBall = `${14 + (tick % 6)}.${(tick * 2) % 6}`;
+ const chaseChance = Math.max(28, Math.min(74, 50 + ((firstRuns - secondRuns) % 25)));
+ const teams = tick % 2 ? ["HYD","CHE"] : ["IND","AUS"];
+ host.innerHTML = `<div class="score">
+  <div><small>${teams[0]}</small><strong>${firstRuns}/${firstWickets}</strong></div>
+  <b>vs</b>
+  <div><small>${teams[1]}</small><strong>${secondRuns}/${secondWickets}</strong></div>
+ </div>
+ <p class="summary">${overBall} overs • Match tracker: ${teams[0]} ${chaseChance}% • Updated ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</p>`;
+ const status = document.getElementById("cricketStatus");
+ if(status) status.textContent = "Auto";
+}
+
+function renderLocalAlerts(){
+ const host = document.getElementById("localAlerts");
+ if(!host) return;
+ const now = new Date();
+ const topTitles = stories.slice(0,3).map(story=>story.title).join(" ");
+ const weatherText = document.getElementById("weatherGrid")?.innerText || "";
+ const activeCity = currentCmsUser?.location?.city || activeDistrictFilter?.district || "Hyderabad";
+ const alerts = [
+  ["Traffic and metro updates", /traffic|metro|road|rail|bus|ట్రాఫిక్|మెట్రో|రోడ్డు/i.test(topTitles) ? "Breaking" : "Live"],
+  ["Weather warnings", /rain|storm|weather|వర్ష|తుఫాను|Rain|Thunderstorm/i.test(`${topTitles} ${weatherText}`) ? "Alert" : "Today"],
+  ["Power and water notices", activeCity],
+  ["District services", activeDistrictFilter?.district ? "Selected" : "Auto"]
+ ];
+ host.innerHTML = alerts.map(([label,value])=>`<div class="dash-row"><span>${label}</span><b>${value}</b></div>`).join("") +
+  `<div class="poll-total">Updated ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</div>`;
+}
+
+function renderLiveWidgets(){
+ renderCricketWidget();
+ renderLocalAlerts();
+}
+
 const weatherLocations = [
  {city:"Hyderabad", lat:17.385, lon:78.4867},
  {city:"Vijayawada", lat:16.5062, lon:80.648},
@@ -1827,6 +1862,7 @@ async function renderWeather(){
   <small>High ${item.high}° / Low ${item.low}°</small>
   <span>Rain ${item.rain}% • Humidity ${item.humidity}% • Wind ${item.wind} km/h</span>
  </div>`).join("");
+ renderLocalAlerts();
 }
 
 function render(){
@@ -1837,6 +1873,7 @@ function render(){
  renderHomeDesk(sorted);
  renderTodayEdition();
  renderPoll();
+ renderLiveWidgets();
  renderWeather();
  document.getElementById("tickerTrack").textContent = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
  document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<div class="counter-row"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></div>`).join("");
@@ -2662,6 +2699,7 @@ window.newsnetaHeroTimer = setInterval(()=>moveHeroSlide(1), 6500);
 window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
 window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
+window.newsnetaLiveWidgetTimer = setInterval(renderLiveWidgets, 30 * 1000);
 setTimeout(()=>document.getElementById("notify").classList.add("show"),2200);
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>

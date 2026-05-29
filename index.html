@@ -162,10 +162,13 @@ button{cursor:pointer}
 }
 .nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .nav-districts{
- display:grid;
+ display:none;
  grid-template-columns:minmax(180px,1fr) minmax(210px,1fr) auto;
  gap:8px;
 }
+.nav-districts.show{display:grid}
+.nav-districts[data-active-state="telangana"] #apMenuSelect{display:none}
+.nav-districts[data-active-state="ap"] #telanganaMenuSelect{display:none}
 .menu-select{
  min-height:42px;
  width:100%;
@@ -190,9 +193,9 @@ button{cursor:pointer}
  gap:8px;
 }
 .ticker{
- position:sticky;
- top:82px;
- z-index:40;
+ position:relative;
+ top:auto;
+ z-index:30;
  border-bottom:1px solid var(--line);
  background:linear-gradient(90deg,#151821,#2a1013);
  color:#fff;
@@ -806,7 +809,7 @@ button{cursor:pointer}
  .category-grid{grid-template-columns:repeat(3,1fr)}
  .newsline{grid-template-columns:repeat(2,1fr)}
  .layout-doc,.role-grid{grid-template-columns:1fr 1fr}
- .ticker{top:124px}
+ .ticker{top:auto}
  .nav-districts{grid-template-columns:1fr 1fr auto}
  .menu-refresh{grid-column:auto}
 }
@@ -1419,14 +1422,15 @@ function setupNav(){
  nav.addEventListener("click", event=>{
   const link = event.target.closest("a");
   if(!link) return;
-  if(link.dataset.home){
+ if(link.dataset.home){
    event.preventDefault();
    nav.querySelectorAll("a").forEach(a=>a.classList.remove("active"));
    link.classList.add("active");
    activeDistrictFilter = null;
+   document.querySelector(".nav-districts")?.classList.remove("show");
    document.getElementById("telanganaMenuSelect").value = "";
    document.getElementById("apMenuSelect").value = "";
-   document.getElementById("home").scrollIntoView({behavior:"smooth", block:"start"});
+   window.scrollTo({top:0, behavior:"smooth"});
    return;
   }
   activeDistrictFilter = null;
@@ -1436,6 +1440,12 @@ function setupNav(){
   if(apMenuSelect) apMenuSelect.value = "";
   nav.querySelectorAll("a").forEach(a=>a.classList.remove("active"));
   link.classList.add("active");
+  const districtMenu = document.querySelector(".nav-districts");
+  if(districtMenu){
+   const state = link.dataset.cat === "telangana" ? "telangana" : link.dataset.cat === "ap" ? "ap" : "";
+   districtMenu.classList.toggle("show", Boolean(state));
+   districtMenu.dataset.activeState = state;
+  }
   loadNews(link.dataset.cat);
  });
 }
@@ -1949,7 +1959,9 @@ function setupDistricts(){
 
  function selectDistrictFromMenu(state, district){
   if(!district) return;
-  activeDistrictFilter = {state, district};
+ activeDistrictFilter = {state, district};
+  document.querySelector(".nav-districts")?.classList.add("show");
+  document.querySelector(".nav-districts").dataset.activeState = state;
   telanganaMenuSelect.value = state === "telangana" ? district : "";
   apMenuSelect.value = state === "ap" ? district : "";
   document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));
@@ -2143,7 +2155,7 @@ document.addEventListener("click", event=>{
 });
 
 function findStoryById(id){
- return [...stories, ...districtStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
+ return [...stories, ...districtStories, ...heroStories, ...globalTopStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
 }
 
 function openStoryDetail(id){
@@ -2200,11 +2212,12 @@ function openStoryDetail(id){
  document.getElementById("storyShare").onclick = async ()=>{
   const shareData = {title: story.title, text: makeSummary(story.title), url: location.href};
   if(navigator.share) await navigator.share(shareData).catch(()=>{});
-  else navigator.clipboard?.writeText(`${story.title} - ${location.href}`);
+ else navigator.clipboard?.writeText(`${story.title} - ${location.href}`);
  };
  document.getElementById("storySave").onclick = ()=>localStorage.setItem("newsneta-saved-story", JSON.stringify({title:story.title, savedAt:new Date().toISOString()}));
  document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
  document.getElementById("storyBackdrop").classList.add("open");
+ document.querySelector(".story-modal")?.scrollTo({top:0, behavior:"smooth"});
  document.body.classList.add("lock");
 }
 
@@ -2276,7 +2289,7 @@ document.getElementById("readerQuestionBtn")?.addEventListener("click",()=>{
  const out = document.getElementById("readerQuestionOut");
  if(out) out.textContent = input?.value ? `Newsroom question received: ${input.value}. We will connect it to a related explainer or live update.` : "Type a question about any story first.";
 });
-document.getElementById("topArrow").addEventListener("click",()=>document.getElementById("home").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("topArrow").addEventListener("click",()=>window.scrollTo({top:0, behavior:"smooth"}));
 window.addEventListener("scroll",()=>{
  document.getElementById("topArrow").classList.toggle("show", window.scrollY > 520);
 },{passive:true});

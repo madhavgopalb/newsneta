@@ -90,11 +90,11 @@ button{cursor:pointer}
  width:350px;
  height:92px;
  border-radius:8px;
- object-fit:cover;
+ object-fit:contain;
  object-position:center;
- background:#fff;
+ background:transparent;
  padding:0;
- box-shadow:0 8px 20px rgba(15,23,42,.08);
+ box-shadow:none;
  transform:scale(1.16);
  transform-origin:left center;
 }
@@ -832,7 +832,7 @@ button{cursor:pointer}
  .topbar{position:sticky}
  .header{grid-template-columns:1fr auto;padding:8px 12px;gap:8px}
  .brand{max-width:calc(100vw - 136px);height:68px}
- .brand-logo{width:min(62vw,260px);height:68px;max-height:68px;object-fit:cover;transform:scale(1.08);transform-origin:left center}
+ .brand-logo{width:min(62vw,260px);height:68px;max-height:68px;object-fit:contain;transform:scale(1.08);transform-origin:left center}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
  .header-actions{gap:6px}
@@ -920,7 +920,7 @@ button{cursor:pointer}
  <div class="topbar">
   <header class="header" aria-label="NewsNeta header">
    <a class="brand" href="#">
-    <img class="brand-logo" src="assets/newsneta-logo.jpg" alt="NewsNeta logo"/>
+    <img class="brand-logo" src="assets/newsneta-logo-transparent.png" alt="NewsNeta logo"/>
     <div>
      <h1>NewsNeta</h1>
      <small>తెలుగు ప్రజల వార్తా వేదిక</small>
@@ -936,6 +936,7 @@ button{cursor:pointer}
     <select class="language-select" id="languageSelect" aria-label="Translate language">
      <option value="te">తెలుగు</option>
      <option value="en">English</option>
+     <option value="hi">हिन्दी</option>
     </select>
     <button class="pill-btn" id="liveBtn" type="button"><span class="live-dot"></span><span class="label">LIVE</span></button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
@@ -962,12 +963,12 @@ button{cursor:pointer}
  <div class="edition-strip" aria-label="NewsNeta quick services">
   <div class="edition-inner">
    <div class="quick-editions">
-    <a class="quick-pill live" href="#latestGrid">Latest</a>
-    <a class="quick-pill" href="#reels">Videos</a>
-    <a class="quick-pill" href="#photoNews">Photo Stories</a>
-    <a class="quick-pill" href="#epaper">E-Paper</a>
-    <a class="quick-pill" href="#opinionDesk">Editorial</a>
-    <a class="quick-pill" href="#publishingDesk">Newsroom Desk</a>
+     <a class="quick-pill live" id="quickLatest" href="#latestGrid">Latest</a>
+     <a class="quick-pill" id="quickVideos" href="#reels">Videos</a>
+     <a class="quick-pill" id="quickPhoto" href="#photoNews">Photo Stories</a>
+     <a class="quick-pill" id="quickEpaper" href="#epaper">E-Paper</a>
+     <a class="quick-pill" id="quickEditorial" href="#opinionDesk">Editorial</a>
+     <a class="quick-pill" id="quickNewsroom" href="#publishingDesk">Newsroom Desk</a>
    </div>
    <div class="reader-tools">
     <button class="quick-pill" id="openLiveTv" type="button">Live TV</button>
@@ -999,7 +1000,7 @@ button{cursor:pointer}
    <div class="side-stack">
     <aside class="home-panel weather-rail" id="todayEdition">
      <div class="edition-card">
-     <strong>Today's NewsNeta Edition</strong>
+     <strong id="editionCardTitle">Today's NewsNeta Edition</strong>
      <p id="todayEditionText">Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.</p>
       <div class="edition-actions">
        <button class="pill-btn admin-login-btn" id="openEditionCard" type="button">Open Edition</button>
@@ -1007,18 +1008,18 @@ button{cursor:pointer}
       </div>
      </div>
      <div class="weather-head">
-      <div class="section-title" style="margin:0"><h2>Weather & Forecast</h2><span class="chip">Auto</span></div>
+      <div class="section-title" style="margin:0"><h2 id="weatherTitle">Weather & Forecast</h2><span class="chip" id="weatherModeChip">Auto</span></div>
       <button class="pill-btn" id="weatherRefreshNow" type="button">Refresh</button>
      </div>
      <div class="weather-grid" id="weatherGrid"></div>
      <div class="weather-updated" id="weatherUpdated">Weather loading...</div>
     </aside>
     <aside class="glass-panel">
-     <div class="panel-title"><h3>Trending Telugu News</h3><span class="tag">Live</span></div>
+     <div class="panel-title"><h3 id="trendingTitle">Trending Telugu News</h3><span class="tag">Live</span></div>
      <div class="counter-list" id="trendingList"></div>
     </aside>
     <aside class="glass-panel">
-     <div class="panel-title"><h3>Fact Check Signal</h3><span>91%</span></div>
+     <div class="panel-title"><h3 id="factCheckTitle">Fact Check Signal</h3><span>91%</span></div>
      <div class="trust-meter">
       <div class="meter"><span></span></div>
       <p class="summary">సోర్స్ నమ్మకత్వం, భాషా తీవ్రత, రిపీట్ క్లెయిమ్స్, అధికారిక ధృవీకరణ ఆధారంగా వార్తా నమ్మకత్వం చూపించబడుతుంది.</p>
@@ -1030,13 +1031,13 @@ button{cursor:pointer}
   <section class="home-desk" id="homeDesk" aria-label="Home live news desk">
    <div class="home-panel">
     <div class="section-title">
-     <h2>Home: Latest & Live News</h2>
+     <h2 id="homeDeskTitle">Home: Latest & Live News</h2>
      <button class="pill-btn" id="homeRefreshNow" type="button">Refresh now</button>
     </div>
     <div class="live-list" id="homeLiveList"></div>
    </div>
    <aside class="home-panel">
-    <div class="section-title"><h2>Legal & Editorial Compliance</h2><span class="chip">Checklist</span></div>
+    <div class="section-title"><h2 id="complianceTitle">Legal & Editorial Compliance</h2><span class="chip" id="complianceChip">Checklist</span></div>
     <div class="dashboard-table" id="compliancePanel">
      <div class="dash-row"><span>Source and claim verification</span><b>Required</b></div>
      <div class="dash-row"><span>Defamation, privacy and takedown review</span><b>Required</b></div>
@@ -1047,7 +1048,7 @@ button{cursor:pointer}
 
   <section class="section" id="reels">
    <div class="section-title">
-    <h2>Short News Reels</h2>
+    <h2 id="reelsTitle">Short News Reels</h2>
     <span class="chip active">Swipe</span>
    </div>
    <div class="reels" id="reelsFeed"></div>
@@ -1055,22 +1056,22 @@ button{cursor:pointer}
 
   <section class="grid-2">
    <div class="section">
-    <div class="section-title"><h2>Recommended News</h2><span class="chip">Personalized</span></div>
+    <div class="section-title"><h2 id="recommendedTitle">Recommended News</h2><span class="chip" id="recommendedChip">Personalized</span></div>
     <div class="story-grid" id="recommendedGrid"></div>
    </div>
    <div class="section">
-    <div class="section-title"><h2>Most Read Now</h2><span class="chip">Live readers</span></div>
+    <div class="section-title"><h2 id="mostReadTitle">Most Read Now</h2><span class="chip" id="mostReadChip">Live readers</span></div>
     <div id="mostViewed" class="reader-stack"></div>
    </div>
   </section>
 
   <section class="section">
-   <div class="section-title"><h2>Category-wise Telugu News</h2><span class="chip">Auto-tagged</span></div>
+   <div class="section-title"><h2 id="categoryWiseTitle">Category-wise Telugu News</h2><span class="chip" id="categoryWiseChip">Auto-tagged</span></div>
    <div class="category-grid" id="categoryGrid"></div>
   </section>
 
   <section class="section newsroom-desk" id="publishingDesk">
-   <div class="section-title"><h2>State Editions & Live Updates</h2><span class="chip">News Desk</span></div>
+   <div class="section-title"><h2 id="stateEditionsTitle">State Editions & Live Updates</h2><span class="chip" id="stateEditionsChip">News Desk</span></div>
    <div class="newsline">
     <a class="newsline-card" href="#latestGrid"><small>Telangana</small><strong>District editions with local impact and civic updates</strong><span>Live</span></a>
     <a class="newsline-card" href="#latestGrid"><small>Andhra Pradesh</small><strong>Constituency, development, weather and public services</strong><span>Live</span></a>
@@ -1086,7 +1087,7 @@ button{cursor:pointer}
 
   <section class="section newsroom-desk" id="todaysEditionFull">
    <div class="section-title">
-    <h2>Today's Edition</h2>
+    <h2 id="todayFullTitle">Today's Edition</h2>
     <div class="reader-tools">
      <button class="quick-pill live" type="button" id="editionRefreshNow">Refresh edition</button>
      <button class="quick-pill" type="button" id="editionBriefListen">Listen brief</button>
@@ -1128,11 +1129,11 @@ button{cursor:pointer}
   </section>
 
   <section class="section" id="interactivePolls">
-   <div class="section-title"><h2>Public Pulse</h2><span class="chip">Interactive Polls</span></div>
+   <div class="section-title"><h2 id="publicPulseTitle">Public Pulse</h2><span class="chip" id="publicPulseChip">Interactive Polls</span></div>
    <div class="wide-grid">
     <article class="mini-card">
      <div class="panel-title"><h3 id="pollQuestion">Today's Reader Poll</h3><span class="tag">Live</span></div>
-     <p class="summary">Vote once and see the live reader pulse update instantly.</p>
+     <p class="summary" id="pollSummaryText">Vote once and see the live reader pulse update instantly.</p>
      <div id="pollOptions"></div>
      <div class="poll-total" id="pollTotal">Vote to see live reader pulse.</div>
     </article>
@@ -1417,8 +1418,9 @@ let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
 let activeEditionTopic = "Top";
 let currentLanguage = localStorage.getItem("newsneta-language") || "te";
+let speechState = {speaking:false, paused:false, targetId:null, utterance:null};
 
-const uiText = {
+const uiTextBase = {
  te:{
   home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
   newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
@@ -1433,9 +1435,54 @@ const uiText = {
  }
 };
 
-const categoryTranslations = {
+const categoryTranslationsBase = {
  en:{politics:"Politics",telangana:"Telangana",ap:"Andhra Pradesh",national:"National",international:"International",cinema:"Cinema",sports:"Sports",technology:"Technology",business:"Business",viral:"Viral"},
  te:{politics:"రాజకీయాలు",telangana:"తెలంగాణ",ap:"ఆంధ్రప్రదేశ్",national:"జాతీయం",international:"అంతర్జాతీయం",cinema:"సినిమా",sports:"క్రీడలు",technology:"టెక్నాలజీ",business:"బిజినెస్",viral:"వైరల్"}
+};
+
+const uiText = {
+ te:{
+  home:"⌂ Home", latest:"తాజా వార్తలు", videos:"వీడియోలు", photo:"ఫోటో కథనాలు", epaper:"ఈ-పేపర్", editorial:"ఎడిటోరియల్",
+  newsroom:"న్యూస్‌రూమ్ డెస్క్", liveTv:"లైవ్ టీవీ", today:"ఈరోజు ఎడిషన్", refreshNews:"వార్తలు రిఫ్రెష్", refreshNow:"ఇప్పుడే రిఫ్రెష్",
+  openEdition:"ఎడిషన్ తెరవండి", listenBrief:"బ్రీఫ్ వినండి", search:"తెలుగులో వార్తలు వెతకండి...", readFull:"పూర్తి కథనం చదవండి",
+  listen:"ప్లే ఆర్టికల్", playArticle:"ప్లే ఆర్టికల్", pauseAudio:"ఆడియో పాజ్", resumeAudio:"ఆడియో కొనసాగించు", share:"షేర్", save:"సేవ్", continue:"చదవడం కొనసాగించండి", topStory:"టాప్ స్టోరీ",
+  editionTitle:"ఈరోజు NewsNeta ఎడిషన్", editionText:"తాజా టాప్ స్టోరీలు, లైవ్ అప్‌డేట్లు, వాతావరణం, జిల్లాలు మరియు ఎక్కువగా చదివిన వార్తలు హోమ్ డెస్క్ నుంచి రిఫ్రెష్ అవుతాయి.",
+  weather:"వాతావరణం & అంచనా", auto:"ఆటో", refresh:"రిఫ్రెష్", trending:"ట్రెండింగ్ తెలుగు వార్తలు", factCheck:"ఫ్యాక్ట్ చెక్ సిగ్నల్",
+  homeDesk:"హోమ్: తాజా & లైవ్ వార్తలు", compliance:"లీగల్ & ఎడిటోరియల్ కంప్లయెన్స్", checklist:"చెక్‌లిస్ట్", reels:"షార్ట్ న్యూస్ రీల్స్",
+  recommended:"సిఫార్సు చేసిన వార్తలు", personalized:"పర్సనలైజ్డ్", mostRead:"ఎక్కువగా చదివినవి", liveReaders:"లైవ్ రీడర్స్",
+  categoryWise:"కేటగిరీ వారీ తెలుగు వార్తలు", autoTagged:"ఆటో-ట్యాగ్డ్", stateEditions:"రాష్ట్ర ఎడిషన్లు & లైవ్ అప్‌డేట్లు", newsDesk:"న్యూస్ డెస్క్",
+  publicPulse:"పబ్లిక్ పల్స్", interactivePolls:"ఇంటరాక్టివ్ పోల్స్", pollSummary:"ఒక్కసారి ఓటు వేసి లైవ్ రీడర్ పల్స్‌ను వెంటనే చూడండి.", storiesToday:"ఈరోజు కథనాలు", reads:"రీడ్స్", minRead:"నిమిషాల చదువు"
+ },
+ en:{
+  home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
+  newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
+  openEdition:"Open Edition", listenBrief:"Listen Brief", search:"Search Telugu and English news...", readFull:"Read full story",
+  listen:"Play Article", playArticle:"Play Article", pauseAudio:"Pause Audio", resumeAudio:"Resume Audio", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story",
+  editionTitle:"Today's NewsNeta Edition", editionText:"Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.",
+  weather:"Weather & Forecast", auto:"Auto", refresh:"Refresh", trending:"Trending News", factCheck:"Fact Check Signal",
+  homeDesk:"Home: Latest & Live News", compliance:"Legal & Editorial Compliance", checklist:"Checklist", reels:"Short News Reels",
+  recommended:"Recommended News", personalized:"Personalized", mostRead:"Most Read Now", liveReaders:"Live readers",
+  categoryWise:"Category-wise News", autoTagged:"Auto-tagged", stateEditions:"State Editions & Live Updates", newsDesk:"News Desk",
+  publicPulse:"Public Pulse", interactivePolls:"Interactive Polls", pollSummary:"Vote once and see the live reader pulse update instantly.", storiesToday:"stories today", reads:"reads", minRead:"min read"
+ },
+ hi:{
+  home:"⌂ Home", latest:"ताजा खबरें", videos:"वीडियो", photo:"फोटो स्टोरीज", epaper:"ई-पेपर", editorial:"संपादकीय",
+  newsroom:"न्यूज़रूम डेस्क", liveTv:"लाइव टीवी", today:"आज का संस्करण", refreshNews:"खबरें रिफ्रेश करें", refreshNow:"अभी रिफ्रेश करें",
+  openEdition:"संस्करण खोलें", listenBrief:"ब्रिफ सुनें", search:"तेलुगु, हिंदी या अंग्रेजी में खबरें खोजें...", readFull:"पूरी खबर पढ़ें",
+  listen:"लेख चलाएं", playArticle:"लेख चलाएं", pauseAudio:"ऑडियो रोकें", resumeAudio:"ऑडियो जारी रखें", share:"शेयर", save:"सेव", continue:"आगे पढ़ें", topStory:"टॉप स्टोरी",
+  editionTitle:"आज का NewsNeta संस्करण", editionText:"ताजा टॉप स्टोरीज, लाइव अपडेट्स, मौसम, जिले और सबसे ज्यादा पढ़ी गई खबरें होम डेस्क से रिफ्रेश होती हैं.",
+  weather:"मौसम और पूर्वानुमान", auto:"ऑटो", refresh:"रिफ्रेश", trending:"ट्रेंडिंग खबरें", factCheck:"फैक्ट चेक सिग्नल",
+  homeDesk:"होम: ताजा और लाइव खबरें", compliance:"कानूनी और संपादकीय अनुपालन", checklist:"चेकलिस्ट", reels:"शॉर्ट न्यूज रील्स",
+  recommended:"सुझाई गई खबरें", personalized:"पर्सनलाइज्ड", mostRead:"सबसे ज्यादा पढ़ी गई", liveReaders:"लाइव रीडर्स",
+  categoryWise:"श्रेणीवार खबरें", autoTagged:"ऑटो-टैग्ड", stateEditions:"राज्य संस्करण और लाइव अपडेट्स", newsDesk:"न्यूज डेस्क",
+  publicPulse:"पब्लिक पल्स", interactivePolls:"इंटरैक्टिव पोल्स", pollSummary:"एक बार वोट करें और लाइव रीडर पल्स तुरंत देखें.", storiesToday:"आज की खबरें", reads:"रीड्स", minRead:"मिनट पढ़ें"
+ }
+};
+
+const categoryTranslations = {
+ en:{politics:"Politics",telangana:"Telangana",ap:"Andhra Pradesh",national:"National",international:"International",cinema:"Cinema",sports:"Sports",technology:"Technology",business:"Business",viral:"Viral"},
+ te:{politics:"రాజకీయాలు",telangana:"తెలంగాణ",ap:"ఆంధ్రప్రదేశ్",national:"జాతీయం",international:"అంతర్జాతీయం",cinema:"సినిమా",sports:"క్రీడలు",technology:"టెక్నాలజీ",business:"బిజినెస్",viral:"వైరల్"},
+ hi:{politics:"राजनीति",telangana:"तेलंगाना",ap:"आंध्र प्रदेश",national:"राष्ट्रीय",international:"अंतरराष्ट्रीय",cinema:"सिनेमा",sports:"खेल",technology:"टेक्नोलॉजी",business:"बिजनेस",viral:"वायरल"}
 };
 
 function t(key){
@@ -1500,6 +1547,9 @@ function setupNav(){
 function makeSummary(title){
  if(currentLanguage === "en"){
   return `NewsNeta summarizes the key points of "${title}" with background, current impact, and what readers should watch next.`;
+ }
+ if(currentLanguage === "hi"){
+  return `NewsNeta "${title}" की मुख्य बातों, पृष्ठभूमि, असर और अगले अपडेट को आसान भाषा में संक्षेप में बताता है.`;
  }
  return `${title} అనే అంశంపై NewsNeta ముఖ్యాంశాలను సంక్షిప్తంగా కుదించి, నేపథ్యం మరియు ప్రభావాన్ని త్వరగా అర్థమయ్యేలా చూపిస్తుంది.`;
 }
@@ -1751,7 +1801,10 @@ function renderHomeDesk(sorted){
  const today = document.getElementById("todayEditionText");
  if(today){
   const count = sorted.length + fallbackStories.length;
-  today.textContent = `${count} stories in today's edition • ${lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "loading"} refresh • Telangana, Andhra Pradesh, National, Weather and Live updates.`;
+  const localizedTime = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "loading";
+  if(currentLanguage === "en") today.textContent = `${count} stories in today's edition • ${localizedTime} refresh • Telangana, Andhra Pradesh, National, Weather and Live updates.`;
+  else if(currentLanguage === "hi") today.textContent = `${count} खबरें आज के संस्करण में • ${localizedTime} रिफ्रेश • तेलंगाना, आंध्र प्रदेश, राष्ट्रीय, मौसम और लाइव अपडेट्स.`;
+  else today.textContent = `${count} కథనాలు ఈరోజు ఎడిషన్‌లో • ${localizedTime} రిఫ్రెష్ • తెలంగాణ, ఆంధ్రప్రదేశ్, జాతీయం, వాతావరణం మరియు లైవ్ అప్‌డేట్లు.`;
  }
 }
 
@@ -1944,7 +1997,7 @@ function render(){
  const counts = categories.map(([id,label],i)=>({id,label:categoryLabel(id,label),count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
  document.getElementById("categoryGrid").innerHTML = counts.map(c=>{
   const categoryId = c.id || "telangana";
-  return `<a class="category-tile" href="#latestGrid" data-category-tile="${categoryId}"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">stories today</small></a>`;
+  return `<a class="category-tile" href="#latestGrid" data-category-tile="${categoryId}"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">${t("storiesToday")}</small></a>`;
  }).join("");
  animateCounters();
  updateRefreshStatus();
@@ -1961,7 +2014,7 @@ function renderHeroSlide(){
 }
 
 function applyLanguage(){
- document.documentElement.lang = currentLanguage === "en" ? "en" : "te";
+ document.documentElement.lang = currentLanguage === "en" ? "en" : currentLanguage === "hi" ? "hi" : "te";
  const languageSelect = document.getElementById("languageSelect");
  if(languageSelect) languageSelect.value = currentLanguage;
  const search = document.getElementById("searchInput");
@@ -1972,11 +2025,42 @@ function applyLanguage(){
  };
  setText("menuRefreshNow", t("refreshNews"));
  setText("homeRefreshNow", t("refreshNow"));
+ setText("quickLatest", t("latest"));
+ setText("quickVideos", t("videos"));
+ setText("quickPhoto", t("photo"));
+ setText("quickEpaper", t("epaper"));
+ setText("quickEditorial", t("editorial"));
+ setText("quickNewsroom", t("newsroom"));
  setText("openLiveTv", t("liveTv"));
  setText("openEdition", t("today"));
  setText("openEditionCard", t("openEdition"));
  setText("editionListen", t("listenBrief"));
- setText("storyModalListen", t("listen"));
+ setText("editionCardTitle", t("editionTitle"));
+ setText("weatherTitle", t("weather"));
+ setText("weatherModeChip", t("auto"));
+ setText("weatherRefreshNow", t("refresh"));
+ setText("trendingTitle", t("trending"));
+ setText("factCheckTitle", t("factCheck"));
+ setText("homeDeskTitle", t("homeDesk"));
+ setText("complianceTitle", t("compliance"));
+ setText("complianceChip", t("checklist"));
+ setText("reelsTitle", t("reels"));
+ setText("recommendedTitle", t("recommended"));
+ setText("recommendedChip", t("personalized"));
+ setText("mostReadTitle", t("mostRead"));
+ setText("mostReadChip", t("liveReaders"));
+ setText("categoryWiseTitle", t("categoryWise"));
+ setText("categoryWiseChip", t("autoTagged"));
+ setText("stateEditionsTitle", t("stateEditions"));
+ setText("stateEditionsChip", t("newsDesk"));
+ setText("latestTitle", t("latest"));
+ setText("todayFullTitle", t("today"));
+ setText("editionRefreshNow", t("refreshNews"));
+ setText("editionBriefListen", t("listenBrief"));
+ setText("publicPulseTitle", t("publicPulse"));
+ setText("publicPulseChip", t("interactivePolls"));
+ setText("pollSummaryText", t("pollSummary"));
+ if(!speechState.speaking) setText("storyModalListen", t("playArticle"));
  setText("storyShare", t("share"));
  setText("storySave", t("save"));
  setText("storyContinue", t("continue"));
@@ -2113,10 +2197,31 @@ function updateRefreshStatus(){
 
 function speakTelugu(text){
  if(!("speechSynthesis" in window)) return;
+ const targetId = "storyModalListen";
+ const target = document.getElementById(targetId);
+ if(speechState.speaking && speechState.targetId === targetId && !speechState.paused){
+  speechSynthesis.pause();
+  speechState.paused = true;
+  if(target) target.textContent = t("resumeAudio");
+  return;
+ }
+ if(speechState.speaking && speechState.targetId === targetId && speechState.paused){
+  speechSynthesis.resume();
+  speechState.paused = false;
+  if(target) target.textContent = t("pauseAudio");
+  return;
+ }
  speechSynthesis.cancel();
  const utterance = new SpeechSynthesisUtterance(text);
- utterance.lang = "te-IN";
+ utterance.lang = currentLanguage === "en" ? "en-IN" : currentLanguage === "hi" ? "hi-IN" : "te-IN";
  utterance.rate = .92;
+ utterance.onend = utterance.onerror = ()=>{
+  speechState = {speaking:false, paused:false, targetId:null, utterance:null};
+  const btn = document.getElementById(targetId);
+  if(btn) btn.textContent = t("playArticle");
+ };
+ speechState = {speaking:true, paused:false, targetId, utterance};
+ if(target) target.textContent = t("pauseAudio");
  speechSynthesis.speak(utterance);
 }
 
@@ -2148,6 +2253,23 @@ function buildDetailedArticle(story){
   <p>The development may affect local citizens, travel, services, markets, or policy decisions. Important changes will be reflected in this reader view.</p>
   <h3>Verification</h3>
   <p>The current trust score for this story is ${trust}%. Headline, image relevance, update time, category, and context signals are reviewed to keep the reading experience clear.</p>`;
+ }
+ if(currentLanguage === "hi"){
+  return `
+  <p><b>NewsNeta Desk:</b> ${escapeHtml(story.title)} पर ताजा अपडेट उपलब्ध है. यह रिपोर्ट मुख्य घटनाक्रम, पृष्ठभूमि, जनता पर असर और अगले संभावित अपडेट को साफ भाषा में समझाती है.</p>
+  <p>${escapeHtml(base)}</p>
+  <h3>मुख्य बातें</h3>
+  <ul>
+   <li>NewsNeta ${escapeHtml(category)} श्रेणी से जुड़े ताजा घटनाक्रमों को ट्रैक कर रहा है.</li>
+   <li>रिपोर्ट में स्थानीय असर, सार्वजनिक सेवाएं, आधिकारिक बयान और जरूरी प्रतिक्रियाएं शामिल हैं.</li>
+   <li>नई सत्यापित जानकारी मिलते ही यह खबर रिफ्रेश होती है.</li>
+  </ul>
+  <h3>पृष्ठभूमि</h3>
+  <p>पिछले कुछ घंटों में पाठकों की रुचि बढ़ी है. NewsNeta उपलब्ध अपडेट, स्थानीय संदर्भ, सार्वजनिक प्रतिक्रिया और आधिकारिक संकेतों के आधार पर खबर को व्यवस्थित करता है.</p>
+  <h3>जनता पर असर</h3>
+  <p>यह घटनाक्रम स्थानीय नागरिकों, यात्रा, सेवाओं, बाजारों या नीति फैसलों को प्रभावित कर सकता है. महत्वपूर्ण बदलाव इस रीडर व्यू में दिखेंगे.</p>
+  <h3>सत्यापन</h3>
+  <p>इस खबर का वर्तमान ट्रस्ट स्कोर ${trust}% है. शीर्षक, तस्वीर की प्रासंगिकता, अपडेट समय, श्रेणी और संदर्भ संकेतों की समीक्षा की गई है.</p>`;
  }
  return `
   <p><b>NewsNeta Desk:</b> ${escapeHtml(story.title)} పై తాజా సమాచారం అందుబాటులోకి వచ్చింది. ఈ కథనంలో ప్రధాన పరిణామం, దాని నేపథ్యం, ప్రజలపై ఉండే ప్రభావం, తదుపరి అధికారిక అప్‌డేట్లను స్పష్టంగా అందిస్తున్నాం.</p>
@@ -2293,6 +2415,8 @@ function openStoryDetail(id){
  document.getElementById("storyModalTitle").textContent = story.title;
  document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views || 0)} views`;
  document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} ఈ కథనంలో తాజా పరిస్థితి, నేపథ్యం, స్థానిక ప్రభావం, తదుపరి అప్డేట్ గురించి చదవండి.`;
+ if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
+ else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
  document.getElementById("storyModalCopy").classList.remove("reader-large");
  document.getElementById("storyModalCopy").textContent = copy;
  document.getElementById("storyModalFacts").innerHTML = `
@@ -2331,7 +2455,12 @@ function openStoryDetail(id){
  document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story) + 2} min read • ${Intl.NumberFormat("en-IN").format(story.views || 0)} views`;
  document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} ఈ కథనంలో నేపథ్యం, స్థానిక ప్రభావం, ముఖ్యాంశాలు, తదుపరి అప్‌డేట్లు వివరంగా అందుబాటులో ఉన్నాయి.`;
  document.getElementById("storyModalCopy").classList.remove("reader-large");
+ if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
+ else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
  document.getElementById("storyModalCopy").innerHTML = buildDetailedArticle(story);
+ if("speechSynthesis" in window) speechSynthesis.cancel();
+ speechState = {speaking:false, paused:false, targetId:null, utterance:null};
+ document.getElementById("storyModalListen").textContent = t("playArticle");
  document.getElementById("storyModalFacts").innerHTML = `
   <div class="dash-row"><span>Desk</span><b>NewsNeta</b></div>
   <div class="dash-row"><span>Category</span><b>${story.category || "News"}</b></div>
@@ -2355,6 +2484,8 @@ function openStoryDetail(id){
 }
 
 document.getElementById("closeStory").addEventListener("click",()=>{
+ if("speechSynthesis" in window) speechSynthesis.cancel();
+ speechState = {speaking:false, paused:false, targetId:null, utterance:null};
  document.getElementById("storyBackdrop").classList.remove("open");
  document.body.classList.remove("lock");
 });
@@ -2397,6 +2528,8 @@ document.getElementById("themeBtn").addEventListener("click",()=>{
 document.getElementById("languageSelect").addEventListener("change",event=>{
  currentLanguage = event.target.value;
  localStorage.setItem("newsneta-language", currentLanguage);
+ if("speechSynthesis" in window) speechSynthesis.cancel();
+ speechState = {speaking:false, paused:false, targetId:null, utterance:null};
  applyLanguage();
 });
 document.getElementById("aiButton").addEventListener("click",()=>document.getElementById("aiPanel").classList.toggle("open"));

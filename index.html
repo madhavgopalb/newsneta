@@ -78,7 +78,7 @@ button{cursor:pointer}
 }
 .header{
  display:grid;
- grid-template-columns:auto 1fr auto;
+ grid-template-columns:minmax(250px,360px) minmax(260px,1fr) auto;
  align-items:center;
  gap:14px;
  max-width:1240px;
@@ -115,6 +115,17 @@ button{cursor:pointer}
 .search-icon,.spark-icon{position:absolute;top:50%;transform:translateY(-50%);color:var(--muted)}
 .search-icon{left:15px}.spark-icon{right:15px;color:var(--brand)}
 .header-actions{display:flex;align-items:center;gap:8px}
+.language-select{
+ min-height:44px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:var(--surface);
+ color:var(--ink);
+ padding:0 12px;
+ font-weight:800;
+ outline:none;
+ box-shadow:0 8px 24px rgba(15,23,42,.06);
+}
 .icon-btn,.pill-btn{
  border:1px solid var(--line);
  background:var(--surface);
@@ -163,8 +174,10 @@ button{cursor:pointer}
 .nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .nav-districts{
  display:none;
- grid-template-columns:minmax(180px,1fr) minmax(210px,1fr) auto;
+ grid-template-columns:minmax(240px,420px) auto;
  gap:8px;
+ justify-content:start;
+ align-items:center;
 }
 .nav-districts.show{display:grid}
 .nav-districts[data-active-state="telangana"] #apMenuSelect{display:none}
@@ -823,6 +836,7 @@ button{cursor:pointer}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
  .header-actions{gap:6px}
+ .language-select{min-height:40px;max-width:112px;padding:0 8px;font-size:12px}
  .icon-btn,.pill-btn{min-width:40px;height:40px}
  .pill-btn .label{display:none}
  .search-wrap input{height:42px;font-size:16px}
@@ -918,7 +932,11 @@ button{cursor:pointer}
     <span class="spark-icon">Smart</span>
    </label>
    <div class="header-actions">
-    <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open CMS login"><span class="label">CMS Login</span></button>
+   <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open CMS login"><span class="label">CMS Login</span></button>
+    <select class="language-select" id="languageSelect" aria-label="Translate language">
+     <option value="te">తెలుగు</option>
+     <option value="en">English</option>
+    </select>
     <button class="pill-btn" id="liveBtn" type="button"><span class="live-dot"></span><span class="label">LIVE</span></button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
    </div>
@@ -1398,6 +1416,35 @@ let activeDistrictFilter = null;
 let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
 let activeEditionTopic = "Top";
+let currentLanguage = localStorage.getItem("newsneta-language") || "te";
+
+const uiText = {
+ te:{
+  home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
+  newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
+  openEdition:"Open Edition", listenBrief:"Listen Brief", search:"తెలుగులో వార్తలు వెతకండి...", readFull:"Read full story",
+  listen:"Listen", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story"
+ },
+ en:{
+  home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
+  newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
+  openEdition:"Open Edition", listenBrief:"Listen Brief", search:"Search Telugu and English news...", readFull:"Read full story",
+  listen:"Listen", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story"
+ }
+};
+
+const categoryTranslations = {
+ en:{politics:"Politics",telangana:"Telangana",ap:"Andhra Pradesh",national:"National",international:"International",cinema:"Cinema",sports:"Sports",technology:"Technology",business:"Business",viral:"Viral"},
+ te:{politics:"రాజకీయాలు",telangana:"తెలంగాణ",ap:"ఆంధ్రప్రదేశ్",national:"జాతీయం",international:"అంతర్జాతీయం",cinema:"సినిమా",sports:"క్రీడలు",technology:"టెక్నాలజీ",business:"బిజినెస్",viral:"వైరల్"}
+};
+
+function t(key){
+ return uiText[currentLanguage]?.[key] || uiText.te[key] || key;
+}
+
+function categoryLabel(id,label){
+ return categoryTranslations[currentLanguage]?.[id] || label;
+}
 
 const editionTopics = ["Top","Telangana","Andhra Pradesh","Politics","Sports","Cinema","Technology"];
 const dailyPoll = {
@@ -1418,7 +1465,7 @@ function icon(name){
 
 function setupNav(){
  const nav = document.getElementById("categoryNav");
- nav.innerHTML = `<a href="#home" data-home="true" class="active" aria-label="Home">⌂ Home</a>` + categories.map(([id,label])=>`<a href="#latestGrid" data-cat="${id}">${label}</a>`).join("");
+ nav.innerHTML = `<a href="#home" data-home="true" class="active" aria-label="Home">${t("home")}</a>` + categories.map(([id,label])=>`<a href="#latestGrid" data-cat="${id}">${categoryLabel(id,label)}</a>`).join("");
  nav.addEventListener("click", event=>{
   const link = event.target.closest("a");
   if(!link) return;
@@ -1451,6 +1498,9 @@ function setupNav(){
 }
 
 function makeSummary(title){
+ if(currentLanguage === "en"){
+  return `NewsNeta summarizes the key points of "${title}" with background, current impact, and what readers should watch next.`;
+ }
  return `${title} అనే అంశంపై NewsNeta ముఖ్యాంశాలను సంక్షిప్తంగా కుదించి, నేపథ్యం మరియు ప్రభావాన్ని త్వరగా అర్థమయ్యేలా చూపిస్తుంది.`;
 }
 
@@ -1891,9 +1941,9 @@ function render(){
  document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");
  document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,9).map(storyCard).join("");
  document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><img loading="lazy" src="${escapeAttr(s.image)}" alt="" onerror="imageFallback(event)"><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
- const counts = categories.map(([,label],i)=>({label,count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
+ const counts = categories.map(([id,label],i)=>({id,label:categoryLabel(id,label),count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
  document.getElementById("categoryGrid").innerHTML = counts.map(c=>{
-  const categoryId = categories.find(([,label])=>label === c.label)?.[0] || "telangana";
+  const categoryId = c.id || "telangana";
   return `<a class="category-tile" href="#latestGrid" data-category-tile="${categoryId}"><strong>${icon(c.label)} ${c.label}</strong><span>${c.count}</span><small class="summary">stories today</small></a>`;
  }).join("");
  animateCounters();
@@ -1906,8 +1956,37 @@ function renderHeroSlide(){
  document.getElementById("hero").dataset.storyId = heroStory.id || heroStory.link || heroStory.title;
  document.getElementById("heroTitle").textContent = heroStory.title;
  document.getElementById("heroSummary").textContent = makeSummary(heroStory.title);
- document.getElementById("heroSource").textContent = `${heroStory.category || "Top Story"} • ${Intl.NumberFormat("en-IN").format(heroStory.views || 0)} reads`;
+ document.getElementById("heroSource").textContent = `${heroStory.category || t("topStory")} • ${Intl.NumberFormat("en-IN").format(heroStory.views || 0)} reads`;
  document.getElementById("heroDots").innerHTML = heroStories.map((_,index)=>`<button class="hero-dot ${index === heroIndex ? "active" : ""}" type="button" data-hero-index="${index}" aria-label="Top story ${index + 1}"></button>`).join("");
+}
+
+function applyLanguage(){
+ document.documentElement.lang = currentLanguage === "en" ? "en" : "te";
+ const languageSelect = document.getElementById("languageSelect");
+ if(languageSelect) languageSelect.value = currentLanguage;
+ const search = document.getElementById("searchInput");
+ if(search) search.placeholder = t("search");
+ const setText = (id,value)=>{
+  const el = document.getElementById(id);
+  if(el) el.textContent = value;
+ };
+ setText("menuRefreshNow", t("refreshNews"));
+ setText("homeRefreshNow", t("refreshNow"));
+ setText("openLiveTv", t("liveTv"));
+ setText("openEdition", t("today"));
+ setText("openEditionCard", t("openEdition"));
+ setText("editionListen", t("listenBrief"));
+ setText("storyModalListen", t("listen"));
+ setText("storyShare", t("share"));
+ setText("storySave", t("save"));
+ setText("storyContinue", t("continue"));
+ document.querySelectorAll("#categoryNav [data-cat]").forEach(link=>{
+  const found = categories.find(([id])=>id === link.dataset.cat);
+  if(found) link.textContent = categoryLabel(found[0], found[1]);
+ });
+ const homeLink = document.querySelector("#categoryNav [data-home]");
+ if(homeLink) homeLink.textContent = t("home");
+ render();
 }
 
 function moveHeroSlide(step){
@@ -2053,6 +2132,23 @@ function buildDetailedArticle(story){
  const base = cleanText(story.description) || makeSummary(story.title);
  const category = story.category || "News";
  const trust = story.trust || 91;
+ if(currentLanguage === "en"){
+  return `
+  <p><b>NewsNeta Desk:</b> Fresh updates are available on ${escapeHtml(story.title)}. This report explains the main development, background, public impact, and next expected updates in a clear reader-friendly format.</p>
+  <p>${escapeHtml(base)}</p>
+  <h3>Key Points</h3>
+  <ul>
+   <li>NewsNeta is tracking the latest developments in the ${escapeHtml(category)} category.</li>
+   <li>The report highlights local impact, public services, official statements, and relevant reactions.</li>
+   <li>This story is refreshed when new verified information is available.</li>
+  </ul>
+  <h3>Background</h3>
+  <p>Reader interest has increased over the past few hours. NewsNeta structures the story using available updates, local context, public response, and official signals.</p>
+  <h3>Public Impact</h3>
+  <p>The development may affect local citizens, travel, services, markets, or policy decisions. Important changes will be reflected in this reader view.</p>
+  <h3>Verification</h3>
+  <p>The current trust score for this story is ${trust}%. Headline, image relevance, update time, category, and context signals are reviewed to keep the reading experience clear.</p>`;
+ }
  return `
   <p><b>NewsNeta Desk:</b> ${escapeHtml(story.title)} పై తాజా సమాచారం అందుబాటులోకి వచ్చింది. ఈ కథనంలో ప్రధాన పరిణామం, దాని నేపథ్యం, ప్రజలపై ఉండే ప్రభావం, తదుపరి అధికారిక అప్‌డేట్లను స్పష్టంగా అందిస్తున్నాం.</p>
   <p>${escapeHtml(base)}</p>
@@ -2297,6 +2393,11 @@ document.getElementById("themeBtn").addEventListener("click",()=>{
  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
  document.documentElement.dataset.theme = next;
  localStorage.setItem("newsneta-theme", next);
+});
+document.getElementById("languageSelect").addEventListener("change",event=>{
+ currentLanguage = event.target.value;
+ localStorage.setItem("newsneta-language", currentLanguage);
+ applyLanguage();
 });
 document.getElementById("aiButton").addEventListener("click",()=>document.getElementById("aiPanel").classList.toggle("open"));
 document.getElementById("closeAi").addEventListener("click",()=>document.getElementById("aiPanel").classList.remove("open"));
@@ -2707,6 +2808,7 @@ document.getElementById("skipNotify").addEventListener("click",()=>document.getE
 if(localStorage.getItem("newsneta-theme")==="dark") document.documentElement.dataset.theme = "dark";
 setupNav();
 setupDistricts();
+applyLanguage();
 refreshAllNews();
 window.newsnetaHeroTimer = setInterval(()=>moveHeroSlide(1), 6500);
 window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);

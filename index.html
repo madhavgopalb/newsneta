@@ -2886,7 +2886,7 @@ function cmsVideoScreen(role){
  </div>`;
 }
 
-﻿function cmsManageScreen(role){
+function cmsManageScreen(role){
  const queue = cmsQueueForRole(role);
  const rows = queue.length ? queue.map(article=>{
   const canSubmit = role === "reporter" && article.status === "draft";

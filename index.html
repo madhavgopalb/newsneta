@@ -930,7 +930,7 @@ button{cursor:pointer}
  <div class="topbar">
   <header class="header" aria-label="NewsNeta header">
    <a class="brand" href="#">
-    <img class="brand-logo" src="assets/newsneta-logo-transparent.png" alt="NewsNeta logo"/>
+    <img class="brand-logo" src="assets/newsneta-logo-header.png" alt="NewsNeta logo"/>
     <div>
      <h1>NewsNeta</h1>
      <small>తెలుగు ప్రజల వార్తా వేదిక</small>
@@ -1432,8 +1432,16 @@ function saveCmsArticles(){
 }
 
 function primaryCmsArticle(){
- if(!cmsArticles.length) cmsArticles.push({...cmsSampleArticle});
+ if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")) cmsArticles = [{...cmsSampleArticle}];
  return cmsArticles[0];
+}
+
+function ensureCmsSample(){
+ if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")){
+  cmsArticles = [{...cmsSampleArticle}];
+  saveCmsArticles();
+ }
+ return primaryCmsArticle();
 }
 
 const fallbackStories = [
@@ -2784,7 +2792,7 @@ function fillAssistantContent(action){
  }
 }
 
-﻿function cmsWorkflowForm(role){
+function cmsWorkflowForm(role){
  const article = primaryCmsArticle();
  const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option ${d === article.district ? "selected" : ""}>${d}</option>`).join("");
  const categoryOptions = categories.map(([,label])=>`<option ${label === article.category ? "selected" : ""}>${label}</option>`).join("");
@@ -2848,7 +2856,7 @@ function fillAssistantContent(action){
   </div>
   <label>Push alert copy<input id="cmsPushCopy" value="${escapeAttr(article.headline)}"></label>
   ${compliance}
-  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
+  <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="demoApprove" data-article-id="${escapeAttr(article.id)}">Mark Reviewed for Demo</button><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
   <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition. Current status: ${articleStatusLabel(article.status)}.</div>
  </form>`;
 }
@@ -2981,6 +2989,7 @@ function bindCmsScreen(role){
    const action = button.dataset.queueAction;
    if(action === "submit") article.status = "review";
    if(action === "approve"){ article.status = "approved"; article.reviewer = currentCmsUser?.name || "Review Desk"; article.trust = article.trust || 91; }
+   if(action === "demoApprove"){ article.status = "approved"; article.reviewer = "Review Desk"; article.trust = article.trust || 92; article.notes = "Demo reviewer approval completed."; }
    if(action === "publish") publishCmsArticle(article);
    saveCmsArticles();
    switchCmsScreen("manage");
@@ -3016,6 +3025,7 @@ function switchCmsScreen(screen){
 }
 
 function openRoleDashboard(role, user = currentCmsUser){
+ ensureCmsSample();
  const dashboard = document.getElementById("roleDashboard");
  const content = document.getElementById("roleDashboardContent");
  const data = dashboardConfig(role);

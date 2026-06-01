@@ -1,4 +1,4 @@
-const CACHE_NAME = "newsneta-pwa-v37";
+const CACHE_NAME = "newsneta-pwa-v38";
 const APP_SHELL = [
   "/",
   "/index.html",

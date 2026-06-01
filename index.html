@@ -78,7 +78,7 @@ button{cursor:pointer}
 }
 .header{
  display:grid;
- grid-template-columns:minmax(250px,360px) minmax(260px,1fr) auto;
+ grid-template-columns:minmax(320px,480px) minmax(240px,1fr) auto;
  align-items:center;
  gap:14px;
  max-width:1240px;
@@ -87,15 +87,15 @@ button{cursor:pointer}
 }
 .brand{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden}
 .brand-logo{
- width:350px;
- height:92px;
+ width:430px;
+ height:108px;
  border-radius:8px;
  object-fit:contain;
  object-position:center;
  background:transparent;
  padding:0;
  box-shadow:none;
- transform:scale(1.16);
+ transform:scale(1.2);
  transform-origin:left center;
 }
 .brand h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -643,6 +643,14 @@ button{cursor:pointer}
 .queue-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border-radius:0;background:var(--surface);border:0;border-bottom:1px solid var(--line)}
 .queue-item:last-child{border-bottom:0}
 .queue-item small{color:var(--muted);font-weight:800}
+.queue-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.queue-actions button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;min-height:32px;padding:0 10px;font-weight:900}
+.queue-actions button.danger{border-color:rgba(199,11,47,.28);color:#c70b2f;background:#fff5f7}
+.status-pill{display:inline-flex;align-items:center;border-radius:999px;background:#f1f5f9;color:#334155;padding:4px 8px;font-size:11px;font-weight:900;text-transform:uppercase}
+.status-pill.published{background:#dcfce7;color:#166534}
+.status-pill.approved{background:#e0f2fe;color:#075985}
+.status-pill.review{background:#fef3c7;color:#92400e}
+.status-pill.draft{background:#f1f5f9;color:#475569}
 .cms-form{display:grid;gap:14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:16px}
 .cms-form.two-column{grid-template-columns:1fr 1fr;align-items:start}
 .cms-form.two-column > strong,.cms-form.two-column > .cms-ai-box,.cms-form.two-column > .cms-full,.cms-form.two-column > .cms-form-actions,.cms-form.two-column > .workflow-note{grid-column:1/-1}
@@ -832,7 +840,7 @@ button{cursor:pointer}
  .topbar{position:sticky}
  .header{grid-template-columns:1fr auto;padding:8px 12px;gap:8px}
  .brand{max-width:calc(100vw - 136px);height:68px}
- .brand-logo{width:min(62vw,260px);height:68px;max-height:68px;object-fit:contain;transform:scale(1.08);transform-origin:left center}
+ .brand-logo{width:min(66vw,292px);height:72px;max-height:72px;object-fit:contain;transform:scale(1.08);transform-origin:left center}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
  .header-actions{gap:6px}
@@ -897,7 +905,7 @@ button{cursor:pointer}
 }
 @media (max-width:430px){
  .brand{max-width:calc(100vw - 108px);height:62px}
- .brand-logo{width:min(66vw,238px);height:62px;max-height:62px}
+ .brand-logo{width:min(70vw,260px);height:64px;max-height:64px}
  .header-actions .admin-login-btn{padding:0 10px;font-size:12px}
  .header-actions .admin-login-btn .label{display:inline}
  .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
@@ -906,7 +914,7 @@ button{cursor:pointer}
  .summary{font-size:13px}
 }
 @media (max-width:360px){
- .brand-logo{width:210px;height:56px;max-height:56px}
+ .brand-logo{width:230px;height:58px;max-height:58px}
  .header-actions{gap:4px}
  .icon-btn,.pill-btn{min-width:38px;height:38px}
  .nav a,.chip{font-size:12px;padding:8px 10px}
@@ -1388,6 +1396,43 @@ const cmsUsers = {
 };
 
 let currentCmsUser = null;
+
+const cmsSampleArticle = {
+ id:"cms-hyderabad-water-brief",
+ status:"draft",
+ headline:"హైదరాబాద్‌లో తాగునీటి సరఫరాపై ప్రత్యేక సమీక్ష",
+ englishHeadline:"Hyderabad drinking water supply reviewed by civic officials",
+ category:"Telangana",
+ state:"Telangana",
+ district:"Hyderabad",
+ summary:"హైదరాబాద్‌లో వేసవి అవసరాలు, నీటి సరఫరా షెడ్యూల్, మరమ్మతులపై అధికారులు ప్రత్యేక సమీక్ష నిర్వహించారు.",
+ body:"హైదరాబాద్ నగరంలోని పలు ప్రాంతాల్లో తాగునీటి సరఫరా సమయాలు, పైప్‌లైన్ మరమ్మతులు, ట్యాంకర్ సేవలపై అధికారులు సమీక్షించారు. పౌరులకు ముందస్తు సమాచారం అందించేలా వార్డ్ స్థాయిలో ప్రత్యేక బృందాలు ఏర్పాటు చేయాలని నిర్ణయించారు.",
+ image:"https://images.unsplash.com/photo-1541919329513-35f7af297129?auto=format&fit=crop&w=900&q=75",
+ reporter:"District Reporter",
+ reviewer:"",
+ trust:88,
+ notes:"Reporter field notes added. Awaiting reviewer fact check.",
+ publishedAt:null
+};
+
+let cmsArticles = loadCmsArticles();
+
+function loadCmsArticles(){
+ try{
+  const saved = JSON.parse(localStorage.getItem("newsneta-cms-articles") || "null");
+  if(Array.isArray(saved) && saved.length) return saved;
+ }catch(error){}
+ return [{...cmsSampleArticle}];
+}
+
+function saveCmsArticles(){
+ localStorage.setItem("newsneta-cms-articles", JSON.stringify(cmsArticles));
+}
+
+function primaryCmsArticle(){
+ if(!cmsArticles.length) cmsArticles.push({...cmsSampleArticle});
+ return cmsArticles[0];
+}
 
 const fallbackStories = [
  {title:"తెలంగాణలో కొత్త అభివృద్ధి ప్రణాళికలపై కీలక సమీక్ష", category:"Telangana", views:98240, sentiment:"Positive", trust:94, image:"https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75"},
@@ -2667,15 +2712,87 @@ function dashboardConfig(role){
  return config[role] || config.admin;
 }
 
-function cmsWorkflowForm(role){
- const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option>${d}</option>`).join("");
+function articleStatusLabel(status){
+ const labels = {draft:"Reporter draft", review:"In reviewer queue", approved:"Reviewer approved", published:"Published", deleted:"Deleted"};
+ return labels[status] || status;
+}
+
+function cmsQueueForRole(role){
+ return cmsArticles.filter(article => article.status !== "deleted").map(article=>({
+  ...article,
+  action: role === "reporter" ? (article.status === "draft" ? "Edit Draft" : "View") : role === "reviewer" ? (article.status === "review" ? "Review" : "View") : (article.status === "approved" ? "Publish" : "Open")
+ }));
+}
+
+function publishCmsArticle(article){
+ article.status = "published";
+ article.publishedAt = new Date().toISOString();
+ const story = {
+  id:`cms-${article.id}`,
+  title: article.headline,
+  category: article.category,
+  district: article.district,
+  description: article.summary,
+  views: 12000 + Math.round(Math.random()*4000),
+  sentiment:"Neutral",
+  trust: article.trust || 91,
+  image: article.image || "assets/newsneta-logo.jpg",
+  pubDate: article.publishedAt,
+  link:"#"
+ };
+ const existingIndex = stories.findIndex(item=>item.id === story.id);
+ if(existingIndex >= 0) stories[existingIndex] = story;
+ else stories.unshift(story);
+ heroStories = normalizeItems([story, ...heroStories]).slice(0,8);
+ saveCmsArticles();
+ render();
+}
+
+function deleteCmsArticle(id){
+ cmsArticles = cmsArticles.map(article=>article.id === id ? {...article,status:"deleted"} : article);
+ stories = stories.filter(story=>story.id !== `cms-${id}`);
+ saveCmsArticles();
+ render();
+}
+
+function fillAssistantContent(action){
+ const headline = document.getElementById("cmsHeadline");
+ const english = document.getElementById("cmsEnglishHeadline");
+ const summary = document.getElementById("cmsSummary");
+ const body = document.getElementById("cmsBody");
+ const note = document.getElementById("cmsWorkflowNote");
+ if(action === "headline"){
+  if(headline) headline.value = "హైదరాబాద్ నీటి సరఫరాపై సమీక్ష.. వార్డ్ స్థాయిలో ప్రత్యేక బృందాలు";
+  if(english) english.value = "Hyderabad water supply reviewed; ward teams to monitor services";
+  if(note) note.textContent = "Assistant generated stronger Telugu and English headlines.";
+ }
+ if(action === "article"){
+  if(summary) summary.value = "వేసవి డిమాండ్ నేపథ్యంలో నీటి సరఫరా, ట్యాంకర్ సేవలు, పైప్‌లైన్ మరమ్మతులపై అధికారులు సమీక్షించారు.";
+  if(body) body.value = "హైదరాబాద్ నగరంలో వేసవి అవసరాల దృష్ట్యా తాగునీటి సరఫరాపై అధికారులు ప్రత్యేక సమీక్ష నిర్వహించారు. పలు డివిజన్లలో సరఫరా సమయాలు, పైప్‌లైన్ మరమ్మతులు, ట్యాంకర్ సేవలు, ప్రజల ఫిర్యాదుల పరిష్కారంపై దృష్టి పెట్టాలని సూచించారు. వార్డ్ స్థాయిలో బృందాలు రోజువారీ నివేదికలు అందిస్తాయని అధికారులు తెలిపారు.";
+  if(note) note.textContent = "Assistant drafted a complete reporter article with local impact and civic context.";
+ }
+ if(action === "fact"){
+  const trust = document.getElementById("cmsTrustScore");
+  if(trust) trust.value = 92;
+  if(note) note.textContent = "Fact check signal: local civic update, low legal risk, image rights must be confirmed before publishing.";
+ }
+ if(action === "translate"){
+  if(english && headline) english.value = "Hyderabad civic officials review drinking water supply plan";
+  if(note) note.textContent = "Assistant translated the headline into English and kept Telugu copy unchanged for publication.";
+ }
+}
+
+﻿function cmsWorkflowForm(role){
+ const article = primaryCmsArticle();
+ const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option ${d === article.district ? "selected" : ""}>${d}</option>`).join("");
+ const categoryOptions = categories.map(([,label])=>`<option ${label === article.category ? "selected" : ""}>${label}</option>`).join("");
  const aiTools = `<div class="cms-ai-box">
-  <div class="cms-ai-title">AI Writing Assistant <span>CLAUDE AI</span></div>
+  <div class="cms-ai-title">AI Writing Assistant <span>NEWSNETA AI</span></div>
   <div class="cms-ai-actions">
-   <button type="button">Generate Headlines</button>
-   <button type="button">Write Article</button>
-   <button type="button">Fact Check</button>
-   <button type="button">Translate</button>
+   <button type="button" data-ai-action="headline">Generate Headlines</button>
+   <button type="button" data-ai-action="article">Write Article</button>
+   <button type="button" data-ai-action="fact">Fact Check</button>
+   <button type="button" data-ai-action="translate">Translate</button>
   </div>
  </div>`;
  const compliance = `
@@ -2689,51 +2806,50 @@ function cmsWorkflowForm(role){
   return `<form class="cms-form two-column" id="storyUploadForm">
    <strong>Upload News Article</strong>
    ${aiTools}
-   <label>Telugu Headline *<textarea placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">Hyderabad civic update: field report</textarea></label>
-   <label>English Headline<input placeholder="English headline (optional)"></label>
+   <label>Telugu Headline *<textarea id="cmsHeadline" placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">${escapeHtml(article.headline)}</textarea></label>
+   <label>English Headline<input id="cmsEnglishHeadline" value="${escapeAttr(article.englishHeadline)}" placeholder="English headline (optional)"></label>
    <div class="cms-form-grid">
-    <label>Category<select>${categories.map(([,label])=>`<option>${label}</option>`).join("")}</select></label>
-    <label>State<select><option>Telangana</option><option>Andhra Pradesh</option><option>National</option><option>International</option></select></label>
+    <label>Category<select id="cmsCategory">${categoryOptions}</select></label>
+    <label>State<select id="cmsState"><option ${article.state === "Telangana" ? "selected" : ""}>Telangana</option><option ${article.state === "Andhra Pradesh" ? "selected" : ""}>Andhra Pradesh</option><option>National</option><option>International</option></select></label>
    </div>
-   <label>District *<select>${districtOptions}</select></label>
-   <label>Summary *<textarea placeholder="2-3 వాక్యాల సారాంశం...">Reporter field notes, official response, local impact, and next update details.</textarea></label>
-   <label>Full Article<textarea class="article-body" placeholder="పూర్తి వార్త వివరాలు..."></textarea></label>
-   <label>Image / Video URL<input placeholder="https://..."></label>
+   <label>District *<select id="cmsDistrict">${districtOptions}</select></label>
+   <label>Summary *<textarea id="cmsSummary" placeholder="2-3 వాక్యాల సారాంశం...">${escapeHtml(article.summary)}</textarea></label>
+   <label>Full Article<textarea id="cmsBody" class="article-body" placeholder="పూర్తి వార్త వివరాలు...">${escapeHtml(article.body)}</textarea></label>
+   <label>Image / Video URL<input id="cmsImage" value="${escapeAttr(article.image)}" placeholder="https://..."></label>
    ${compliance}
    <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Queue</button><button class="pill-btn admin-login-btn" type="submit">Upload and Submit for Review</button></div>
-   <div class="workflow-note" id="cmsWorkflowNote">Draft ready for reporter submission.</div>
+   <div class="workflow-note" id="cmsWorkflowNote">Sample draft loaded. Reporter can edit, use assistant tools, and submit for review.</div>
   </form>`;
  }
  if(role === "reviewer"){
   return `<form class="cms-form two-column" id="storyUploadForm">
    <strong>Review and Approve News</strong>
    ${aiTools}
-   <label>Review queue<select><option>AP investment story</option><option>Viral video claim</option><option>Telangana district update</option></select></label>
-   <label>Reviewer notes<textarea>Fact check complete. Headline tightened. Trust score updated.</textarea></label>
+   <label>Review queue<select id="cmsReviewSelect"><option>${escapeHtml(article.headline)} (${articleStatusLabel(article.status)})</option></select></label>
+   <label>Reviewer notes<textarea id="cmsReviewerNotes">${escapeHtml(article.notes || "Fact check complete. Headline tightened. Trust score updated.")}</textarea></label>
    <div class="cms-form-grid">
-    <label>Trust score<input type="number" value="91"></label>
-    <label>Status<select><option>Approve</option><option>Send back to reporter</option><option>Reject</option></select></label>
+    <label>Trust score<input id="cmsTrustScore" type="number" value="${article.trust || 91}"></label>
+    <label>Status<select id="cmsReviewStatus"><option>Approve</option><option>Send back to reporter</option><option>Reject</option></select></label>
    </div>
    ${compliance}
    <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Review Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve for Publish Queue</button></div>
-   <div class="workflow-note" id="cmsWorkflowNote">Story ready for reviewer decision.</div>
+   <div class="workflow-note" id="cmsWorkflowNote">Story ready for reviewer decision. Current status: ${articleStatusLabel(article.status)}.</div>
   </form>`;
  }
  return `<form class="cms-form two-column" id="storyUploadForm">
   <strong>Publish News</strong>
   ${aiTools}
-  <label>Publish queue<select><option>Approved Telangana district story</option><option>Approved AP business story</option><option>Breaking weather alert</option></select></label>
+  <label>Publish queue<select id="cmsPublishSelect"><option>${escapeHtml(article.headline)} (${articleStatusLabel(article.status)})</option></select></label>
   <div class="cms-form-grid">
-   <label>Homepage slot<select><option>Top carousel</option><option>Latest live</option><option>District lead</option></select></label>
-   <label>Schedule<select><option>Publish now</option><option>Today's edition</option><option>Breaking ticker only</option></select></label>
+   <label>Homepage slot<select id="cmsHomepageSlot"><option>Top carousel</option><option>Latest live</option><option>District lead</option></select></label>
+   <label>Schedule<select id="cmsSchedule"><option>Publish now</option><option>Today's edition</option><option>Breaking ticker only</option></select></label>
   </div>
-  <label>Push alert copy<input value="Breaking update from NewsNeta"></label>
+  <label>Push alert copy<input id="cmsPushCopy" value="${escapeAttr(article.headline)}"></label>
   ${compliance}
-  <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
-  <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition.</div>
+  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
+  <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition. Current status: ${articleStatusLabel(article.status)}.</div>
  </form>`;
 }
-
 function cmsWorkflowLane(role){
  const active = {reporter:1, reviewer:2, admin:3}[role] || 1;
  const stages = [
@@ -2770,23 +2886,27 @@ function cmsVideoScreen(role){
  </div>`;
 }
 
-function cmsManageScreen(role){
+﻿function cmsManageScreen(role){
+ const queue = cmsQueueForRole(role);
+ const rows = queue.length ? queue.map(article=>{
+  const canSubmit = role === "reporter" && article.status === "draft";
+  const canApprove = role === "reviewer" && article.status === "review";
+  const canPublish = role === "admin" && article.status === "approved";
+  const canDelete = role === "admin";
+  return `<div class="queue-item"><span><strong>${escapeHtml(article.headline)}</strong><br><small>${escapeHtml(article.district)} • ${escapeHtml(article.category)} • <span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></small></span><div class="queue-actions">${canSubmit ? `<button type="button" data-queue-action="submit" data-article-id="${escapeAttr(article.id)}">Submit</button>` : ""}${canApprove ? `<button type="button" data-queue-action="approve" data-article-id="${escapeAttr(article.id)}">Approve</button>` : ""}${canPublish ? `<button type="button" data-queue-action="publish" data-article-id="${escapeAttr(article.id)}">Publish</button>` : ""}<button type="button" data-cms-screen-jump="article">Open</button>${canDelete ? `<button class="danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete</button>` : ""}</div></div>`;
+ }).join("") : `<div class="queue-item"><span>No active CMS articles<br><small>Use Article Upload to recreate the sample story.</small></span><div class="queue-actions"><button type="button" data-reset-sample="true">Create Sample</button></div></div>`;
  return `<div class="cms-screen">
-  <div class="cms-screen-head"><div><strong>Manage Content</strong><small>Review queues, featured slots, corrections and takedowns.</small></div><span class="chip">Manage</span></div>
+  <div class="cms-screen-head"><div><strong>Manage Content</strong><small>Working queue for reporter upload, reviewer approval, admin publish and delete rights.</small></div><span class="chip">Manage</span></div>
   <div class="cms-feature-grid">
-   <div class="cms-feature-card"><strong>Pending Articles</strong><small>12 stories waiting for review or publish.</small></div>
-   <div class="cms-feature-card"><strong>Breaking Ticker</strong><small>4 active ticker items across homepage and mobile.</small></div>
-   <div class="cms-feature-card"><strong>District Queue</strong><small>Telangana and AP district reports grouped by location.</small></div>
-   <div class="cms-feature-card"><strong>Corrections Desk</strong><small>Track updates, corrections, and reader grievances.</small></div>
+   <div class="cms-feature-card"><strong>Reporter Drafts</strong><small>${cmsArticles.filter(a=>a.status === "draft").length} stories can be edited or submitted.</small></div>
+   <div class="cms-feature-card"><strong>Review Queue</strong><small>${cmsArticles.filter(a=>a.status === "review").length} stories awaiting reviewer action.</small></div>
+   <div class="cms-feature-card"><strong>Approved Queue</strong><small>${cmsArticles.filter(a=>a.status === "approved").length} stories ready for admin publish.</small></div>
+   <div class="cms-feature-card"><strong>Published Articles</strong><small>${cmsArticles.filter(a=>a.status === "published").length} CMS stories are live on the home feed.</small></div>
   </div>
-  <div class="queue-list">
-   <div class="queue-item"><span>Hyderabad civic update<br><small>Reporter draft</small></span><b>Open</b></div>
-   <div class="queue-item"><span>AP investment story<br><small>Reviewer approved</small></span><b>Publish</b></div>
-   <div class="queue-item"><span>Weather alert<br><small>Breaking ticker</small></span><b>Edit</b></div>
-  </div>
+  <div class="queue-list">${rows}</div>
+  <div class="workflow-note" id="cmsWorkflowNote">${role === "admin" ? "Admin can publish approved stories and delete any article." : role === "reviewer" ? "Reviewer can approve stories submitted by reporters." : "Reporter can upload drafts and submit them for review."}</div>
  </div>`;
 }
-
 function cmsAnalyticsScreen(){
  return `<div class="cms-screen">
   <div class="cms-screen-head"><div><strong>Analytics</strong><small>Traffic, districts, engagement, alerts and AI quality.</small></div><span class="chip">Live</span></div>
@@ -2817,8 +2937,65 @@ function cmsScreenMarkup(role, screen="article"){
 function bindCmsScreen(role){
  document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
   event.preventDefault();
-  const verbs = {admin:"Published to home, ticker and today's edition.", reporter:"Submitted to reviewer queue.", reviewer:"Approved for admin publish queue."};
-  document.getElementById("cmsWorkflowNote").textContent = verbs[role] || "Workflow updated.";
+  const article = primaryCmsArticle();
+  if(role === "reporter"){
+   article.headline = document.getElementById("cmsHeadline")?.value.trim() || article.headline;
+   article.englishHeadline = document.getElementById("cmsEnglishHeadline")?.value.trim() || article.englishHeadline;
+   article.category = document.getElementById("cmsCategory")?.value || article.category;
+   article.state = document.getElementById("cmsState")?.value || article.state;
+   article.district = document.getElementById("cmsDistrict")?.value || article.district;
+   article.summary = document.getElementById("cmsSummary")?.value.trim() || article.summary;
+   article.body = document.getElementById("cmsBody")?.value.trim() || article.body;
+   article.image = document.getElementById("cmsImage")?.value.trim() || article.image;
+   article.status = "review";
+   article.reporter = currentCmsUser?.name || article.reporter;
+   article.notes = "Submitted by reporter for reviewer fact check.";
+   document.getElementById("cmsWorkflowNote").textContent = "Reporter submitted the sample article to the reviewer queue.";
+  }else if(role === "reviewer"){
+   const decision = document.getElementById("cmsReviewStatus")?.value || "Approve";
+   article.trust = Number(document.getElementById("cmsTrustScore")?.value || article.trust || 91);
+   article.notes = document.getElementById("cmsReviewerNotes")?.value.trim() || "Reviewer approved.";
+   article.reviewer = currentCmsUser?.name || "Review Desk";
+   article.status = decision === "Approve" ? "approved" : decision === "Reject" ? "draft" : "draft";
+   document.getElementById("cmsWorkflowNote").textContent = article.status === "approved" ? "Reviewer approved the sample article for admin publish queue." : "Reviewer sent the article back to reporter.";
+  }else{
+   if(article.status !== "approved" && article.status !== "published"){
+    document.getElementById("cmsWorkflowNote").textContent = "Admin can publish after reviewer approval. Use reviewer login or approve in Manage Queue first.";
+    return;
+   }
+   publishCmsArticle(article);
+   document.getElementById("cmsWorkflowNote").textContent = "Admin published the sample article to homepage, ticker and today's edition.";
+  }
+  saveCmsArticles();
+  switchCmsScreen("manage");
+ });
+ document.querySelectorAll("[data-ai-action]").forEach(button=>{
+  button.addEventListener("click",()=>fillAssistantContent(button.dataset.aiAction));
+ });
+ document.querySelectorAll("[data-queue-action]").forEach(button=>{
+  button.addEventListener("click",()=>{
+   const article = cmsArticles.find(item=>item.id === button.dataset.articleId);
+   if(!article) return;
+   const action = button.dataset.queueAction;
+   if(action === "submit") article.status = "review";
+   if(action === "approve"){ article.status = "approved"; article.reviewer = currentCmsUser?.name || "Review Desk"; article.trust = article.trust || 91; }
+   if(action === "publish") publishCmsArticle(article);
+   saveCmsArticles();
+   switchCmsScreen("manage");
+  });
+ });
+ document.querySelectorAll("[data-delete-article]").forEach(button=>{
+  button.addEventListener("click",()=>{
+   deleteCmsArticle(button.dataset.deleteArticle);
+   switchCmsScreen("manage");
+  });
+ });
+ document.querySelectorAll("[data-reset-sample]").forEach(button=>{
+  button.addEventListener("click",()=>{
+   cmsArticles = [{...cmsSampleArticle}];
+   saveCmsArticles();
+   switchCmsScreen("article");
+  });
  });
  document.querySelectorAll("[data-cms-screen-jump]").forEach(button=>{
   button.addEventListener("click",()=>switchCmsScreen(button.dataset.cmsScreenJump));

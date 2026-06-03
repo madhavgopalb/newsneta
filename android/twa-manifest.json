@@ -15,8 +15,8 @@
   "startUrl": "/",
   "scope": "/",
   "orientation": "portrait",
-  "iconUrl": "https://newsneta.com/assets/newsneta-logo.jpg",
-  "maskableIconUrl": "https://newsneta.com/assets/newsneta-logo.jpg",
+  "iconUrl": "https://newsneta.com/assets/app/icon-512.png",
+  "maskableIconUrl": "https://newsneta.com/assets/app/maskable-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android/newsneta-release.keystore",

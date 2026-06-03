@@ -19,33 +19,45 @@
       "name": "Latest News",
       "short_name": "Latest",
       "url": "/#latestGrid",
-      "icons": [{ "src": "assets/newsneta-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+      "icons": [{ "src": "assets/app/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "District News",
       "short_name": "Districts",
       "url": "/#categoryNav",
-      "icons": [{ "src": "assets/newsneta-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+      "icons": [{ "src": "assets/app/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Short News Reels",
       "short_name": "Reels",
       "url": "/#reels",
-      "icons": [{ "src": "assets/newsneta-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+      "icons": [{ "src": "assets/app/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "icons": [
     {
-      "src": "assets/newsneta-logo.jpg",
+      "src": "assets/app/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/newsneta-logo.jpg",
+      "src": "assets/app/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "assets/app/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/app/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

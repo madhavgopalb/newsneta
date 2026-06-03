@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "netlify dev",
-    "check": "node --check netlify/functions/news.js"
+    "check": "node --check netlify/functions/news.js",
+    "check:playstore": "node scripts/verify-playstore-readiness.js"
   },
   "dependencies": {
     "rss-parser": "^3.13.0"

@@ -9,3 +9,8 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Android release signing secrets
+android/*.keystore
+android/*.jks
+android/key.properties

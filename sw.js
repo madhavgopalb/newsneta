@@ -1,11 +1,15 @@
-const CACHE_NAME = "newsneta-pwa-v40";
+const CACHE_NAME = "newsneta-pwa-v41";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.json",
   "/assets/newsneta-logo.jpg",
   "/assets/newsneta-logo-transparent.png",
-  "/assets/newsneta-logo-header.png"
+  "/assets/newsneta-logo-header.png",
+  "/assets/app/icon-192.png",
+  "/assets/app/icon-512.png",
+  "/assets/app/maskable-192.png",
+  "/assets/app/maskable-512.png"
 ];
 
 self.addEventListener("install", event => {

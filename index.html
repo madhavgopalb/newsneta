@@ -219,8 +219,9 @@ button{cursor:pointer}
  overflow:hidden;
 }
 .ticker-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:9px 16px}
-.ticker-label{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;background:var(--brand);padding:7px 9px;border-radius:999px;white-space:nowrap}
-.ticker-track{white-space:nowrap;animation:marquee 34s linear infinite;color:#f8fafc;font-size:14px}
+.ticker-label{position:relative;z-index:2;flex:0 0 auto;display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;background:var(--brand);padding:7px 9px;border-radius:999px;white-space:nowrap}
+.ticker-track{flex:1;min-width:0;overflow:hidden;white-space:nowrap;color:#f8fafc;font-size:14px}
+.ticker-copy{display:inline-block;min-width:max-content;padding-left:100%;animation:marquee 34s linear infinite;will-change:transform}
 .edition-strip{border-bottom:1px solid var(--line);background:var(--surface)}
 .edition-inner{max-width:1240px;margin:0 auto;padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
 .quick-editions,.reader-tools{display:flex;gap:8px;overflow:auto;scrollbar-width:none}
@@ -834,7 +835,7 @@ button{cursor:pointer}
 }
 .bottom-nav a{flex:1;text-align:center;color:var(--muted);font-size:11px;font-weight:800;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .bottom-nav span{display:block;font-size:20px;margin-bottom:2px}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-55%)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @keyframes pulse{50%{opacity:.45;transform:scale(.9)}}
 @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
 @keyframes shortProgress{from{width:0}to{width:100%}}
@@ -995,7 +996,7 @@ button{cursor:pointer}
  <div class="ticker" aria-label="Breaking news ticker">
   <div class="ticker-inner">
    <div class="ticker-label"><span class="live-dot"></span>BREAKING</div>
-   <div class="ticker-track" id="tickerTrack">తాజా వార్తలు లోడ్ అవుతున్నాయి...</div>
+   <div class="ticker-track" id="tickerTrack"><span class="ticker-copy">తాజా వార్తలు లోడ్ అవుతున్నాయి...</span></div>
  </div>
 </div>
 
@@ -2072,7 +2073,9 @@ function render(){
  renderPoll();
  renderLiveWidgets();
  renderWeather();
- document.getElementById("tickerTrack").textContent = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
+ const tickerText = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
+ const tickerTrack = document.getElementById("tickerTrack");
+ tickerTrack.innerHTML = `<span class="ticker-copy">${escapeHtml(tickerText)}</span>`;
  document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></a>`).join("");
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");

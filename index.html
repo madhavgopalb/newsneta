@@ -142,6 +142,7 @@ button{cursor:pointer}
  gap:8px;
  box-shadow:0 8px 24px rgba(15,23,42,.06);
 }
+.pill-btn.menu-toggle{display:none}
 .pill-btn{padding:0 14px;font-weight:800}
 .admin-login-btn{background:var(--brand);color:#fff;border-color:var(--brand)}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 6px rgba(215,25,32,.16);animation:pulse 1.4s infinite}
@@ -875,7 +876,7 @@ button{cursor:pointer}
  .icon-btn,.pill-btn{min-width:40px;height:40px}
  .pill-btn .label{display:none}
  .search-wrap input{height:42px;font-size:16px}
- .menu-toggle{display:inline-flex}
+ .pill-btn.menu-toggle{display:inline-flex;width:44px;padding:0;font-size:20px}
  .nav-menu-row{grid-template-columns:1fr;padding:0 12px 8px;gap:8px}
  .nav{display:none;gap:7px;flex-wrap:wrap;overflow:visible;max-height:46vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px}
  .nav-menu-row.menu-open .nav{display:flex}
@@ -927,7 +928,8 @@ button{cursor:pointer}
  .reel{min-height:70svh}
  .news-card:hover{transform:none}
  .bottom-nav{display:flex}
- .floating-ai{bottom:calc(78px + env(safe-area-inset-bottom));right:12px;padding:10px 12px;font-size:13px}
+ .floating-ai{bottom:calc(78px + env(safe-area-inset-bottom));right:12px;max-width:calc(100vw - 86px);padding:10px 12px;font-size:13px}
+ .top-arrow{left:12px;right:auto;bottom:calc(78px + env(safe-area-inset-bottom));width:42px;height:42px;font-size:20px;z-index:71}
  .ai-panel{bottom:calc(132px + env(safe-area-inset-bottom));right:12px}
  .story-modal{max-height:92vh}
  .story-modal-body{padding:14px}
@@ -982,7 +984,7 @@ button{cursor:pointer}
    </div>
   </header>
   <div class="nav-menu-row" aria-label="Main menu">
-   <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="categoryNav">☰ Categories</button>
+   <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="categoryNav">☰</button>
    <nav class="nav" aria-label="News categories" id="categoryNav"></nav>
    <div class="nav-districts" aria-label="District news menu">
     <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>

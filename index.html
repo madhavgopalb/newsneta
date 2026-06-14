@@ -702,9 +702,22 @@ button{cursor:pointer}
 .queue-actions button.danger{border-color:rgba(199,11,47,.28);color:#c70b2f;background:#fff5f7}
 .status-pill{display:inline-flex;align-items:center;border-radius:999px;background:#f1f5f9;color:#334155;padding:4px 8px;font-size:11px;font-weight:900;text-transform:uppercase}
 .status-pill.published{background:#dcfce7;color:#166534}
+.status-pill.scheduled{background:#ede9fe;color:#5b21b6}
+.status-pill.admin_review,.status-pill.reviewer_approved,.status-pill.approved{background:#dbeafe;color:#1d4ed8}
 .status-pill.approved{background:#e0f2fe;color:#075985}
-.status-pill.review{background:#fef3c7;color:#92400e}
+.status-pill.review,.status-pill.submitted,.status-pill.under_review{background:#fef3c7;color:#92400e}
+.status-pill.changes_requested{background:#ffedd5;color:#9a3412}
+.status-pill.reviewer_rejected,.status-pill.rejected,.status-pill.unpublished,.status-pill.archived{background:#fee2e2;color:#991b1b}
 .status-pill.draft{background:#f1f5f9;color:#475569}
+.cms-status-grid,.cms-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cms-meta-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:10px}
+.cms-meta-card span{display:block;color:var(--muted);font:800 11px/1 Inter,sans-serif;text-transform:uppercase}
+.cms-meta-card b{display:block;margin-top:5px;font-size:15px}
+.audit-list,.notification-list,.media-list{display:grid;gap:8px}
+.audit-item,.notification-item,.media-item{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px}
+.audit-item small,.notification-item small,.media-item small{display:block;color:var(--muted);font-weight:800;margin-top:3px}
+.storage-note{padding:10px;border-radius:8px;background:#eff6ff;color:#1e3a8a;font-weight:800}
+.publish-validation{padding:10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-weight:900}
 .cms-form{display:grid;gap:14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:16px}
 .cms-form.two-column{grid-template-columns:1fr 1fr;align-items:start}
 .cms-form.two-column > strong,.cms-form.two-column > .cms-ai-box,.cms-form.two-column > .cms-full,.cms-form.two-column > .cms-form-actions,.cms-form.two-column > .workflow-note{grid-column:1/-1}
@@ -1475,9 +1488,11 @@ button{cursor:pointer}
 
 <script>
 const categories = [
- ["politics","Politics"],["telangana","Telangana"],["ap","Andhra Pradesh"],["national","National"],
- ["international","International"],["cinema","Cinema"],["sports","Sports"],["technology","Technology"],
- ["business","Business"],["viral","Viral"]
+ ["latest","Latest News"],["politics","Politics"],["ap","Andhra Pradesh"],["telangana","Telangana"],
+ ["district","District News"],["national","National"],["international","International"],["business","Business"],
+ ["sports","Sports"],["entertainment","Entertainment"],["cinema","Cinema"],["technology","Technology"],
+ ["education","Education"],["health","Health"],["crime","Crime"],["weather","Weather"],["jobs","Jobs"],
+ ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
 const refreshIntervalMs = 5 * 60 * 1000;
@@ -1558,8 +1573,94 @@ function saveCmsArticles(){
  localStorage.setItem("newsneta-cms-articles", JSON.stringify(cmsArticles));
 }
 
+function slugify(value){
+ return String(value || "newsneta-story").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,90) || `story-${Date.now()}`;
+}
+
+function cmsArticleDefaults(article = {}){
+ const now = new Date().toISOString();
+ const headline = article.headline || article.title || "NewsNeta newsroom article";
+ const categoryId = categoryIdForValue(article.category || "telangana");
+ const imageUrl = article.image || article.thumbnail || "assets/newsneta-logo.jpg";
+ return {
+  id: article.id || `cms-${Date.now()}`,
+  status: article.status || "draft",
+  headline,
+  shortHeadline: article.shortHeadline || article.englishHeadline || headline,
+  englishHeadline: article.englishHeadline || "",
+  category: categoryId,
+  subcategory: article.subcategory || "General",
+  state: article.state || "Telangana",
+  district: article.district || "Hyderabad",
+  tags: article.tags || `${categoryLabelForId(categoryId)}, ${article.district || "Hyderabad"}`,
+  author: article.author || article.reporter || "NewsNeta Desk",
+  reporterLocation: article.reporterLocation || article.district || "Hyderabad",
+  language: article.language || "Telugu",
+  breaking: Boolean(article.breaking),
+  featuredRequest: Boolean(article.featuredRequest),
+  featured: Boolean(article.featured),
+  pinned: Boolean(article.pinned),
+  priority: article.priority || "Normal",
+  seoTitle: article.seoTitle || article.englishHeadline || headline,
+  metaDescription: article.metaDescription || article.summary || "NewsNeta Telugu news update with verified newsroom workflow.",
+  slug: article.slug || slugify(article.englishHeadline || headline),
+  sourceReference: article.sourceReference || "Reporter notes",
+  factCheckNotes: article.factCheckNotes || article.notes || "Source, location, image rights and legal checks pending.",
+  summary: article.summary || "",
+  body: article.body || "",
+  image: imageUrl,
+  videoUrl: article.videoUrl || "",
+  youtubeUrl: article.youtubeUrl || "",
+  thumbnail: article.thumbnail || imageUrl,
+  mediaCaption: article.mediaCaption || article.caption || headline,
+  altText: article.altText || headline,
+  videoTranscript: article.videoTranscript || "",
+  media: Array.isArray(article.media) && article.media.length ? article.media : [{
+   id:`media-${article.id || Date.now()}`,
+   media_type:imageUrl.match(/\.(mp4|mov|webm)(\?|$)/i) ? "video" : "image",
+   file_name:(imageUrl.split("/").pop() || "newsneta-media").split("?")[0],
+   original_file_name:(imageUrl.split("/").pop() || "newsneta-media").split("?")[0],
+   storage_provider:"Supabase Storage",
+   storage_bucket:"reporter-uploads",
+   storage_path:`reporter-uploads/${slugify(headline)}`,
+   public_url:imageUrl,
+   thumbnail_url:article.thumbnail || imageUrl,
+   file_size:"metadata only",
+   mime_type:imageUrl.match(/\.(mp4|mov|webm)(\?|$)/i) ? "video/mp4" : "image/webp",
+   width:900,
+   height:600,
+   duration:article.duration || "",
+   caption:article.mediaCaption || headline,
+   alt_text:article.altText || headline,
+   uploaded_by:article.reporter || "District Reporter",
+   uploaded_at:article.uploadedAt || now
+  }],
+  reporter: article.reporter || "District Reporter",
+  reviewer: article.reviewer || "",
+  admin: article.admin || "",
+  trust: article.trust || 88,
+  notes: article.notes || "",
+  reviewComments: article.reviewComments || "",
+  correctionNotes: article.correctionNotes || "",
+  scheduledAt: article.scheduledAt || null,
+  publishedAt: article.publishedAt || null,
+  updatedAt: article.updatedAt || now,
+  workflow: Array.isArray(article.workflow) && article.workflow.length ? article.workflow : [{
+   from_status:"new", to_status:article.status || "draft", action_taken:"Article created", comments:"Workflow initialized", changed_by:article.reporter || "District Reporter", changed_at:now
+  }],
+  notifications: Array.isArray(article.notifications) ? article.notifications : [],
+  analytics: article.analytics || {views:0, shares:0, likes:0, comments_count:0, avg_read_time:"0m"}
+ };
+}
+
+function hydrateCmsArticles(){
+ cmsArticles = cmsArticles.map(cmsArticleDefaults);
+}
+
 function primaryCmsArticle(){
+ hydrateCmsArticles();
  if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")) cmsArticles = [{...cmsSampleArticle}];
+ cmsArticles = cmsArticles.map(cmsArticleDefaults);
  return cmsArticles[0];
 }
 
@@ -3038,8 +3139,75 @@ function dashboardConfig(role){
 }
 
 function articleStatusLabel(status){
- const labels = {draft:"Reporter draft", review:"In reviewer queue", approved:"Reviewer approved", published:"Published", deleted:"Deleted"};
+ const labels = {
+  draft:"Draft",
+  submitted:"Submitted",
+  under_review:"Under Review",
+  changes_requested:"Changes Requested",
+  reviewer_approved:"Reviewer Approved",
+  reviewer_rejected:"Reviewer Rejected",
+  admin_review:"Admin Review",
+  published:"Published",
+  scheduled:"Scheduled",
+  rejected:"Rejected",
+  unpublished:"Unpublished",
+  archived:"Archived",
+  review:"Submitted",
+  approved:"Reviewer Approved",
+  deleted:"Deleted"
+ };
  return labels[status] || status;
+}
+
+function workflowRoleForStatus(status){
+ if(["draft","changes_requested"].includes(status)) return "reporter";
+ if(["submitted","under_review","review"].includes(status)) return "reviewer";
+ if(["reviewer_approved","admin_review","approved","scheduled"].includes(status)) return "admin";
+ return "all";
+}
+
+function addWorkflowEntry(article, toStatus, action, comments){
+ const fromStatus = article.status || "draft";
+ article.status = toStatus;
+ article.updatedAt = new Date().toISOString();
+ article.workflow = Array.isArray(article.workflow) ? article.workflow : [];
+ article.workflow.unshift({
+  from_status:fromStatus,
+  to_status:toStatus,
+  action_taken:action,
+  comments:comments || "",
+  changed_by:currentCmsUser?.name || "NewsNeta Desk",
+  role:currentCmsUser?.role || "system",
+  changed_at:new Date().toISOString(),
+  ip_address:"client-session"
+ });
+}
+
+function notifyArticle(article, type, message){
+ article.notifications = Array.isArray(article.notifications) ? article.notifications : [];
+ article.notifications.unshift({
+  id:`note-${Date.now()}`,
+  user_id:workflowRoleForStatus(article.status),
+  article_id:article.id,
+  notification_type:type,
+  message,
+  read_status:false,
+  created_at:new Date().toISOString()
+ });
+}
+
+function validatePublishReady(article){
+ const missing = [];
+ if(!article.headline) missing.push("title");
+ if(!article.body) missing.push("body");
+ if(!article.category) missing.push("category");
+ if(!article.seoTitle) missing.push("SEO title");
+ if(!article.metaDescription) missing.push("meta description");
+ if(!article.slug) missing.push("slug");
+ if(!article.reporter) missing.push("reporter");
+ if(!["reviewer_approved","admin_review","approved","scheduled","published"].includes(article.status)) missing.push("reviewer approval");
+ if(!article.media?.length && !article.image && !article.videoUrl && !article.youtubeUrl) missing.push("media");
+ return missing;
 }
 
 function categoryIdForValue(value){
@@ -3081,8 +3249,10 @@ function cmsQueueForRole(role){
 }
 
 function publishCmsArticle(article){
- article.status = "published";
+ addWorkflowEntry(article, "published", "Admin published", "Article is visible on homepage, category, district, search, RSS/sitemap queues and push queue when breaking.");
  article.publishedAt = new Date().toISOString();
+ article.admin = currentCmsUser?.name || "Admin Desk";
+ notifyArticle(article, "article_published", "Article published and distributed to public surfaces.");
  const story = publishedCmsStories(categoryIdForValue(article.category)).find(item=>item.id === `cms-${article.id}`);
  const existingIndex = stories.findIndex(item=>item.id === story.id);
  if(existingIndex >= 0) stories[existingIndex] = story;
@@ -3153,17 +3323,51 @@ function cmsWorkflowForm(role){
    ${aiTools}
    <label>Telugu Headline *<textarea id="cmsHeadline" placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">${escapeHtml(article.headline)}</textarea></label>
    <label>English Headline<input id="cmsEnglishHeadline" value="${escapeAttr(article.englishHeadline)}" placeholder="English headline (optional)"></label>
+   <label>Short Headline<input id="cmsShortHeadline" value="${escapeAttr(article.shortHeadline)}" placeholder="Short mobile headline"></label>
    <div class="cms-form-grid">
     <label>Category<select id="cmsCategory">${categoryOptions}</select></label>
+    <label>Subcategory<input id="cmsSubcategory" value="${escapeAttr(article.subcategory)}" placeholder="Politics, civic, cricket..."></label>
+   </div>
+   <div class="cms-form-grid">
     <label>State<select id="cmsState"><option ${article.state === "Telangana" ? "selected" : ""}>Telangana</option><option ${article.state === "Andhra Pradesh" ? "selected" : ""}>Andhra Pradesh</option><option>National</option><option>International</option></select></label>
+    <label>Language<select id="cmsLanguage"><option ${article.language === "Telugu" ? "selected" : ""}>Telugu</option><option ${article.language === "English" ? "selected" : ""}>English</option></select></label>
    </div>
    <label>District *<select id="cmsDistrict">${districtOptions}</select></label>
+   <div class="cms-form-grid">
+    <label>Author Name<input id="cmsAuthor" value="${escapeAttr(article.author)}" placeholder="Reporter or desk name"></label>
+    <label>Reporter Location<input id="cmsReporterLocation" value="${escapeAttr(article.reporterLocation)}" placeholder="City / field location"></label>
+   </div>
+   <label>Tags<input id="cmsTags" value="${escapeAttr(article.tags)}" placeholder="comma separated tags"></label>
    <label>Summary *<textarea id="cmsSummary" placeholder="2-3 వాక్యాల సారాంశం...">${escapeHtml(article.summary)}</textarea></label>
    <label>Full Article<textarea id="cmsBody" class="article-body" placeholder="పూర్తి వార్త వివరాలు...">${escapeHtml(article.body)}</textarea></label>
-   <label>Image / Video URL<input id="cmsImage" value="${escapeAttr(article.image)}" placeholder="https://..."></label>
+   <div class="cms-form-grid">
+    <label>SEO Title<input id="cmsSeoTitle" value="${escapeAttr(article.seoTitle)}" placeholder="SEO title"></label>
+    <label>Slug<input id="cmsSlug" value="${escapeAttr(article.slug)}" placeholder="seo-friendly-slug"></label>
+   </div>
+   <label>Meta Description<textarea id="cmsMetaDescription" placeholder="Search result description">${escapeHtml(article.metaDescription)}</textarea></label>
+   <label>Source Reference<textarea id="cmsSourceReference" placeholder="Source reference, contact, official note">${escapeHtml(article.sourceReference)}</textarea></label>
+   <label>Fact-check Notes<textarea id="cmsFactCheckNotes" placeholder="Verification, legal and safety notes">${escapeHtml(article.factCheckNotes)}</textarea></label>
+   <div class="cms-form-grid">
+    <label>Image URL<input id="cmsImage" value="${escapeAttr(article.image)}" placeholder="https://..."></label>
+    <label>Thumbnail URL<input id="cmsThumbnail" value="${escapeAttr(article.thumbnail)}" placeholder="https://..."></label>
+   </div>
+   <div class="cms-form-grid">
+    <label>Hosted Video URL<input id="cmsVideoUrl" value="${escapeAttr(article.videoUrl)}" placeholder="https://...mp4"></label>
+    <label>YouTube Link<input id="cmsYoutubeUrl" value="${escapeAttr(article.youtubeUrl)}" placeholder="https://youtube.com/..."></label>
+   </div>
+   <div class="cms-form-grid">
+    <label>Media Caption<input id="cmsMediaCaption" value="${escapeAttr(article.mediaCaption)}" placeholder="Caption for images/videos"></label>
+    <label>Alt Text<input id="cmsAltText" value="${escapeAttr(article.altText)}" placeholder="Accessible image description"></label>
+   </div>
+   <label>Video Transcript<textarea id="cmsVideoTranscript" placeholder="Transcript for video news">${escapeHtml(article.videoTranscript)}</textarea></label>
+   <div class="compliance-checks">
+    <label><input id="cmsBreaking" type="checkbox" ${article.breaking ? "checked" : ""}> Breaking news flag</label>
+    <label><input id="cmsFeaturedRequest" type="checkbox" ${article.featuredRequest ? "checked" : ""}> Request featured placement</label>
+   </div>
+   <div class="storage-note">Media files use cloud storage metadata. Production upload should use signed URLs with Supabase Storage, S3, or Cloudflare R2; the database stores URLs and metadata only.</div>
    ${compliance}
-   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Queue</button><button class="pill-btn admin-login-btn" type="submit">Upload and Submit for Review</button></div>
-   <div class="workflow-note" id="cmsWorkflowNote">Sample draft loaded. Reporter can edit, use assistant tools, and submit for review.</div>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-save-draft="true">Save Draft</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Queue</button><button class="pill-btn admin-login-btn" type="submit">Submit for Review</button></div>
+   <div class="workflow-note" id="cmsWorkflowNote">Reporter can save drafts, attach media metadata, and submit for review.</div>
   </form>`;
  }
  if(role === "reviewer"){
@@ -3191,7 +3395,7 @@ function cmsWorkflowForm(role){
   </div>
   <label>Push alert copy<input id="cmsPushCopy" value="${escapeAttr(article.headline)}"></label>
   ${compliance}
-  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
+  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="unpublish" data-article-id="${escapeAttr(article.id)}">Unpublish</button><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="archive" data-article-id="${escapeAttr(article.id)}">Archive</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Final Decision</button></div>
   <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition. Current status: ${articleStatusLabel(article.status)}.</div>
  </form>`;
 }
@@ -3227,16 +3431,43 @@ function cmsVideoScreen(role){
    <label>Description<textarea>Short video summary, source notes, and publish instructions.</textarea></label>
    <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Video Queue</button><button class="pill-btn admin-login-btn" type="submit">${role === "reviewer" ? "Approve Video" : role === "admin" ? "Publish Video" : "Submit Video"}</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Video workspace ready.</div>
-  </form>
+ </form>
+ </div>`;
+}
+
+function cmsWorkflowAudit(article){
+ const history = (article.workflow || []).slice(0,6).map(item=>`<div class="audit-item"><b>${escapeHtml(articleStatusLabel(item.from_status))} -> ${escapeHtml(articleStatusLabel(item.to_status))}</b><small>${escapeHtml(item.action_taken)} by ${escapeHtml(item.changed_by)} • ${formatStoryDate(item.changed_at)}</small><small>${escapeHtml(item.comments || "")}</small></div>`).join("");
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Audit Log</strong><small>Every editorial action is tracked with user, role, timestamp and status movement.</small></div><span class="chip">Audit</span></div>
+  <div class="audit-list">${history || `<div class="audit-item">No audit events yet.</div>`}</div>
+ </div>`;
+}
+
+function cmsNotificationPanel(article, role){
+ const notes = (article.notifications || []).slice(0,6).map(note=>`<div class="notification-item"><b>${escapeHtml(note.notification_type)}</b><small>${escapeHtml(note.message)} • ${formatStoryDate(note.created_at)}</small></div>`).join("");
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Notifications</strong><small>In-app events for reporter, reviewer and admin workflow states.</small></div><span class="chip">${role}</span></div>
+  <div class="notification-list">${notes || `<div class="notification-item">No notifications yet.</div>`}</div>
+ </div>`;
+}
+
+function cmsMediaPanel(article){
+ const media = (article.media || []).map(item=>`<div class="media-item"><b>${escapeHtml(item.media_type)} • ${escapeHtml(item.storage_provider)}</b><small>${escapeHtml(item.storage_bucket)} / ${escapeHtml(item.storage_path)}</small><small>${escapeHtml(item.file_name)} • ${escapeHtml(item.mime_type)} • ${escapeHtml(item.caption || "")}</small></div>`).join("");
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Media Metadata</strong><small>Files stay in cloud storage; CMS stores signed/public URL metadata only.</small></div><span class="chip">Storage</span></div>
+  <div class="media-list">${media || `<div class="media-item">No media metadata yet.</div>`}</div>
+  <div class="storage-note">Security checklist: signed upload URLs, file type validation, size checks, virus scan placeholder, private draft bucket, public CDN delivery after publishing.</div>
  </div>`;
 }
 
 function cmsManageScreen(role){
  const queue = cmsQueueForRole(role);
+ const activeArticle = primaryCmsArticle();
+ const missing = validatePublishReady(activeArticle);
  const rows = queue.length ? queue.map(article=>{
-  const canSubmit = role === "reporter" && article.status === "draft";
-  const canApprove = role === "reviewer" && article.status === "review";
-  const canPublish = role === "admin" && article.status === "approved";
+  const canSubmit = role === "reporter" && ["draft","changes_requested"].includes(article.status);
+  const canApprove = role === "reviewer" && ["submitted","under_review","review"].includes(article.status);
+  const canPublish = role === "admin" && ["reviewer_approved","admin_review","approved","scheduled"].includes(article.status);
   const canDelete = role === "admin";
   return `<div class="queue-item"><span><strong>${escapeHtml(article.headline)}</strong><br><small>${escapeHtml(article.district)} • ${escapeHtml(article.category)} • <span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></small></span><div class="queue-actions">${canSubmit ? `<button type="button" data-queue-action="submit" data-article-id="${escapeAttr(article.id)}">Submit</button>` : ""}${canApprove ? `<button type="button" data-queue-action="approve" data-article-id="${escapeAttr(article.id)}">Approve</button>` : ""}${canPublish ? `<button type="button" data-queue-action="publish" data-article-id="${escapeAttr(article.id)}">Publish</button>` : ""}<button type="button" data-cms-screen-jump="article">Open</button>${canDelete ? `<button class="danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete</button>` : ""}</div></div>`;
  }).join("") : `<div class="queue-item"><span>No active CMS articles<br><small>Use Article Upload to recreate the sample story.</small></span><div class="queue-actions"><button type="button" data-reset-sample="true">Create Sample</button></div></div>`;
@@ -3249,6 +3480,10 @@ function cmsManageScreen(role){
    <div class="cms-feature-card"><strong>Published Articles</strong><small>${cmsArticles.filter(a=>a.status === "published").length} CMS stories are live on the home feed.</small></div>
   </div>
   <div class="queue-list">${rows}</div>
+  ${role === "admin" ? `<div class="${missing.length ? "publish-validation" : "workflow-note"}">${missing.length ? `Publishing validation: ${missing.join(", ")} still required.` : "Publishing validation passed for the active article."}</div>` : ""}
+  ${cmsMediaPanel(activeArticle)}
+  ${cmsNotificationPanel(activeArticle, role)}
+  ${cmsWorkflowAudit(activeArticle)}
   <div class="workflow-note" id="cmsWorkflowNote">${role === "admin" ? "Admin can publish approved stories and delete any article." : role === "reviewer" ? "Reviewer can approve stories submitted by reporters." : "Reporter can upload drafts and submit them for review."}</div>
  </div>`;
 }
@@ -3279,37 +3514,82 @@ function cmsScreenMarkup(role, screen="article"){
  </div>`;
 }
 
+function updateArticleFromReporterForm(article){
+ article.headline = document.getElementById("cmsHeadline")?.value.trim() || article.headline;
+ article.englishHeadline = document.getElementById("cmsEnglishHeadline")?.value.trim() || article.englishHeadline;
+ article.shortHeadline = document.getElementById("cmsShortHeadline")?.value.trim() || article.shortHeadline;
+ article.category = document.getElementById("cmsCategory")?.value || article.category;
+ article.subcategory = document.getElementById("cmsSubcategory")?.value.trim() || article.subcategory;
+ article.state = document.getElementById("cmsState")?.value || article.state;
+ article.district = document.getElementById("cmsDistrict")?.value || article.district;
+ article.language = document.getElementById("cmsLanguage")?.value || article.language;
+ article.author = document.getElementById("cmsAuthor")?.value.trim() || article.author;
+ article.reporterLocation = document.getElementById("cmsReporterLocation")?.value.trim() || article.reporterLocation;
+ article.tags = document.getElementById("cmsTags")?.value.trim() || article.tags;
+ article.summary = document.getElementById("cmsSummary")?.value.trim() || article.summary;
+ article.body = document.getElementById("cmsBody")?.value.trim() || article.body;
+ article.seoTitle = document.getElementById("cmsSeoTitle")?.value.trim() || article.seoTitle || article.headline;
+ article.slug = slugify(document.getElementById("cmsSlug")?.value.trim() || article.slug || article.seoTitle || article.headline);
+ article.metaDescription = document.getElementById("cmsMetaDescription")?.value.trim() || article.metaDescription;
+ article.sourceReference = document.getElementById("cmsSourceReference")?.value.trim() || article.sourceReference;
+ article.factCheckNotes = document.getElementById("cmsFactCheckNotes")?.value.trim() || article.factCheckNotes;
+ article.image = document.getElementById("cmsImage")?.value.trim() || article.image;
+ article.thumbnail = document.getElementById("cmsThumbnail")?.value.trim() || article.thumbnail || article.image;
+ article.videoUrl = document.getElementById("cmsVideoUrl")?.value.trim() || article.videoUrl;
+ article.youtubeUrl = document.getElementById("cmsYoutubeUrl")?.value.trim() || article.youtubeUrl;
+ article.mediaCaption = document.getElementById("cmsMediaCaption")?.value.trim() || article.mediaCaption;
+ article.altText = document.getElementById("cmsAltText")?.value.trim() || article.altText;
+ article.videoTranscript = document.getElementById("cmsVideoTranscript")?.value.trim() || article.videoTranscript;
+ article.breaking = Boolean(document.getElementById("cmsBreaking")?.checked);
+ article.featuredRequest = Boolean(document.getElementById("cmsFeaturedRequest")?.checked);
+ article.reporter = currentCmsUser?.name || article.reporter;
+ article.updatedAt = new Date().toISOString();
+ article.media = cmsArticleDefaults({...article, media:[]}).media;
+ return article;
+}
+
 function bindCmsScreen(role){
  document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
   event.preventDefault();
   const article = primaryCmsArticle();
   if(role === "reporter"){
-   article.headline = document.getElementById("cmsHeadline")?.value.trim() || article.headline;
-   article.englishHeadline = document.getElementById("cmsEnglishHeadline")?.value.trim() || article.englishHeadline;
-   article.category = document.getElementById("cmsCategory")?.value || article.category;
-   article.state = document.getElementById("cmsState")?.value || article.state;
-   article.district = document.getElementById("cmsDistrict")?.value || article.district;
-   article.summary = document.getElementById("cmsSummary")?.value.trim() || article.summary;
-   article.body = document.getElementById("cmsBody")?.value.trim() || article.body;
-   article.image = document.getElementById("cmsImage")?.value.trim() || article.image;
-   article.status = "review";
-   article.reporter = currentCmsUser?.name || article.reporter;
+   updateArticleFromReporterForm(article);
+   addWorkflowEntry(article, "submitted", "Submitted for review", "Reporter submitted article with media, SEO and source notes.");
+   notifyArticle(article, "article_submitted", "Article submitted. Reviewer/editor action required.");
    article.notes = "Submitted by reporter for reviewer fact check.";
-   document.getElementById("cmsWorkflowNote").textContent = "Reporter submitted the sample article to the reviewer queue.";
+   document.getElementById("cmsWorkflowNote").textContent = "Reporter submitted the article to the reviewer queue.";
   }else if(role === "reviewer"){
    const decision = document.getElementById("cmsReviewStatus")?.value || "Approve";
    article.trust = Number(document.getElementById("cmsTrustScore")?.value || article.trust || 91);
    article.notes = document.getElementById("cmsReviewerNotes")?.value.trim() || "Reviewer approved.";
    article.reviewer = currentCmsUser?.name || "Review Desk";
-   article.status = decision === "Approve" ? "approved" : decision === "Reject" ? "draft" : "draft";
-   document.getElementById("cmsWorkflowNote").textContent = article.status === "approved" ? "Reviewer approved the sample article for admin publish queue." : "Reviewer sent the article back to reporter.";
+   if(decision === "Approve"){
+    addWorkflowEntry(article, "reviewer_approved", "Reviewer approved", article.notes);
+    notifyArticle(article, "reviewer_approved", "Reviewer approved article. Admin final decision required.");
+   }else if(decision === "Reject"){
+    addWorkflowEntry(article, "reviewer_rejected", "Reviewer rejected", article.notes);
+    notifyArticle(article, "article_rejected", "Reviewer rejected article with notes.");
+   }else{
+    addWorkflowEntry(article, "changes_requested", "Changes requested", article.notes);
+    notifyArticle(article, "changes_requested", "Reviewer requested changes from reporter.");
+   }
+   document.getElementById("cmsWorkflowNote").textContent = article.status === "reviewer_approved" ? "Reviewer approved the article for admin publish queue." : "Reviewer decision saved.";
   }else{
-   if(article.status !== "approved" && article.status !== "published"){
-    document.getElementById("cmsWorkflowNote").textContent = "Admin can publish after reviewer approval. Use reviewer login or approve in Manage Queue first.";
+   const missing = validatePublishReady(article);
+   if(missing.length && article.status !== "published"){
+    document.getElementById("cmsWorkflowNote").innerHTML = `<div class="publish-validation">Cannot publish yet. Missing: ${missing.join(", ")}.</div>`;
     return;
    }
-   publishCmsArticle(article);
-   document.getElementById("cmsWorkflowNote").textContent = "Admin published the sample article to homepage, ticker and today's edition.";
+   const schedule = document.getElementById("cmsSchedule")?.value || "Publish now";
+   if(schedule === "Publish now"){
+    publishCmsArticle(article);
+    document.getElementById("cmsWorkflowNote").textContent = "Admin published the article to homepage, ticker and today's edition.";
+   }else{
+    article.scheduledAt = schedule === "Today's edition" ? new Date(Date.now() + 30 * 60 * 1000).toISOString() : new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    addWorkflowEntry(article, "scheduled", "Admin scheduled", `${schedule} selected by admin.`);
+    notifyArticle(article, "article_scheduled", "Article scheduled by admin.");
+    document.getElementById("cmsWorkflowNote").textContent = "Admin scheduled the article for publication.";
+   }
   }
   saveCmsArticles();
   switchCmsScreen("manage");
@@ -3317,14 +3597,46 @@ function bindCmsScreen(role){
  document.querySelectorAll("[data-ai-action]").forEach(button=>{
   button.addEventListener("click",()=>fillAssistantContent(button.dataset.aiAction));
  });
+ document.querySelectorAll("[data-save-draft]").forEach(button=>{
+  button.addEventListener("click",()=>{
+   const article = primaryCmsArticle();
+   updateArticleFromReporterForm(article);
+   addWorkflowEntry(article, "draft", "Draft saved", "Reporter saved draft without submitting.");
+   notifyArticle(article, "draft_saved", "Draft saved in newsroom workspace.");
+   saveCmsArticles();
+   const note = document.getElementById("cmsWorkflowNote");
+   if(note) note.textContent = "Draft saved. You can continue editing or submit for review.";
+  });
+ });
  document.querySelectorAll("[data-queue-action]").forEach(button=>{
   button.addEventListener("click",()=>{
    const article = cmsArticles.find(item=>item.id === button.dataset.articleId);
    if(!article) return;
    const action = button.dataset.queueAction;
-   if(action === "submit") article.status = "review";
-   if(action === "approve"){ article.status = "approved"; article.reviewer = currentCmsUser?.name || "Review Desk"; article.trust = article.trust || 91; }
+   if(action === "submit"){
+    addWorkflowEntry(article, "submitted", "Submitted for review", "Reporter submitted from manage queue.");
+    notifyArticle(article, "article_submitted", "Article submitted to reviewer queue.");
+   }
+   if(action === "approve"){
+    article.reviewer = currentCmsUser?.name || "Review Desk";
+    article.trust = article.trust || 91;
+    addWorkflowEntry(article, "reviewer_approved", "Reviewer approved", "Approved from manage queue.");
+    notifyArticle(article, "reviewer_approved", "Article approved for admin review.");
+   }
    if(action === "publish") publishCmsArticle(article);
+   if(action === "schedule"){
+    article.scheduledAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    addWorkflowEntry(article, "scheduled", "Admin scheduled", "Scheduled for publication in one hour.");
+    notifyArticle(article, "article_scheduled", "Article scheduled by admin.");
+   }
+   if(action === "unpublish"){
+    addWorkflowEntry(article, "unpublished", "Admin unpublished", "Article removed from public surfaces.");
+    notifyArticle(article, "article_unpublished", "Published article was unpublished.");
+   }
+   if(action === "archive"){
+    addWorkflowEntry(article, "archived", "Admin archived", "Article moved to archive.");
+    notifyArticle(article, "article_archived", "Article archived by admin.");
+   }
    saveCmsArticles();
    switchCmsScreen("manage");
   });
@@ -3358,6 +3670,18 @@ function switchCmsScreen(screen){
  }
 }
 
+function cmsMetricsForRole(role){
+ hydrateCmsArticles();
+ const count = status => cmsArticles.filter(article=>article.status === status).length;
+ if(role === "reporter"){
+  return [["My Drafts", count("draft")],["Submitted", count("submitted") + count("under_review")],["Changes", count("changes_requested")],["Published", count("published")]];
+ }
+ if(role === "reviewer"){
+  return [["Pending Review", count("submitted") + count("under_review")],["Changes Requested", count("changes_requested")],["Approved", count("reviewer_approved")],["Rejected", count("reviewer_rejected")]];
+ }
+ return [["Total Articles", cmsArticles.filter(a=>a.status !== "deleted").length],["Pending Approvals", count("reviewer_approved") + count("admin_review")],["Published", count("published")],["Scheduled", count("scheduled")]];
+}
+
 function openRoleDashboard(role, user = currentCmsUser){
  ensureCmsSample();
  const dashboard = document.getElementById("roleDashboard");
@@ -3384,7 +3708,7 @@ function openRoleDashboard(role, user = currentCmsUser){
    </div>
   </div>
   <div class="dashboard-metrics">
-   ${data.metrics.map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}
+   ${cmsMetricsForRole(role).map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}
   </div>
   <div class="dashboard-actions">
    ${data.actions.map(([title,desc])=>`<button class="dashboard-action" type="button"><strong>${title}</strong><small>${desc}</small></button>`).join("")}

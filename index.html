@@ -115,7 +115,8 @@ button{cursor:pointer}
 }
 [data-theme="dark"] .search-wrap input{background:rgba(255,255,255,.06)}
 .search-icon,.spark-icon{position:absolute;top:50%;transform:translateY(-50%);color:var(--muted)}
-.search-icon{left:15px}.spark-icon{right:15px;color:var(--brand)}
+.search-icon{left:15px}.spark-icon{right:10px;color:var(--brand)}
+.voice-search-btn{border:0;background:rgba(215,25,32,.1);color:var(--brand);border-radius:999px;min-width:34px;height:34px;font-weight:900}
 .header-actions{display:flex;align-items:center;gap:8px}
 .menu-toggle{display:none}
 .language-select{
@@ -507,6 +508,24 @@ button{cursor:pointer}
 .poll-option span,.poll-option b{position:relative;z-index:1}
 .poll-option.voted{border-color:var(--brand);color:var(--brand)}
 .poll-total{margin-top:10px;color:var(--muted);font:800 12px/1.4 Inter,sans-serif}
+.preference-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:14px}
+.pref-chip-row{display:flex;gap:8px;flex-wrap:wrap}
+.pref-chip{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:9px 12px;font-weight:900}
+.pref-chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.preference-panel,.district-panel{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px;display:grid;gap:12px}
+.preference-panel select{min-height:42px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:0 12px;font-weight:800}
+.district-dashboard{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.district-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:13px;display:grid;gap:8px}
+.district-card small{color:var(--muted);font-weight:900;text-transform:uppercase}
+.district-card strong{font-size:17px;line-height:1.28}
+.summary-modes{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.summary-mode-btn{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);min-height:34px;padding:0 11px;font-weight:900}
+.summary-mode-btn.active{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.voice-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.voice-tools select,.voice-tools input{height:38px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:0 10px;font-weight:800}
+.engagement-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.engagement-row button{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);height:36px;padding:0 12px;font-weight:900}
+.engagement-row button.active{background:rgba(215,25,32,.1);color:var(--brand);border-color:rgba(215,25,32,.28)}
 .score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;text-align:center}
 .score strong{font:800 24px/1 Inter,sans-serif}
 .dashboard-table{display:grid;gap:8px}
@@ -862,12 +881,13 @@ button{cursor:pointer}
 @media (max-width:980px){
  .header{grid-template-columns:auto auto;gap:10px}
  .search-wrap{grid-column:1/-1;order:3}
- .home-desk,.hero-grid,.grid-2,.wide-grid{grid-template-columns:1fr}
+ .home-desk,.hero-grid,.grid-2,.wide-grid,.preference-grid{grid-template-columns:1fr}
  .hero{min-height:460px}
  .side-stack{grid-template-columns:1fr 1fr}
  .weather-rail{grid-column:1/-1}
  .side-stack .weather-grid{grid-template-columns:repeat(2,1fr)}
  .desk-lanes{grid-template-columns:repeat(2,1fr)}
+ .district-dashboard{grid-template-columns:repeat(2,1fr)}
  .edition-inner{grid-template-columns:1fr}
  .story-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .category-grid{grid-template-columns:repeat(3,1fr)}
@@ -918,7 +938,7 @@ button{cursor:pointer}
  .reader-row{grid-template-columns:76px 1fr}
  .reader-row img{width:76px}
  .reader-row small:last-child{grid-column:2}
- .story-grid,.layout-doc,.role-grid,.district-tools,.district-board{grid-template-columns:1fr}
+ .story-grid,.layout-doc,.role-grid,.district-tools,.district-board,.district-dashboard{grid-template-columns:1fr}
  .category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .category-tile{min-height:70px}
  .story-analysis-grid,.newsline{grid-template-columns:1fr}
@@ -987,9 +1007,9 @@ button{cursor:pointer}
     </div>
    </a>
    <label class="search-wrap">
-    <span class="search-icon">⌕</span>
+   <span class="search-icon">⌕</span>
     <input id="searchInput" type="search" placeholder="తెలుగులో వార్తలు వెతకండి..." autocomplete="off"/>
-    <span class="spark-icon">Smart</span>
+    <button class="spark-icon voice-search-btn" id="voiceSearchBtn" type="button" aria-label="Voice search">Mic</button>
    </label>
    <div class="header-actions">
    <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open CMS login"><span class="label">CMS Login</span></button>
@@ -1105,6 +1125,36 @@ button{cursor:pointer}
      <div class="dash-row"><span>Corrections and grievance workflow</span><b>Enabled</b></div>
     </div>
    </aside>
+  </section>
+
+  <section class="section" id="personalizationHub">
+   <div class="section-title"><h2>For You Preferences</h2><span class="chip">AI Personalization</span></div>
+   <div class="preference-grid">
+    <article class="preference-panel">
+     <strong>Choose your edition</strong>
+     <p class="summary">Select topics and a default district. NewsNeta uses these choices to tune recommendations on this device.</p>
+     <div class="pref-chip-row" id="preferenceChips"></div>
+     <div class="pref-chip-row">
+      <select id="defaultDistrictSelect" aria-label="Default district"></select>
+      <button class="pill-btn admin-login-btn" id="savePreferences" type="button">Save Preferences</button>
+     </div>
+     <div class="summary-output" id="preferenceReason">Recommended stories will adapt after you save preferences.</div>
+    </article>
+    <article class="preference-panel">
+     <strong>Smart Search</strong>
+     <p class="summary">Search supports Telugu, English and common transliteration terms such as Hyderabad, Vijayawada, cricket and politics.</p>
+     <div class="dashboard-table" id="smartSearchSignals">
+      <div class="dash-row"><span>Telugu search</span><b>Enabled</b></div>
+      <div class="dash-row"><span>Voice search</span><b>Browser-ready</b></div>
+      <div class="dash-row"><span>Topic matching</span><b>Live feed</b></div>
+     </div>
+    </article>
+   </div>
+  </section>
+
+  <section class="section" id="districtDashboard">
+   <div class="section-title"><h2>District Dashboard</h2><span class="chip" id="districtDashboardChip">Hyperlocal</span></div>
+   <div class="district-dashboard" id="districtDashboardGrid"></div>
   </section>
 
   <section class="section" id="reels">
@@ -1226,6 +1276,10 @@ button{cursor:pointer}
     <article class="future-card"><span>Personal</span><strong>For You edition by district and topic</strong><small class="summary">Topic chips reshape the edition instantly for local readers.</small></article>
     <article class="future-card"><span>Video</span><strong>Short vertical briefings with voice playback</strong><small class="summary">Reels-style news, quick explainers and audio summaries for mobile users.</small></article>
     <article class="future-card"><span>Trust</span><strong>Fact-check and correction signals</strong><small class="summary">Trust score, corrections workflow and polls make the site more transparent.</small></article>
+    <article class="future-card"><span>PWA</span><strong>Installable app and offline reading</strong><small class="summary">Manifest, service worker and Play Store wrapper setup are ready for app distribution.</small></article>
+    <article class="future-card"><span>Revenue</span><strong>AdSense, sponsored and premium slots</strong><small class="summary">Header, in-article, video, sponsored and subscription modules can be activated from CMS.</small></article>
+    <article class="future-card"><span>SEO</span><strong>Discover-friendly article experience</strong><small class="summary">Freshness, large images, summaries and article metadata support news SEO workflows.</small></article>
+    <article class="future-card"><span>Push</span><strong>Category and district alert subscriptions</strong><small class="summary">Breaking, weather, cricket, election and district alerts are structured for FCM integration.</small></article>
    </div>
   </section>
 
@@ -1376,12 +1430,26 @@ button{cursor:pointer}
      <button class="pill-btn" id="storyModalListen" type="button">Listen</button>
      <button class="pill-btn" id="storyFontToggle" type="button">A+</button>
      <button class="pill-btn" id="storySave" type="button">Save</button>
+     <div class="voice-tools" aria-label="Voice reader controls">
+      <select id="storyVoiceMode" aria-label="Voice profile"><option value="auto">Auto voice</option><option value="female">Female Telugu</option><option value="male">Male Telugu</option></select>
+      <input id="storyVoiceSpeed" type="range" min="0.75" max="1.25" step="0.05" value="0.92" aria-label="Voice speed">
+     </div>
      <div class="share-icons" aria-label="Share this news">
       <button class="share-icon whatsapp" data-social-share="whatsapp" type="button" aria-label="Share on WhatsApp">WA</button>
       <button class="share-icon facebook" data-social-share="facebook" type="button" aria-label="Share on Facebook">f</button>
       <button class="share-icon twitter" data-social-share="twitter" type="button" aria-label="Share on X">X</button>
       <button class="share-icon instagram" data-social-share="instagram" type="button" aria-label="Copy link for Instagram">IG</button>
      </div>
+    </div>
+    <div class="summary-modes" aria-label="Summary modes">
+     <button class="summary-mode-btn active" data-summary-mode="quick" type="button">30 sec read</button>
+     <button class="summary-mode-btn" data-summary-mode="minute" type="button">1 min read</button>
+     <button class="summary-mode-btn" data-summary-mode="full" type="button">Full article</button>
+    </div>
+    <div class="engagement-row" aria-label="Reader engagement">
+     <button id="storyLike" type="button">Like</button>
+     <button id="storyImportant" type="button">Important</button>
+     <button id="storyComment" type="button">Comment</button>
     </div>
     <div class="story-detail-copy" id="storyModalCopy">Full story details will appear here.</div>
     <div class="dashboard-table" id="storyModalFacts"></div>
@@ -1531,6 +1599,20 @@ let heroIndex = 0;
 let activeEditionTopic = "Top";
 let currentLanguage = localStorage.getItem("newsneta-language") || "te";
 let speechState = {speaking:false, paused:false, targetId:null, utterance:null};
+const preferenceOptions = ["Telangana","Andhra Pradesh","Hyderabad","Vijayawada","Visakhapatnam","Tirupati","Sports","Politics","Cinema","Technology"];
+let readerPreferences = loadReaderPreferences();
+
+function loadReaderPreferences(){
+ try{
+  const saved = JSON.parse(localStorage.getItem("newsneta-reader-preferences") || "null");
+  if(saved && Array.isArray(saved.topics)) return saved;
+ }catch(error){}
+ return {topics:["Telangana","Sports"], district:"Hyderabad"};
+}
+
+function saveReaderPreferences(){
+ localStorage.setItem("newsneta-reader-preferences", JSON.stringify(readerPreferences));
+}
 
 const uiTextBase = {
  te:{
@@ -1982,6 +2064,48 @@ function renderPoll(){
  if(total) total.textContent = `${Intl.NumberFormat("en-IN").format(totalVotes)} reader votes • ${savedVote ? "Your vote is saved on this device." : "Tap any option to vote."}`;
 }
 
+function storyMatchesPreference(story, preference){
+ const text = `${story.title || ""} ${story.category || ""} ${story.description || ""}`.toLowerCase();
+ return text.includes(String(preference || "").toLowerCase());
+}
+
+function personalizedStories(all){
+ const preferred = all.filter(story=>readerPreferences.topics.some(topic=>storyMatchesPreference(story, topic)));
+ const districtMatches = all.filter(story=>storyMatchesPreference(story, readerPreferences.district));
+ return [...districtMatches, ...preferred, ...all]
+  .filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+}
+
+function renderPreferences(){
+ const host = document.getElementById("preferenceChips");
+ const select = document.getElementById("defaultDistrictSelect");
+ if(!host || !select) return;
+ host.innerHTML = preferenceOptions.map(option=>`<button class="pref-chip ${readerPreferences.topics.includes(option) ? "active" : ""}" type="button" data-pref-topic="${escapeAttr(option)}">${option}</button>`).join("");
+ const districtList = ["Hyderabad","Vijayawada","Visakhapatnam","Tirupati","Warangal","Karimnagar","Guntur","Nellore","Kurnool","Kadapa"];
+ select.innerHTML = districtList.map(district=>`<option ${district === readerPreferences.district ? "selected" : ""}>${district}</option>`).join("");
+ const reason = document.getElementById("preferenceReason");
+ if(reason) reason.textContent = `For You edition: ${readerPreferences.district} + ${readerPreferences.topics.join(", ")}. Recommendations update with every refresh.`;
+}
+
+function renderDistrictDashboard(sorted){
+ const host = document.getElementById("districtDashboardGrid");
+ if(!host) return;
+ const district = activeDistrictFilter?.district || readerPreferences.district || "Hyderabad";
+ const local = sorted.filter(story=>storyMatchesPreference(story, district)).concat(sorted).slice(0,3);
+ const weatherText = document.getElementById("weatherGrid")?.innerText?.split("\n").slice(0,3).join(" ") || "Weather updates auto-refresh.";
+ const cards = [
+  ["Local headlines", local[0]?.title || `${district} latest local updates`],
+  ["Weather", weatherText],
+  ["Events", `${district} civic, cultural and public meetings tracker`],
+  ["Jobs", "Government, private and campus hiring alerts"],
+  ["Govt notices", "Public services, schemes, traffic and utility notices"],
+  ["Emergency alerts", "Weather warnings, road closures and local advisories"]
+ ];
+ host.innerHTML = cards.map(([label,value])=>`<article class="district-card"><small>${label}</small><strong>${escapeHtml(value)}</strong></article>`).join("");
+ const chip = document.getElementById("districtDashboardChip");
+ if(chip) chip.textContent = district;
+}
+
 function renderCricketWidget(){
  const host = document.getElementById("cricketWidget");
  if(!host) return;
@@ -2102,6 +2226,8 @@ function render(){
  renderHomeDesk(sorted);
  renderTodayEdition();
  renderPoll();
+ renderPreferences();
+ renderDistrictDashboard(sorted);
  renderLiveWidgets();
  renderWeather();
  const tickerText = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
@@ -2109,7 +2235,7 @@ function render(){
  tickerTrack.innerHTML = `<span class="ticker-copy">${escapeHtml(tickerText)}</span>`;
  document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></a>`).join("");
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
- document.getElementById("recommendedGrid").innerHTML = sorted.slice(1,5).map(storyCard).join("");
+ document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
  document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,13).map(storyCard).join("");
  document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><img loading="lazy" src="${escapeAttr(s.image)}" alt="" onerror="imageFallback(event)"><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
  const counts = categories.map(([id,label],i)=>({id,label:categoryLabel(id,label),count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
@@ -2333,7 +2459,19 @@ function speakTelugu(text){
  speechSynthesis.cancel();
  const utterance = new SpeechSynthesisUtterance(text);
  utterance.lang = currentLanguage === "en" ? "en-IN" : currentLanguage === "hi" ? "hi-IN" : "te-IN";
- utterance.rate = .92;
+ const speed = Number(document.getElementById("storyVoiceSpeed")?.value || .92);
+ utterance.rate = Number.isFinite(speed) ? speed : .92;
+ const voiceMode = document.getElementById("storyVoiceMode")?.value || "auto";
+ const voices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
+ const langPrefix = utterance.lang.split("-")[0].toLowerCase();
+ const preferredVoice = voices.find(voice=>{
+  const name = (voice.name || "").toLowerCase();
+  const lang = (voice.lang || "").toLowerCase();
+  const matchesLanguage = lang.startsWith(langPrefix) || lang.includes("-in");
+  const matchesMode = voiceMode === "auto" || name.includes(voiceMode);
+  return matchesLanguage && matchesMode;
+ }) || voices.find(voice=>(voice.lang || "").toLowerCase().startsWith(langPrefix));
+ if(preferredVoice) utterance.voice = preferredVoice;
  utterance.onend = utterance.onerror = ()=>{
   speechState = {speaking:false, paused:false, targetId:null, utterance:null};
   const btn = document.getElementById(targetId);
@@ -2404,8 +2542,22 @@ function buildDetailedArticle(story){
   <h3>ప్రజలపై ప్రభావం</h3>
   <p>ఈ పరిణామం స్థానిక ప్రజలు, ప్రయాణం, సేవలు, మార్కెట్లు లేదా విధాన నిర్ణయాలపై ప్రభావం చూపే అవకాశం ఉంది. అందుకే తాజా వివరాలు వచ్చిన వెంటనే NewsNeta రీడర్ వ్యూలో అప్‌డేట్ చేస్తుంది.</p>
   <h3>ధృవీకరణ</h3>
-  <p>ఈ కథనానికి ప్రస్తుత ట్రస్ట్ స్కోర్ ${trust}%. శీర్షిక, చిత్రం, ప్రచురణ సమయం, వర్గీకరణ, మరియు సంబంధిత సంకేతాలను పరిశీలించి పాఠకులకు స్పష్టమైన రీడింగ్ అనుభవం అందిస్తున్నాం.</p>
+ <p>ఈ కథనానికి ప్రస్తుత ట్రస్ట్ స్కోర్ ${trust}%. శీర్షిక, చిత్రం, ప్రచురణ సమయం, వర్గీకరణ, మరియు సంబంధిత సంకేతాలను పరిశీలించి పాఠకులకు స్పష్టమైన రీడింగ్ అనుభవం అందిస్తున్నాం.</p>
  `;
+}
+
+function renderStorySummaryMode(story, mode){
+ const copy = document.getElementById("storyModalCopy");
+ if(!copy) return;
+ if(mode === "quick"){
+  copy.innerHTML = `<h3>Quick Summary</h3><ul><li>${escapeHtml(makeSummary(story.title))}</li><li>Category: ${escapeHtml(story.category || "News")}</li><li>Updated: ${formatStoryDate(story.pubDate || lastRefreshAt)}</li></ul>`;
+  return;
+ }
+ if(mode === "minute"){
+  copy.innerHTML = `<h3>One Minute Brief</h3><p>${escapeHtml(makeSummary(story.title))}</p><ul><li>What happened: ${escapeHtml(story.title)}</li><li>Why it matters: local impact, public services and official updates are being tracked.</li><li>Next update: this story refreshes when verified feed data changes.</li></ul>`;
+  return;
+ }
+ copy.innerHTML = buildDetailedArticle(story);
 }
 
 function playShortNews(id, button){
@@ -2437,6 +2589,43 @@ function playShortNews(id, button){
 }
 
 document.addEventListener("click", event=>{
+ const prefButton = event.target.closest("[data-pref-topic]");
+ if(prefButton){
+  event.preventDefault();
+  const topic = prefButton.dataset.prefTopic;
+  readerPreferences.topics = readerPreferences.topics.includes(topic)
+   ? readerPreferences.topics.filter(item=>item !== topic)
+   : [...readerPreferences.topics, topic];
+  saveReaderPreferences();
+  render();
+  return;
+ }
+ if(event.target.closest("#savePreferences")){
+  event.preventDefault();
+  const selected = document.getElementById("defaultDistrictSelect")?.value || readerPreferences.district;
+  readerPreferences.district = selected;
+  saveReaderPreferences();
+  render();
+  return;
+ }
+ const summaryMode = event.target.closest("[data-summary-mode]");
+ if(summaryMode){
+  event.preventDefault();
+  const storyId = document.querySelector(".story-modal")?.dataset.storyId;
+  const story = findStoryById(storyId);
+  if(story){
+   document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button === summaryMode));
+   renderStorySummaryMode(story, summaryMode.dataset.summaryMode);
+  }
+  return;
+ }
+ const engagement = event.target.closest("#storyLike,#storyImportant,#storyComment");
+ if(engagement){
+  event.preventDefault();
+  engagement.classList.toggle("active");
+  if(engagement.id === "storyComment") alert("Comment workspace will be connected to the user profile system in the production backend.");
+  return;
+ }
  const reelPlay = event.target.closest(".reel-play");
  if(reelPlay){
   event.preventDefault();
@@ -2497,6 +2686,48 @@ function findStoryById(id){
  return [...stories, ...districtStories, ...heroStories, ...globalTopStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
 }
 
+function searchAliases(query){
+ const map = {
+  hyderabad:["హైదరాబాద్","hydrabad","cyberabad"],
+  warangal:["వరంగల్"],
+  vijayawada:["విజయవాడ"],
+  visakhapatnam:["విశాఖపట్నం","vizag"],
+  tirupati:["తిరుపతి"],
+  sports:["క్రీడలు","cricket","ipl"],
+  cinema:["సినిమా","movies","tollywood"],
+  politics:["రాజకీయాలు"],
+  weather:["వాతావరణం","rain","forecast"],
+  business:["బిజినెస్","market"],
+  technology:["టెక్నాలజీ","tech"]
+ };
+ return [query, ...(map[query] || [])].filter(Boolean).map(item=>item.toLowerCase());
+}
+
+function storySearchText(story){
+ return [story.title, story.description, story.category, story.district, story.state, story.tags?.join(" ")].filter(Boolean).join(" ").toLowerCase();
+}
+
+function runVoiceSearch(){
+ const search = document.getElementById("searchInput");
+ const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+ if(!Recognition){
+  if(search) search.placeholder = "Voice search is not supported in this browser";
+  return;
+ }
+ const recognition = new Recognition();
+ recognition.lang = currentLanguage === "en" ? "en-IN" : currentLanguage === "hi" ? "hi-IN" : "te-IN";
+ recognition.interimResults = false;
+ recognition.maxAlternatives = 1;
+ recognition.onresult = event=>{
+  const transcript = event.results?.[0]?.[0]?.transcript || "";
+  if(search){
+   search.value = transcript;
+   search.dispatchEvent(new Event("input", {bubbles:true}));
+  }
+ };
+ recognition.start();
+}
+
 function shareStoryTo(platform, story){
  const url = new URL(location.href);
  url.hash = `story-${encodeURIComponent(story.id || story.title || "news")}`;
@@ -2519,6 +2750,8 @@ function shareStoryTo(platform, story){
 function openStoryDetail(id){
  const story = findStoryById(id);
  if(!story) return;
+ const modal = document.querySelector(".story-modal");
+ if(modal) modal.dataset.storyId = story.id || story.link || story.title;
  const related = stories
   .filter(item => item.title !== story.title && item.category === story.category)
   .concat(stories.filter(item => item.title !== story.title))
@@ -2584,6 +2817,8 @@ function openStoryDetail(id){
 function openStoryDetail(id){
  const story = findStoryById(id);
  if(!story) return;
+ const modal = document.querySelector(".story-modal");
+ if(modal) modal.dataset.storyId = story.id || story.link || story.title;
  const related = stories
   .filter(item => item.title !== story.title && item.category === story.category)
   .concat(stories.filter(item => item.title !== story.title))
@@ -2598,6 +2833,8 @@ function openStoryDetail(id){
  if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
  else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
  document.getElementById("storyModalCopy").innerHTML = buildDetailedArticle(story);
+ document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
+ document.querySelectorAll("#storyLike,#storyImportant,#storyComment").forEach(button=>button.classList.remove("active"));
  if("speechSynthesis" in window) speechSynthesis.cancel();
  speechState = {speaking:false, paused:false, targetId:null, utterance:null};
  document.getElementById("storyModalListen").textContent = t("playArticle");
@@ -3205,9 +3442,16 @@ document.getElementById("summarizeBtn").addEventListener("click",()=>{
 document.getElementById("searchInput").addEventListener("input", event=>{
  const q = event.target.value.trim().toLowerCase();
  if(!q){ render(); return; }
- const filtered = stories.filter(s=>s.title.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+ const aliases = searchAliases(q);
+ const filtered = stories.filter(story=>{
+  const text = storySearchText(story);
+  return aliases.some(alias=>text.includes(alias));
+ });
+ const reason = document.getElementById("preferenceReason");
+ if(reason) reason.textContent = filtered.length ? `${filtered.length} matching stories found for "${event.target.value.trim()}".` : "No exact match found. Showing the latest available stories.";
  document.getElementById("latestGrid").innerHTML = (filtered.length ? filtered : stories).map(storyCard).join("");
 });
+document.getElementById("voiceSearchBtn")?.addEventListener("click", runVoiceSearch);
 
 document.getElementById("allowNotify").addEventListener("click",()=>{
  document.getElementById("notify").classList.remove("show");

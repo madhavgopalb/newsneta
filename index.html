@@ -721,6 +721,25 @@ button{cursor:pointer}
 .article-meta-line{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font:800 12px/1 Inter,sans-serif;margin:0 0 12px}
 .article-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .article-toolbar .pill-btn{height:38px;min-width:38px;padding:0 12px}
+.share-icons{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.share-icon{
+ width:38px;
+ height:38px;
+ border-radius:999px;
+ border:1px solid var(--line);
+ display:inline-grid;
+ place-items:center;
+ color:#fff;
+ font:900 13px/1 Inter,sans-serif;
+ box-shadow:0 8px 20px rgba(15,23,42,.1);
+ cursor:pointer;
+}
+.share-icon.whatsapp{background:#25d366}
+.share-icon.facebook{background:#1877f2}
+.share-icon.twitter{background:#111827}
+.share-icon.instagram{background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)}
+.story-info-strip{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+.story-info-strip span{border:1px solid var(--line);border-radius:999px;background:rgba(127,139,160,.1);color:var(--muted);padding:7px 10px;font:800 12px/1 Inter,sans-serif}
 .story-detail-copy.reader-large{font-size:18px}
 .story-detail-copy{
  margin-top:14px;
@@ -1356,8 +1375,13 @@ button{cursor:pointer}
     <div class="article-toolbar">
      <button class="pill-btn" id="storyModalListen" type="button">Listen</button>
      <button class="pill-btn" id="storyFontToggle" type="button">A+</button>
-     <button class="pill-btn" id="storyShare" type="button">Share</button>
      <button class="pill-btn" id="storySave" type="button">Save</button>
+     <div class="share-icons" aria-label="Share this news">
+      <button class="share-icon whatsapp" data-social-share="whatsapp" type="button" aria-label="Share on WhatsApp">WA</button>
+      <button class="share-icon facebook" data-social-share="facebook" type="button" aria-label="Share on Facebook">f</button>
+      <button class="share-icon twitter" data-social-share="twitter" type="button" aria-label="Share on X">X</button>
+      <button class="share-icon instagram" data-social-share="instagram" type="button" aria-label="Copy link for Instagram">IG</button>
+     </div>
     </div>
     <div class="story-detail-copy" id="storyModalCopy">Full story details will appear here.</div>
     <div class="dashboard-table" id="storyModalFacts"></div>
@@ -2150,7 +2174,6 @@ function applyLanguage(){
  setText("publicPulseChip", t("interactivePolls"));
  setText("pollSummaryText", t("pollSummary"));
  if(!speechState.speaking) setText("storyModalListen", t("playArticle"));
- setText("storyShare", t("share"));
  setText("storySave", t("save"));
  setText("storyContinue", t("continue"));
  document.querySelectorAll("#categoryNav [data-cat]").forEach(link=>{
@@ -2467,6 +2490,25 @@ function findStoryById(id){
  return [...stories, ...districtStories, ...heroStories, ...globalTopStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
 }
 
+function shareStoryTo(platform, story){
+ const url = new URL(location.href);
+ url.hash = `story-${encodeURIComponent(story.id || story.title || "news")}`;
+ const shareUrl = encodeURIComponent(url.toString());
+ const title = encodeURIComponent(story.title || "NewsNeta story");
+ const text = encodeURIComponent(`${story.title || "NewsNeta story"} - ${makeSummary(story.title || "")}`);
+ const targets = {
+  whatsapp:`https://api.whatsapp.com/send?text=${text}%20${shareUrl}`,
+  facebook:`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+  twitter:`https://twitter.com/intent/tweet?text=${title}&url=${shareUrl}`
+ };
+ if(platform === "instagram"){
+  navigator.clipboard?.writeText(`${story.title} - ${url.toString()}`);
+  window.open("https://www.instagram.com/", "_blank", "noopener");
+  return;
+ }
+ window.open(targets[platform] || url.toString(), "_blank", "noopener,noreferrer");
+}
+
 function openStoryDetail(id){
  const story = findStoryById(id);
  if(!story) return;
@@ -2553,21 +2595,18 @@ function openStoryDetail(id){
  speechState = {speaking:false, paused:false, targetId:null, utterance:null};
  document.getElementById("storyModalListen").textContent = t("playArticle");
  document.getElementById("storyModalFacts").innerHTML = `
-  <div class="dash-row"><span>Desk</span><b>NewsNeta</b></div>
-  <div class="dash-row"><span>Category</span><b>${story.category || "News"}</b></div>
-  <div class="dash-row"><span>Updated</span><b>${formatStoryDate(story.pubDate || lastRefreshAt)}</b></div>
-  <div class="dash-row"><span>Trust score</span><b>${story.trust || 91}%</b></div>
-  <div class="dash-row"><span>News depth</span><b>Context + impact + updates</b></div>
-  <div class="dash-row"><span>Reader mode</span><b>Voice, share, save, font size</b></div>
+  <div class="story-info-strip">
+   <span>${escapeHtml(story.category || "News")}</span>
+   <span>${formatStoryDate(story.pubDate || lastRefreshAt)}</span>
+   <span>${readMinutes(story) + 2} min read</span>
+  </div>
  `;
  document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}"><img src="${escapeAttr(item.image)}" alt="" onerror="imageFallback(event)"><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
  document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${cleanText(document.getElementById("storyModalCopy").innerText).slice(0,900)}`);
  document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
- document.getElementById("storyShare").onclick = async ()=>{
-  const shareData = {title: story.title, text: makeSummary(story.title), url: location.href};
-  if(navigator.share) await navigator.share(shareData).catch(()=>{});
-  else navigator.clipboard?.writeText(`${story.title} - ${location.href}`);
- };
+ document.querySelectorAll("[data-social-share]").forEach(button=>{
+  button.onclick = ()=>shareStoryTo(button.dataset.socialShare, story);
+ });
  document.getElementById("storySave").onclick = ()=>localStorage.setItem("newsneta-saved-story", JSON.stringify({title:story.title, savedAt:new Date().toISOString()}));
  document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
  document.getElementById("storyBackdrop").classList.add("open");

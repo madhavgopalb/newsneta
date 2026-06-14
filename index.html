@@ -1525,6 +1525,7 @@ let refreshCount = 0;
 let nextRefreshAt = null;
 let newsSourceMode = "Static preview";
 let activeDistrictFilter = null;
+const maxStoryAgeDays = 10;
 let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
 let activeEditionTopic = "Top";
@@ -1836,6 +1837,7 @@ function imageFallback(event){
 }
 
 function normalizeItems(items){
+ const freshCutoff = Date.now() - maxStoryAgeDays * 24 * 60 * 60 * 1000;
  return items.map((item,index)=>({
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
   title:item.title || fallbackStories[index % fallbackStories.length].title,
@@ -1847,7 +1849,10 @@ function normalizeItems(items){
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
   description:item.description || item.contentSnippet || item.content || ""
- }));
+ })).filter(story=>{
+  const time = new Date(story.pubDate || Date.now()).getTime();
+  return Number.isNaN(time) || time >= freshCutoff;
+ }).sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
 }
 
 function readMinutes(story){
@@ -2209,7 +2214,8 @@ async function loadNews(cat="telangana"){
   if(!res.ok) throw new Error("news api failed");
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
-  stories = normalizeItems(data.items && data.items.length ? data.items : fallbackStories);
+  const liveItems = normalizeItems(data.items || []);
+  stories = liveItems.length ? liveItems : normalizeItems(fallbackStories);
  }catch(error){
   newsSourceMode = "Static preview demo";
   stories = normalizeItems(fallbackStories);
@@ -2259,7 +2265,8 @@ async function loadDistrictNews(state, district){
   if(!res.ok) throw new Error("district news api failed");
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : newsSourceMode;
-  stories = normalizeItems(data.items && data.items.length ? data.items : fallbackStories)
+  const liveItems = normalizeItems(data.items || []);
+  stories = (liveItems.length ? liveItems : normalizeItems(fallbackStories))
    .map(story=>({...story, category: district}));
  }catch(error){
   newsSourceMode = "Static preview demo";

@@ -8,20 +8,26 @@ const parser = new Parser({
 
 const CACHE = {};
 const IMAGE_CACHE = {};
-const TTL = 5 * 60 * 1000;
+const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
+const FRESH_NEWS_DAYS = 10;
+
+function googleNewsUrl(query) {
+  const freshQuery = `${query} when:7d`;
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(freshQuery)}&hl=te&gl=IN&ceid=IN:te`;
+}
 
 const FEEDS = {
-  politics: "https://news.google.com/rss/search?q=Telugu+politics+India&hl=te&gl=IN&ceid=IN:te",
-  telangana: "https://news.google.com/rss/search?q=Telangana+Telugu&hl=te&gl=IN&ceid=IN:te",
-  ap: "https://news.google.com/rss/search?q=Andhra+Pradesh+Telugu&hl=te&gl=IN&ceid=IN:te",
-  national: "https://news.google.com/rss/search?q=India+Telugu+news&hl=te&gl=IN&ceid=IN:te",
-  international: "https://news.google.com/rss/search?q=World+Telugu+news&hl=te&gl=IN&ceid=IN:te",
-  cinema: "https://news.google.com/rss/search?q=Telugu+cinema+news&hl=te&gl=IN&ceid=IN:te",
-  sports: "https://news.google.com/rss/search?q=Sports+Telugu&hl=te&gl=IN&ceid=IN:te",
-  technology: "https://news.google.com/rss/search?q=Technology+Telugu+news&hl=te&gl=IN&ceid=IN:te",
-  business: "https://news.google.com/rss/search?q=Business+Telugu+news&hl=te&gl=IN&ceid=IN:te",
-  viral: "https://news.google.com/rss/search?q=Viral+Telugu+news&hl=te&gl=IN&ceid=IN:te"
+  politics: googleNewsUrl("Telugu politics India"),
+  telangana: googleNewsUrl("Telangana Telugu news"),
+  ap: googleNewsUrl("Andhra Pradesh Telugu news"),
+  national: googleNewsUrl("India Telugu news"),
+  international: googleNewsUrl("World Telugu international news"),
+  cinema: googleNewsUrl("Telugu cinema news"),
+  sports: googleNewsUrl("Sports Telugu cricket"),
+  technology: googleNewsUrl("Technology Telugu news"),
+  business: googleNewsUrl("Business Telugu news"),
+  viral: googleNewsUrl("Viral Telugu news")
 };
 
 const IMAGE_SETS = {
@@ -95,7 +101,7 @@ const CATEGORY_LABELS = {
 function feedFor(cat, district) {
   if (district) {
     const state = cat === "ap" ? "Andhra Pradesh" : "Telangana";
-    return `https://news.google.com/rss/search?q=${encodeURIComponent(`${district} ${state} Telugu news`)}&hl=te&gl=IN&ceid=IN:te`;
+    return googleNewsUrl(`${district} ${state} Telugu news`);
   }
   return FEEDS[cat] || FEEDS.telangana;
 }
@@ -149,6 +155,24 @@ function publicTitle(title = "") {
     .trim();
 }
 
+function articleTime(item = {}) {
+  const date = new Date(item.publishedAt || item.pubDate || item.isoDate || item.date || 0);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function isFreshArticle(item = {}, maxAgeDays = FRESH_NEWS_DAYS) {
+  const time = articleTime(item);
+  if (!time) return false;
+  const ageMs = Date.now() - time;
+  return ageMs >= 0 && ageMs <= maxAgeDays * 24 * 60 * 60 * 1000;
+}
+
+function freshSorted(items = [], maxAgeDays = FRESH_NEWS_DAYS) {
+  return items
+    .filter(item => isFreshArticle(item, maxAgeDays))
+    .sort((a, b) => articleTime(b) - articleTime(a));
+}
+
 async function fetchGNewsItems(cat, district) {
   const apiKey = process.env.GNEWS_API_KEY;
   if (!apiKey) return null;
@@ -167,7 +191,10 @@ async function fetchGNewsItems(cat, district) {
   const payload = await response.json();
   if (!Array.isArray(payload.articles) || payload.articles.length === 0) return null;
 
-  return Promise.all(payload.articles.map(async (article, index) => {
+  const freshArticles = freshSorted(payload.articles);
+  if (!freshArticles.length) return null;
+
+  return Promise.all(freshArticles.slice(0, 10).map(async (article, index) => {
     const title = publicTitle(article.title);
     const fallback = selectImage(title, cat, district, index);
     const image = trustedImageUrl(article.image)
@@ -362,7 +389,19 @@ exports.handler = async function handler(event) {
     }
 
     const feed = await parser.parseURL(feedUrl);
-    const rawItems = feed.items.slice(0, 24);
+    const rawItems = freshSorted(feed.items).slice(0, 24);
+    if (!rawItems.length) {
+      const data = {
+        status: "stale-filtered",
+        provider: "rss-plus-licensed-photo-api",
+        category: cat,
+        district: district || null,
+        updatedAt: new Date().toISOString(),
+        items: []
+      };
+      CACHE[cacheKey] = { time: Date.now(), data };
+      return json(200, data, 60);
+    }
     const imageResults = await Promise.all(
       rawItems.map((item, index) => articleImage(item, cat, district, index))
     );

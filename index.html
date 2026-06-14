@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>NewsNeta - Telugu News, Breaking News, District News</title>
 <meta name="description" content="NewsNeta is a Telugu-first news website with breaking news, district updates, short news videos, live feeds, polls, cricket scores, voice readouts, and personalized recommendations."/>
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+<meta name="keywords" content="Telugu news, breaking news Telugu, Telangana news, Andhra Pradesh news, district news, politics, cinema, sports, business, NewsNeta"/>
 <meta name="theme-color" content="#d71920"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -15,9 +17,17 @@
 <meta property="og:description" content="Premium Telugu news with short updates, live coverage, district news, voice readouts, and smart recommendations."/>
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="te_IN"/>
+<meta property="og:url" content="https://newsneta.com/"/>
+<meta property="og:image" content="https://newsneta.com/assets/newsneta-logo-header.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="NewsNeta - Telugu News, Breaking News, District News"/>
+<meta name="twitter:description" content="Telugu breaking news, district updates, politics, cinema, sports, business, weather and personalized news recommendations."/>
+<link rel="canonical" href="https://newsneta.com/"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="assets/newsneta-logo.jpg"/>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"NewsMediaOrganization","name":"NewsNeta","url":"https://newsneta.com/","logo":"https://newsneta.com/assets/newsneta-logo-header.png","sameAs":["https://newsneta.com/"],"areaServed":["Telangana","Andhra Pradesh","India"],"publishingPrinciples":"https://newsneta.com/#publishingDesk"}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -529,6 +539,7 @@ button{cursor:pointer}
 .score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;text-align:center}
 .score strong{font:800 24px/1 Inter,sans-serif}
 .dashboard-table{display:grid;gap:8px}
+.dashboard-table p{display:none}
 .dash-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px;border-radius:var(--radius);background:rgba(127,139,160,.1)}
 .summarizer textarea{
  width:100%;
@@ -847,7 +858,7 @@ button{cursor:pointer}
 }
 .login-error{display:none;margin:0 16px 14px;padding:10px 12px;border-radius:10px;background:rgba(215,25,32,.12);color:var(--brand);font-weight:900;font-size:13px}
 .login-error.show{display:block}
-.cms-preview{border-top:1px solid var(--line);padding:14px 16px;background:#fff7f8}
+.cms-preview{display:none}
 .cms-preview strong{display:block;margin-bottom:8px}
 .cms-preview div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;color:var(--muted);font-size:13px}
 .cms-preview .account-row{grid-template-columns:1fr;gap:3px;border-top:1px solid var(--line)}
@@ -1012,7 +1023,7 @@ button{cursor:pointer}
     <button class="spark-icon voice-search-btn" id="voiceSearchBtn" type="button" aria-label="Voice search">Mic</button>
    </label>
    <div class="header-actions">
-   <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open CMS login"><span class="label">CMS Login</span></button>
+   <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open login"><span class="label">Login</span></button>
     <select class="language-select" id="languageSelect" aria-label="Translate language">
      <option value="te">తెలుగు</option>
      <option value="en">English</option>
@@ -1052,7 +1063,7 @@ button{cursor:pointer}
      <a class="quick-pill" id="quickNewsroom" href="#publishingDesk">Newsroom Desk</a>
    </div>
    <div class="reader-tools">
-    <button class="quick-pill" id="openLiveTv" type="button">Live TV</button>
+    <button class="quick-pill" id="openExplainers" type="button">Explainers</button>
     <button class="quick-pill" id="openEdition" type="button">Today's Edition</button>
    </div>
   </div>
@@ -1291,12 +1302,15 @@ button{cursor:pointer}
     <div class="summary-output" id="summaryOutput">AI సారాంశం ఇక్కడ కనిపిస్తుంది.</div>
    </article>
    <article class="section" id="epaper">
-    <div class="section-title"><h2>Live TV / YouTube</h2><span class="chip">Embed-ready</span></div>
-    <div style="aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#111;display:grid;place-items:center;color:#fff;text-align:center;padding:20px">
-     <div>
-      <strong>NewsNeta LIVE</strong>
-      <p style="margin:8px 0 0;color:#d6dae3">Productionలో YouTube live embed లేదా HLS stream ఇక్కడ లోడ్ అవుతుంది.</p>
+    <div class="section-title"><h2>Today's Explainers</h2><span class="chip">Context</span></div>
+    <div class="dashboard-table">
+     <div class="dash-row">
+      <span>Election tracker</span><b>Read</b>
+      <small class="summary">Fast context for the biggest developing story.</small>
      </div>
+     <a class="dash-row" href="#latestGrid"><span>Weather impact guide</span><b>Read</b></a>
+     <a class="dash-row" href="#latestGrid"><span>District development updates</span><b>Read</b></a>
+     <a class="dash-row" href="#latestGrid"><span>Business and market briefing</span><b>Read</b></a>
     </div>
    </article>
   </section>
@@ -1361,8 +1375,8 @@ button{cursor:pointer}
   <div class="login-modal">
    <header>
     <div>
-     <strong id="loginTitle">Upload News</strong>
-     <p class="summary" style="margin:4px 0 0">NewsNeta AI Content System</p>
+     <strong id="loginTitle">Login</strong>
+     <p class="summary" style="margin:4px 0 0">Sign in to NewsNeta newsroom</p>
     </div>
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
@@ -1375,17 +1389,17 @@ button{cursor:pointer}
    <div class="login-content">
     <div class="login-panel">
      <div class="login-kicker">
-      <strong>Login to continue</strong>
-      <small>Select the matching newsroom role before opening the upload desk.</small>
+      <strong>Sign in</strong>
+      <small>Enter your newsroom credentials to continue.</small>
      </div>
      <form id="loginForm">
       <label>
        Email
-       <input id="loginEmail" type="email" value="admin@newsneta.in" autocomplete="email"/>
+       <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email"/>
       </label>
       <label>
        Password
-       <input id="loginPassword" type="password" value="newsneta-demo" autocomplete="current-password"/>
+       <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"/>
       </label>
       <label>
        Role
@@ -1395,20 +1409,9 @@ button{cursor:pointer}
         <option value="reviewer">Reviewer - approve and fact-check</option>
        </select>
       </label>
-      <button class="pill-btn admin-login-btn" type="submit">Open dashboard</button>
+      <button class="pill-btn admin-login-btn" type="submit">Sign in</button>
      </form>
      <div class="login-error" id="loginError" role="alert"></div>
-     <div class="cms-preview" id="cmsPreview">
-      <strong>Demo newsroom accounts</strong>
-      <div class="account-row"><b>admin@newsneta.in</b><small>Admin role, Hyderabad desk</small></div>
-      <div class="account-row"><b>reporter@newsneta.in</b><small>Reporter role, Vijayawada desk</small></div>
-      <div class="account-row"><b>reviewer@newsneta.in</b><small>Reviewer role, Visakhapatnam desk</small></div>
-      <div class="publish-board">
-       <div class="publish-step"><b>Reporter draft</b><small>District, category, media, tags, summary</small></div>
-       <div class="publish-step"><b>Reviewer approval</b><small>Fact check, rewrite headline, SEO, trust score</small></div>
-       <div class="publish-step"><b>Admin publish</b><small>Schedule, breaking ticker, push notification, homepage slot</small></div>
-      </div>
-     </div>
     </div>
     <section class="role-dashboard" id="roleDashboard" hidden>
      <div id="roleDashboardContent"></div>
@@ -1617,13 +1620,13 @@ function saveReaderPreferences(){
 const uiTextBase = {
  te:{
   home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
-  newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
+  newsroom:"Newsroom Desk", liveTv:"Explainers", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
   openEdition:"Open Edition", listenBrief:"Listen Brief", search:"తెలుగులో వార్తలు వెతకండి...", readFull:"Read full story",
   listen:"Listen", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story"
  },
  en:{
   home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
-  newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
+  newsroom:"Newsroom Desk", liveTv:"Explainers", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
   openEdition:"Open Edition", listenBrief:"Listen Brief", search:"Search Telugu and English news...", readFull:"Read full story",
   listen:"Listen", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story"
  }
@@ -1649,7 +1652,7 @@ const uiText = {
  },
  en:{
   home:"⌂ Home", latest:"Latest", videos:"Videos", photo:"Photo Stories", epaper:"E-Paper", editorial:"Editorial",
-  newsroom:"Newsroom Desk", liveTv:"Live TV", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
+  newsroom:"Newsroom Desk", liveTv:"Explainers", today:"Today's Edition", refreshNews:"Refresh news", refreshNow:"Refresh now",
   openEdition:"Open Edition", listenBrief:"Listen Brief", search:"Search Telugu and English news...", readFull:"Read full story",
   listen:"Play Article", playArticle:"Play Article", pauseAudio:"Pause Audio", resumeAudio:"Resume Audio", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story",
   editionTitle:"Today's NewsNeta Edition", editionText:"Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.",
@@ -2275,7 +2278,7 @@ function applyLanguage(){
  setText("quickEpaper", t("epaper"));
  setText("quickEditorial", t("editorial"));
  setText("quickNewsroom", t("newsroom"));
- setText("openLiveTv", t("liveTv"));
+ setText("openExplainers", t("liveTv"));
  setText("openEdition", t("today"));
  setText("openEditionCard", t("openEdition"));
  setText("editionListen", t("listenBrief"));
@@ -2341,10 +2344,13 @@ async function loadNews(cat="telangana"){
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
   const liveItems = normalizeItems(data.items || []);
-  stories = liveItems.length ? liveItems : normalizeItems(fallbackStories);
+  const cmsPublished = publishedCmsStories(cat);
+  const baseItems = liveItems.length ? liveItems : normalizeItems(fallbackStories);
+  stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
  }catch(error){
   newsSourceMode = "Static preview demo";
-  stories = normalizeItems(fallbackStories);
+  const cmsPublished = publishedCmsStories(cat);
+  stories = [...cmsPublished, ...normalizeItems(fallbackStories)].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
  }
  const latestTitle = document.getElementById("latestTitle");
  const categoryLabel = categories.find(([id])=>id === cat)?.[1] || "Latest";
@@ -2873,7 +2879,7 @@ document.getElementById("storyBackdrop").addEventListener("click",event=>{
 document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${document.getElementById("heroTitle").textContent}. ${document.getElementById("heroSummary").textContent}`));
 document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
 document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
-document.getElementById("openLiveTv").addEventListener("click",()=>document.getElementById("reels").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("openExplainers").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
 document.getElementById("openEdition").addEventListener("click",async ()=>{
  await refreshAllNews();
  openTodayEdition();
@@ -2980,7 +2986,7 @@ document.getElementById("aiForm").addEventListener("submit",event=>{
 document.getElementById("adminLoginBtn").addEventListener("click",()=>{
  if(!currentCmsUser){
   document.querySelector(".login-modal")?.classList.remove("authenticated");
-  document.getElementById("loginTitle").textContent = "Upload News";
+  document.getElementById("loginTitle").textContent = "Login";
  }
  document.getElementById("loginBackdrop").classList.add("open");
 });
@@ -2989,22 +2995,6 @@ document.getElementById("loginBackdrop").addEventListener("click",event=>{
  if(event.target.id === "loginBackdrop") document.getElementById("loginBackdrop").classList.remove("open");
 });
 document.querySelectorAll(".cms-tab").forEach(tab=>tab.addEventListener("click",()=>switchCmsScreen(tab.dataset.cmsScreen)));
-document.getElementById("roleSelect").addEventListener("change",event=>{
- const role = event.target.value;
- const permissions = {
-  admin: ["Publish / unpublish news","Manage reporters, reviewers, districts","Ads, analytics, sources, push alerts"],
- reporter: ["Create district drafts","Upload media and sources","Submit stories for review"],
- reviewer: ["Approve or reject stories","Edit SEO, summary, and trust score","Send approved stories to publish queue"]
- };
- document.getElementById("cmsPreview").innerHTML = `<strong>${role[0].toUpperCase()+role.slice(1)} permissions preview</strong>` +
-  permissions[role].map(item=>`<div><span>${item}</span><b>Allowed</b></div>`).join("") +
-  `<div class="publish-board">
-    <div class="publish-step"><b>Draft</b><small>Reporter creates story with district, category, tags, and images.</small></div>
-    <div class="publish-step"><b>Review</b><small>Reviewer checks facts, headline, SEO, and trust score.</small></div>
-    <div class="publish-step"><b>Publish</b><small>Admin sends to homepage, ticker, push alert, and archive.</small></div>
-   </div>`;
-});
-
 function dashboardConfig(role){
  const config = {
   admin:{
@@ -3052,6 +3042,37 @@ function articleStatusLabel(status){
  return labels[status] || status;
 }
 
+function categoryIdForValue(value){
+ const normalized = String(value || "").toLowerCase().trim();
+ const found = categories.find(([id,label])=>id === normalized || label.toLowerCase() === normalized);
+ return found ? found[0] : normalized;
+}
+
+function categoryLabelForId(id){
+ return categories.find(([catId])=>catId === id)?.[1] || id || "News";
+}
+
+function publishedCmsStories(cat){
+ const requested = categoryIdForValue(cat);
+ return cmsArticles
+  .filter(article=>article.status === "published")
+  .filter(article=>!cat || categoryIdForValue(article.category) === requested || categoryIdForValue(article.state) === requested)
+  .map(article=>({
+   id:`cms-${article.id}`,
+   title: article.headline,
+   category: categoryLabelForId(categoryIdForValue(article.category)),
+   district: article.district,
+   state: article.state,
+   description: article.summary,
+   views: 12000 + Math.round(Math.random()*4000),
+   sentiment:"Neutral",
+   trust: article.trust || 91,
+   image: article.image || "assets/newsneta-logo.jpg",
+   pubDate: article.publishedAt || new Date().toISOString(),
+   link:"#"
+  }));
+}
+
 function cmsQueueForRole(role){
  return cmsArticles.filter(article => article.status !== "deleted").map(article=>({
   ...article,
@@ -3062,19 +3083,7 @@ function cmsQueueForRole(role){
 function publishCmsArticle(article){
  article.status = "published";
  article.publishedAt = new Date().toISOString();
- const story = {
-  id:`cms-${article.id}`,
-  title: article.headline,
-  category: article.category,
-  district: article.district,
-  description: article.summary,
-  views: 12000 + Math.round(Math.random()*4000),
-  sentiment:"Neutral",
-  trust: article.trust || 91,
-  image: article.image || "assets/newsneta-logo.jpg",
-  pubDate: article.publishedAt,
-  link:"#"
- };
+ const story = publishedCmsStories(categoryIdForValue(article.category)).find(item=>item.id === `cms-${article.id}`);
  const existingIndex = stories.findIndex(item=>item.id === story.id);
  if(existingIndex >= 0) stories[existingIndex] = story;
  else stories.unshift(story);
@@ -3120,7 +3129,8 @@ function fillAssistantContent(action){
 function cmsWorkflowForm(role){
  const article = primaryCmsArticle();
  const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option ${d === article.district ? "selected" : ""}>${d}</option>`).join("");
- const categoryOptions = categories.map(([,label])=>`<option ${label === article.category ? "selected" : ""}>${label}</option>`).join("");
+ const articleCategoryId = categoryIdForValue(article.category);
+ const categoryOptions = categories.map(([id,label])=>`<option value="${escapeAttr(id)}" ${id === articleCategoryId ? "selected" : ""}>${label}</option>`).join("");
  const aiTools = `<div class="cms-ai-box">
   <div class="cms-ai-title">AI Writing Assistant <span>NEWSNETA AI</span></div>
   <div class="cms-ai-actions">
@@ -3181,7 +3191,7 @@ function cmsWorkflowForm(role){
   </div>
   <label>Push alert copy<input id="cmsPushCopy" value="${escapeAttr(article.headline)}"></label>
   ${compliance}
-  <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="demoApprove" data-article-id="${escapeAttr(article.id)}">Mark Reviewed for Demo</button><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
+  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve and Publish</button></div>
   <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition. Current status: ${articleStatusLabel(article.status)}.</div>
  </form>`;
 }
@@ -3314,7 +3324,6 @@ function bindCmsScreen(role){
    const action = button.dataset.queueAction;
    if(action === "submit") article.status = "review";
    if(action === "approve"){ article.status = "approved"; article.reviewer = currentCmsUser?.name || "Review Desk"; article.trust = article.trust || 91; }
-   if(action === "demoApprove"){ article.status = "approved"; article.reviewer = "Review Desk"; article.trust = article.trust || 92; article.notes = "Demo reviewer approval completed."; }
    if(action === "publish") publishCmsArticle(article);
    saveCmsArticles();
    switchCmsScreen("manage");
@@ -3390,7 +3399,7 @@ function openRoleDashboard(role, user = currentCmsUser){
   currentCmsUser = null;
   sessionStorage.removeItem("newsneta-cms-user");
   document.querySelector(".login-modal")?.classList.remove("authenticated");
-  document.getElementById("loginTitle").textContent = "Upload News";
+  document.getElementById("loginTitle").textContent = "Login";
   document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
   renderWeather();
  });

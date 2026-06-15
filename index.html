@@ -2063,11 +2063,12 @@ function formatStoryDate(dateText){
 function storyCard(story){
  const refreshedAt = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "loading";
  const storyId = story.id || story.link || story.title;
+ const reporterBadge = story.reporterUpload ? `<span class="badge">${story.sourceLabel || "Reporter Upload"}</span>` : `<span class="badge">NewsNeta</span>`;
  return `<article class="news-card">
   <a href="#" data-story-id="${escapeAttr(storyId)}">
    <div class="thumb">
     <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}" onerror="imageFallback(event)">
-    <div class="badge-row"><span class="badge">${story.category}</span><span class="badge">NewsNeta</span></div>
+    <div class="badge-row"><span class="badge">${story.category}</span>${reporterBadge}</div>
    </div>
   </a>
   <div class="card-body">
@@ -2976,6 +2977,7 @@ function openStoryDetail(id){
  document.getElementById("storyModalFacts").innerHTML = `
   <div class="story-info-strip">
    <span>${escapeHtml(story.category || "News")}</span>
+   ${story.reporterUpload ? `<span>Reporter Upload</span>` : ""}
    <span>${formatStoryDate(story.pubDate || lastRefreshAt)}</span>
    <span>${readMinutes(story) + 2} min read</span>
   </div>
@@ -3254,7 +3256,10 @@ function publishedCmsStories(cat){
  return cmsArticles
   .filter(article=>article.status === "published")
   .filter(article=>!cat || categoryIdForValue(article.category) === requested || categoryIdForValue(article.state) === requested)
-  .map(article=>({
+  .map(article=>{
+   const firstImage = (article.media || []).find(item=>item.media_type === "image" && item.public_url)?.public_url;
+   const thumbnailImage = article.thumbnail && !String(article.thumbnail).startsWith("blob:") ? article.thumbnail : "";
+   return {
    id:`cms-${article.id}`,
    title: article.headline,
    category: categoryLabelForId(categoryIdForValue(article.category)),
@@ -3268,10 +3273,13 @@ function publishedCmsStories(cat){
    views: 12000 + Math.round(Math.random()*4000),
    sentiment:"Neutral",
    trust: article.trust || 91,
-   image: article.image || "assets/newsneta-logo.jpg",
+   image: firstImage || thumbnailImage || article.image || "assets/newsneta-logo.jpg",
+   reporterUpload:true,
+   sourceLabel:"Reporter Upload",
    pubDate: article.publishedAt || new Date().toISOString(),
    link:"#"
-  }));
+   };
+  });
 }
 
 function cmsQueueForRole(role){
@@ -3598,6 +3606,8 @@ function updateArticleFromReporterForm(article){
  article.reporter = currentCmsUser?.name || article.reporter;
  article.updatedAt = new Date().toISOString();
  const uploadedMedia = [...(cmsUploadSession.images || []).map(item=>item.metadata), cmsUploadSession.thumbnail?.metadata, cmsUploadSession.video?.metadata].filter(Boolean);
+ if(cmsUploadSession.images?.[0]?.metadata?.public_url) article.image = cmsUploadSession.images[0].metadata.public_url;
+ if(cmsUploadSession.thumbnail?.metadata?.public_url) article.thumbnail = cmsUploadSession.thumbnail.metadata.public_url;
  article.media = uploadedMedia.length ? uploadedMedia.map(item=>({
   ...item,
   caption:document.getElementById("cmsMediaCaption")?.value || item.caption,
@@ -3625,7 +3635,16 @@ function uploadConfig(kind){
  return configs[kind];
 }
 
-function handleCmsFileUpload(kind, file, position = 0){
+function readFileAsDataUrl(file){
+ return new Promise((resolve,reject)=>{
+  const reader = new FileReader();
+  reader.onload = ()=>resolve(reader.result);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+ });
+}
+
+async function handleCmsFileUpload(kind, file, position = 0){
  const config = uploadConfig(kind);
  const note = document.getElementById("cmsWorkflowNote");
  if(!file || !config) return;
@@ -3638,7 +3657,8 @@ function handleCmsFileUpload(kind, file, position = 0){
   return;
  }
  if(kind !== "image" && cmsUploadSession[kind]?.localUrl) URL.revokeObjectURL(cmsUploadSession[kind].localUrl);
- const localUrl = URL.createObjectURL(file);
+ const isPersistentImage = kind === "image" || kind === "thumbnail";
+ const localUrl = isPersistentImage ? await readFileAsDataUrl(file) : URL.createObjectURL(file);
  const field = document.getElementById(config.urlField);
  if(field && (kind !== "image" || position === 0)) field.value = localUrl;
  const uploadItem = {
@@ -3650,7 +3670,7 @@ function handleCmsFileUpload(kind, file, position = 0){
    media_type:kind === "video" ? "video" : "image",
    file_name:`${slugify(file.name)}-${Date.now()}`,
    original_file_name:file.name,
-   storage_provider:"Local browser preview",
+   storage_provider:isPersistentImage ? "Browser data URL preview" : "Local browser preview",
    storage_bucket:config.bucket,
    storage_path:`pending-upload/${file.name}`,
    public_url:localUrl,
@@ -3689,15 +3709,17 @@ function handleCmsFileUpload(kind, file, position = 0){
  if(note) note.textContent = `${file.name} selected. The URL field and media metadata were updated.`;
 }
 
-function handleCmsMultiFileUpload(kind, fileList){
+async function handleCmsMultiFileUpload(kind, fileList){
  const files = Array.from(fileList || []);
  if(kind === "image"){
-  (cmsUploadSession.images || []).forEach(item=>item.localUrl && URL.revokeObjectURL(item.localUrl));
+  (cmsUploadSession.images || []).forEach(item=>item.localUrl && String(item.localUrl).startsWith("blob:") && URL.revokeObjectURL(item.localUrl));
   cmsUploadSession.images = [];
   const preview = document.getElementById("cmsImagePreview");
   if(preview) preview.innerHTML = "";
  }
- files.forEach((file,index)=>handleCmsFileUpload(kind, file, index));
+ for(const [index,file] of files.entries()){
+  await handleCmsFileUpload(kind, file, index);
+ }
  const note = document.getElementById("cmsWorkflowNote");
  if(kind === "image" && note && files.length > 1) note.textContent = `${files.length} images selected. The first image is used as the main story image; all images are saved in media metadata.`;
 }

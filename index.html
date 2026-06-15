@@ -718,6 +718,14 @@ button{cursor:pointer}
 .audit-item small,.notification-item small,.media-item small{display:block;color:var(--muted);font-weight:800;margin-top:3px}
 .storage-note{padding:10px;border-radius:8px;background:#eff6ff;color:#1e3a8a;font-weight:800}
 .publish-validation{padding:10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-weight:900}
+.upload-drop{border:1px dashed rgba(37,99,235,.42);border-radius:10px;background:#f8fbff;padding:12px;display:grid;gap:9px}
+.upload-drop strong{font-size:14px;color:var(--ink)}
+.upload-drop input[type=file]{padding:9px;background:#fff}
+.upload-hint{color:var(--muted);font-weight:800;font-size:12px}
+.upload-preview{display:none;border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px;gap:8px}
+.upload-preview.show{display:grid}
+.upload-preview img,.upload-preview video{max-width:100%;border-radius:8px;background:#0f172a;max-height:180px;object-fit:contain}
+.upload-preview b{font-size:13px}
 .cms-form{display:grid;gap:14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:16px}
 .cms-form.two-column{grid-template-columns:1fr 1fr;align-items:start}
 .cms-form.two-column > strong,.cms-form.two-column > .cms-ai-box,.cms-form.two-column > .cms-full,.cms-form.two-column > .cms-form-actions,.cms-form.two-column > .workflow-note{grid-column:1/-1}
@@ -1540,6 +1548,7 @@ const cmsUsers = {
 };
 
 let currentCmsUser = null;
+const cmsUploadSession = {};
 
 const cmsSampleArticle = {
  id:"cms-hyderabad-water-brief",
@@ -3357,6 +3366,26 @@ function cmsWorkflowForm(role){
    <label>Source Reference<textarea id="cmsSourceReference" placeholder="Source reference, contact, official note">${escapeHtml(article.sourceReference)}</textarea></label>
    <label>Fact-check Notes<textarea id="cmsFactCheckNotes" placeholder="Verification, legal and safety notes">${escapeHtml(article.factCheckNotes)}</textarea></label>
    <div class="cms-form-grid">
+    <div class="upload-drop">
+     <strong>Upload Image</strong>
+     <input id="cmsImageUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+     <small class="upload-hint">JPG, JPEG, PNG or WebP. Max 5 MB.</small>
+     <div class="upload-preview" id="cmsImagePreview"></div>
+    </div>
+    <div class="upload-drop">
+     <strong>Upload Thumbnail</strong>
+     <input id="cmsThumbnailUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+     <small class="upload-hint">Used for article cards and social sharing.</small>
+     <div class="upload-preview" id="cmsThumbnailPreview"></div>
+    </div>
+   </div>
+   <div class="upload-drop">
+    <strong>Upload Video</strong>
+    <input id="cmsVideoUpload" type="file" accept=".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm">
+    <small class="upload-hint">MP4, MOV or WebM. Local preview is created now; production storage should use signed upload URLs.</small>
+    <div class="upload-preview" id="cmsVideoPreview"></div>
+   </div>
+   <div class="cms-form-grid">
     <label>Image URL<input id="cmsImage" value="${escapeAttr(article.image)}" placeholder="https://..."></label>
     <label>Thumbnail URL<input id="cmsThumbnail" value="${escapeAttr(article.thumbnail)}" placeholder="https://..."></label>
    </div>
@@ -3553,11 +3582,94 @@ function updateArticleFromReporterForm(article){
  article.featuredRequest = Boolean(document.getElementById("cmsFeaturedRequest")?.checked);
  article.reporter = currentCmsUser?.name || article.reporter;
  article.updatedAt = new Date().toISOString();
- article.media = cmsArticleDefaults({...article, media:[]}).media;
+ const uploadedMedia = ["image","thumbnail","video"].map(kind=>cmsUploadSession[kind]?.metadata).filter(Boolean);
+ article.media = uploadedMedia.length ? uploadedMedia.map(item=>({
+  ...item,
+  caption:document.getElementById("cmsMediaCaption")?.value || item.caption,
+  alt_text:document.getElementById("cmsAltText")?.value || item.alt_text,
+  thumbnail_url:document.getElementById("cmsThumbnail")?.value || item.thumbnail_url
+ })) : cmsArticleDefaults({...article, media:[]}).media;
  return article;
 }
 
+function formatBytes(bytes){
+ if(!bytes && bytes !== 0) return "";
+ const units = ["B","KB","MB","GB"];
+ let size = bytes;
+ let index = 0;
+ while(size >= 1024 && index < units.length - 1){ size /= 1024; index += 1; }
+ return `${size.toFixed(index ? 1 : 0)} ${units[index]}`;
+}
+
+function uploadConfig(kind){
+ const configs = {
+  image:{max:5 * 1024 * 1024, types:["image/jpeg","image/png","image/webp"], urlField:"cmsImage", preview:"cmsImagePreview", bucket:"news-images"},
+  thumbnail:{max:5 * 1024 * 1024, types:["image/jpeg","image/png","image/webp"], urlField:"cmsThumbnail", preview:"cmsThumbnailPreview", bucket:"news-thumbnails"},
+  video:{max:150 * 1024 * 1024, types:["video/mp4","video/quicktime","video/webm"], urlField:"cmsVideoUrl", preview:"cmsVideoPreview", bucket:"news-videos"}
+ };
+ return configs[kind];
+}
+
+function handleCmsFileUpload(kind, file){
+ const config = uploadConfig(kind);
+ const note = document.getElementById("cmsWorkflowNote");
+ if(!file || !config) return;
+ if(!config.types.includes(file.type)){
+  if(note) note.textContent = `${file.name} is not supported for ${kind}.`;
+  return;
+ }
+ if(file.size > config.max){
+  if(note) note.textContent = `${file.name} is too large. Max allowed is ${formatBytes(config.max)}.`;
+  return;
+ }
+ if(cmsUploadSession[kind]?.localUrl) URL.revokeObjectURL(cmsUploadSession[kind].localUrl);
+ const localUrl = URL.createObjectURL(file);
+ const field = document.getElementById(config.urlField);
+ if(field) field.value = localUrl;
+ cmsUploadSession[kind] = {
+  id:`upload-${kind}-${Date.now()}`,
+  file,
+  localUrl,
+  metadata:{
+   id:`media-${Date.now()}`,
+   media_type:kind === "video" ? "video" : "image",
+   file_name:`${slugify(file.name)}-${Date.now()}`,
+   original_file_name:file.name,
+   storage_provider:"Local browser preview",
+   storage_bucket:config.bucket,
+   storage_path:`pending-upload/${file.name}`,
+   public_url:localUrl,
+   thumbnail_url:kind === "video" ? (document.getElementById("cmsThumbnail")?.value || "") : localUrl,
+   file_size:formatBytes(file.size),
+   mime_type:file.type,
+   width:"",
+   height:"",
+   duration:"",
+   caption:document.getElementById("cmsMediaCaption")?.value || file.name,
+   alt_text:document.getElementById("cmsAltText")?.value || file.name,
+   uploaded_by:currentCmsUser?.name || "Reporter",
+   uploaded_at:new Date().toISOString()
+  }
+ };
+ const preview = document.getElementById(config.preview);
+ if(preview){
+  const media = kind === "video"
+   ? `<video src="${escapeAttr(localUrl)}" controls></video>`
+   : `<img src="${escapeAttr(localUrl)}" alt="">`;
+  preview.classList.add("show");
+  preview.innerHTML = `${media}<b>${escapeHtml(file.name)}</b><small>${escapeHtml(file.type)} • ${formatBytes(file.size)}</small><small>Local preview ready. Cloud upload will replace this with a CDN URL in production.</small>`;
+ }
+ if(note) note.textContent = `${file.name} selected. The URL field and media metadata were updated.`;
+}
+
+function bindCmsUploadInputs(){
+ [["cmsImageUpload","image"],["cmsThumbnailUpload","thumbnail"],["cmsVideoUpload","video"]].forEach(([id,kind])=>{
+  document.getElementById(id)?.addEventListener("change",event=>handleCmsFileUpload(kind, event.target.files?.[0]));
+ });
+}
+
 function bindCmsScreen(role){
+ bindCmsUploadInputs();
  document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
   event.preventDefault();
   const article = primaryCmsArticle();

@@ -716,6 +716,7 @@ button{cursor:pointer}
 .audit-list,.notification-list,.media-list{display:grid;gap:8px}
 .audit-item,.notification-item,.media-item{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px}
 .audit-item small,.notification-item small,.media-item small{display:block;color:var(--muted);font-weight:800;margin-top:3px}
+.media-item img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;display:block;margin-bottom:6px}
 .storage-note{padding:10px;border-radius:8px;background:#eff6ff;color:#1e3a8a;font-weight:800}
 .publish-validation{padding:10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-weight:900}
 .upload-drop{border:1px dashed rgba(37,99,235,.42);border-radius:10px;background:#f8fbff;padding:12px;display:grid;gap:9px}
@@ -2607,9 +2608,13 @@ function cleanText(value){
 }
 
 function buildDetailedArticle(story){
- const base = cleanText(story.description) || makeSummary(story.title);
+ const fullArticle = cleanText(story.fullArticle || story.body);
+ const base = fullArticle || cleanText(story.description) || makeSummary(story.title);
  const category = story.category || "News";
  const trust = story.trust || 91;
+ const cmsMediaGallery = Array.isArray(story.media) && story.media.filter(item=>item.media_type === "image").length > 1
+  ? `<h3>Media Gallery</h3><div class="media-list">${story.media.filter(item=>item.media_type === "image").slice(0,6).map(item=>`<div class="media-item"><img src="${escapeAttr(item.public_url)}" alt="${escapeAttr(item.alt_text || story.title)}" onerror="imageFallback(event)"><small>${escapeHtml(item.caption || item.original_file_name || "")}</small></div>`).join("")}</div>`
+  : "";
  if(currentLanguage === "en"){
   return `
   <p><b>NewsNeta Desk:</b> Fresh updates are available on ${escapeHtml(story.title)}. This report explains the main development, background, public impact, and next expected updates in a clear reader-friendly format.</p>
@@ -2662,6 +2667,12 @@ function buildDetailedArticle(story){
  `;
 }
 
+function storyMediaGallery(story){
+ const images = Array.isArray(story.media) ? story.media.filter(item=>item.media_type === "image" && item.public_url) : [];
+ if(images.length <= 1) return "";
+ return `<h3>Media Gallery</h3><div class="media-list">${images.slice(0,8).map(item=>`<div class="media-item"><img src="${escapeAttr(item.public_url)}" alt="${escapeAttr(item.alt_text || story.title)}" onerror="imageFallback(event)"><small>${escapeHtml(item.caption || item.original_file_name || "")}</small></div>`).join("")}</div>`;
+}
+
 function renderStorySummaryMode(story, mode){
  const copy = document.getElementById("storyModalCopy");
  if(!copy) return;
@@ -2673,7 +2684,7 @@ function renderStorySummaryMode(story, mode){
   copy.innerHTML = `<h3>One Minute Brief</h3><p>${escapeHtml(makeSummary(story.title))}</p><ul><li>What happened: ${escapeHtml(story.title)}</li><li>Why it matters: local impact, public services and official updates are being tracked.</li><li>Next update: this story refreshes when verified feed data changes.</li></ul>`;
   return;
  }
- copy.innerHTML = buildDetailedArticle(story);
+ copy.innerHTML = buildDetailedArticle(story) + storyMediaGallery(story);
 }
 
 function playShortNews(id, button){
@@ -2956,7 +2967,7 @@ function openStoryDetail(id){
  document.getElementById("storyModalCopy").classList.remove("reader-large");
  if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
  else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
- document.getElementById("storyModalCopy").innerHTML = buildDetailedArticle(story);
+ document.getElementById("storyModalCopy").innerHTML = buildDetailedArticle(story) + storyMediaGallery(story);
  document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
  document.querySelectorAll("#storyLike,#storyImportant,#storyComment").forEach(button=>button.classList.remove("active"));
  if("speechSynthesis" in window) speechSynthesis.cancel();
@@ -3250,6 +3261,10 @@ function publishedCmsStories(cat){
    district: article.district,
    state: article.state,
    description: article.summary,
+   body: article.body,
+   fullArticle: article.body,
+   summary: article.summary,
+   media: article.media || [],
    views: 12000 + Math.round(Math.random()*4000),
    sentiment:"Neutral",
    trust: article.trust || 91,
@@ -3368,7 +3383,7 @@ function cmsWorkflowForm(role){
    <div class="cms-form-grid">
     <div class="upload-drop">
      <strong>Upload Image</strong>
-     <input id="cmsImageUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+     <input id="cmsImageUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
      <small class="upload-hint">JPG, JPEG, PNG or WebP. Max 5 MB.</small>
      <div class="upload-preview" id="cmsImagePreview"></div>
     </div>
@@ -3582,7 +3597,7 @@ function updateArticleFromReporterForm(article){
  article.featuredRequest = Boolean(document.getElementById("cmsFeaturedRequest")?.checked);
  article.reporter = currentCmsUser?.name || article.reporter;
  article.updatedAt = new Date().toISOString();
- const uploadedMedia = ["image","thumbnail","video"].map(kind=>cmsUploadSession[kind]?.metadata).filter(Boolean);
+ const uploadedMedia = [...(cmsUploadSession.images || []).map(item=>item.metadata), cmsUploadSession.thumbnail?.metadata, cmsUploadSession.video?.metadata].filter(Boolean);
  article.media = uploadedMedia.length ? uploadedMedia.map(item=>({
   ...item,
   caption:document.getElementById("cmsMediaCaption")?.value || item.caption,
@@ -3610,7 +3625,7 @@ function uploadConfig(kind){
  return configs[kind];
 }
 
-function handleCmsFileUpload(kind, file){
+function handleCmsFileUpload(kind, file, position = 0){
  const config = uploadConfig(kind);
  const note = document.getElementById("cmsWorkflowNote");
  if(!file || !config) return;
@@ -3622,11 +3637,11 @@ function handleCmsFileUpload(kind, file){
   if(note) note.textContent = `${file.name} is too large. Max allowed is ${formatBytes(config.max)}.`;
   return;
  }
- if(cmsUploadSession[kind]?.localUrl) URL.revokeObjectURL(cmsUploadSession[kind].localUrl);
+ if(kind !== "image" && cmsUploadSession[kind]?.localUrl) URL.revokeObjectURL(cmsUploadSession[kind].localUrl);
  const localUrl = URL.createObjectURL(file);
  const field = document.getElementById(config.urlField);
- if(field) field.value = localUrl;
- cmsUploadSession[kind] = {
+ if(field && (kind !== "image" || position === 0)) field.value = localUrl;
+ const uploadItem = {
   id:`upload-${kind}-${Date.now()}`,
   file,
   localUrl,
@@ -3651,20 +3666,45 @@ function handleCmsFileUpload(kind, file){
    uploaded_at:new Date().toISOString()
   }
  };
+ if(kind === "image"){
+  cmsUploadSession.images = cmsUploadSession.images || [];
+  cmsUploadSession.images.push(uploadItem);
+  cmsUploadSession.image = cmsUploadSession.images[0];
+ }else{
+  cmsUploadSession[kind] = uploadItem;
+ }
  const preview = document.getElementById(config.preview);
  if(preview){
   const media = kind === "video"
    ? `<video src="${escapeAttr(localUrl)}" controls></video>`
    : `<img src="${escapeAttr(localUrl)}" alt="">`;
   preview.classList.add("show");
+  if(kind === "image" && position > 0){
+   preview.insertAdjacentHTML("beforeend", `${media}<b>${escapeHtml(file.name)}</b><small>${escapeHtml(file.type)} • ${formatBytes(file.size)}</small>`);
+   if(note) note.textContent = `${file.name} selected. The URL field and media metadata were updated.`;
+   return;
+  }
   preview.innerHTML = `${media}<b>${escapeHtml(file.name)}</b><small>${escapeHtml(file.type)} • ${formatBytes(file.size)}</small><small>Local preview ready. Cloud upload will replace this with a CDN URL in production.</small>`;
  }
  if(note) note.textContent = `${file.name} selected. The URL field and media metadata were updated.`;
 }
 
+function handleCmsMultiFileUpload(kind, fileList){
+ const files = Array.from(fileList || []);
+ if(kind === "image"){
+  (cmsUploadSession.images || []).forEach(item=>item.localUrl && URL.revokeObjectURL(item.localUrl));
+  cmsUploadSession.images = [];
+  const preview = document.getElementById("cmsImagePreview");
+  if(preview) preview.innerHTML = "";
+ }
+ files.forEach((file,index)=>handleCmsFileUpload(kind, file, index));
+ const note = document.getElementById("cmsWorkflowNote");
+ if(kind === "image" && note && files.length > 1) note.textContent = `${files.length} images selected. The first image is used as the main story image; all images are saved in media metadata.`;
+}
+
 function bindCmsUploadInputs(){
  [["cmsImageUpload","image"],["cmsThumbnailUpload","thumbnail"],["cmsVideoUpload","video"]].forEach(([id,kind])=>{
-  document.getElementById(id)?.addEventListener("change",event=>handleCmsFileUpload(kind, event.target.files?.[0]));
+  document.getElementById(id)?.addEventListener("change",event=>handleCmsMultiFileUpload(kind, event.target.files));
  });
 }
 

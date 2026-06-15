@@ -2854,6 +2854,14 @@ function shareStoryTo(platform, story){
  window.open(targets[platform] || url.toString(), "_blank", "noopener,noreferrer");
 }
 
+function scrollStoryModalToTop(){
+ const modal = document.querySelector(".story-modal");
+ requestAnimationFrame(()=>{
+  if(modal) modal.scrollTo({top:0, behavior:"smooth"});
+  document.getElementById("storyModalTitle")?.focus?.({preventScroll:true});
+ });
+}
+
 function openStoryDetail(id){
  const story = findStoryById(id);
  if(!story) return;
@@ -2962,6 +2970,7 @@ function openStoryDetail(id){
  document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
  document.getElementById("storyBackdrop").classList.add("open");
  document.body.classList.add("lock");
+ scrollStoryModalToTop();
 }
 
 document.getElementById("closeStory").addEventListener("click",()=>{

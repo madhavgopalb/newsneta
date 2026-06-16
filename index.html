@@ -2480,13 +2480,11 @@ async function loadNews(cat="telangana"){
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
   const liveItems = normalizeItems(data.items || []);
-  const cmsPublished = publishedCmsStories(cat);
   const baseItems = liveItems.length ? liveItems : normalizeItems(fallbackStories);
-  stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+  stories = mergePublishedStories(cat, baseItems);
  }catch(error){
   newsSourceMode = "Static preview demo";
-  const cmsPublished = publishedCmsStories(cat);
-  stories = [...cmsPublished, ...normalizeItems(fallbackStories)].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+  stories = mergePublishedStories(cat, normalizeItems(fallbackStories));
  }
  const latestTitle = document.getElementById("latestTitle");
  const categoryLabel = categories.find(([id])=>id === cat)?.[1] || "Latest";
@@ -3285,9 +3283,10 @@ function categoryLabelForId(id){
 
 function publishedCmsStories(cat){
  const requested = categoryIdForValue(cat);
+ const includeAllPublished = !cat || requested === "latest";
  return cmsArticles
   .filter(article=>article.status === "published")
-  .filter(article=>!cat || categoryIdForValue(article.category) === requested || categoryIdForValue(article.state) === requested)
+  .filter(article=>includeAllPublished || categoryIdForValue(article.category) === requested || categoryIdForValue(article.state) === requested)
   .map(article=>{
    const firstImage = (article.media || []).find(item=>item.media_type === "image" && item.public_url)?.public_url;
    const thumbnailImage = article.thumbnail && !String(article.thumbnail).startsWith("blob:") ? article.thumbnail : "";
@@ -3312,6 +3311,12 @@ function publishedCmsStories(cat){
    link:"#"
    };
   });
+}
+
+function mergePublishedStories(category, baseItems){
+ const cmsPublished = publishedCmsStories(category);
+ return [...cmsPublished, ...baseItems]
+  .filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
 }
 
 function publishedCmsDistrictStories(state, district){

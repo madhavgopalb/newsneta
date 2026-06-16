@@ -415,6 +415,11 @@ button{cursor:pointer}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
 .section{padding:18px;margin-top:18px}
 .story-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.feed-pager{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.pager-btn{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);min-height:40px;padding:0 14px;font-weight:900}
+.pager-btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.pager-btn:disabled{opacity:.45;cursor:not-allowed}
+.pager-status{color:var(--muted);font:900 12px/1.3 Inter,sans-serif;min-width:96px;text-align:center}
 .news-card{overflow:hidden;background:var(--surface);transition:transform .22s ease, box-shadow .22s ease;border-color:rgba(15,23,42,.14)}
 .news-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
 .thumb{aspect-ratio:16/11;background:linear-gradient(135deg,#d9e2f2,#fff);position:relative;overflow:hidden}
@@ -1228,11 +1233,13 @@ button{cursor:pointer}
   <section class="section">
    <div class="section-title"><h2 id="latestTitle">Latest News</h2><span class="chip">Live</span></div>
    <div class="story-grid" id="latestGrid"></div>
+   <div class="feed-pager" id="latestPager" aria-label="Latest news pagination"></div>
   </section>
 
   <section class="section" id="reporterPublished">
    <div class="section-title"><h2>Reporter Published Stories</h2><span class="chip">Reviewed + Published</span></div>
    <div class="story-grid" id="reporterPublishedGrid"></div>
+   <div class="feed-pager" id="reporterPager" aria-label="Reporter published stories pagination"></div>
   </section>
 
   <section class="section newsroom-desk" id="todaysEditionFull">
@@ -1714,6 +1721,12 @@ let nextRefreshAt = null;
 let newsSourceMode = "Static preview";
 let activeDistrictFilter = null;
 const maxStoryAgeDays = 10;
+const latestPageSize = 9;
+const reporterPageSize = 6;
+let latestPage = 1;
+let reporterPage = 1;
+let latestFeedItems = [];
+let reporterFeedItems = [];
 let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
 let activeEditionTopic = "Top";
@@ -2342,18 +2355,45 @@ async function renderWeather(){
 function renderReporterPublished(){
  const host = document.getElementById("reporterPublishedGrid");
  if(!host) return;
- const published = publishedCmsStories()
+ reporterFeedItems = publishedCmsStories()
   .filter(story=>story.reporterUpload || String(story.sourceLabel || "").toLowerCase().includes("reporter"))
   .sort((a,b)=>new Date(b.publishedAt || b.updatedAt || 0) - new Date(a.publishedAt || a.updatedAt || 0));
- if(!published.length){
-  host.innerHTML = `<article class="mini-card">
+ renderPagedFeed({
+  items: reporterFeedItems,
+  page: reporterPage,
+  pageSize: reporterPageSize,
+  gridId: "reporterPublishedGrid",
+  pagerId: "reporterPager",
+  pageKey: "reporter",
+  emptyHtml: `<article class="mini-card">
    <span class="tag">Newsroom</span>
    <h3>No reporter-published stories yet</h3>
    <p class="summary">Reporter stories will appear here after reviewer approval and admin publication.</p>
-  </article>`;
+  </article>`
+ });
+}
+
+function renderPagedFeed({items, page, pageSize, gridId, pagerId, pageKey, emptyHtml}){
+ const grid = document.getElementById(gridId);
+ const pager = document.getElementById(pagerId);
+ if(!grid) return;
+ const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+ const safePage = Math.min(Math.max(1, page), totalPages);
+ if(pageKey === "latest") latestPage = safePage;
+ if(pageKey === "reporter") reporterPage = safePage;
+ if(!items.length){
+  grid.innerHTML = emptyHtml || `<article class="mini-card"><h3>No stories found</h3><p class="summary">Please refresh or choose another section.</p></article>`;
+  if(pager) pager.innerHTML = "";
   return;
  }
- host.innerHTML = published.slice(0,9).map(storyCard).join("");
+ const start = (safePage - 1) * pageSize;
+ const visible = items.slice(start, start + pageSize);
+ grid.innerHTML = visible.map(storyCard).join("");
+ if(!pager) return;
+ pager.innerHTML = `<button class="pager-btn" type="button" data-page-action="${pageKey}:prev" ${safePage <= 1 ? "disabled" : ""}>Previous</button>
+  <span class="pager-status">Page ${safePage} / ${totalPages}</span>
+  <button class="pager-btn primary" type="button" data-page-action="${pageKey}:next" ${safePage >= totalPages ? "disabled" : ""}>Show older</button>
+  <button class="pager-btn" type="button" data-page-action="${pageKey}:first" ${safePage <= 1 ? "disabled" : ""}>Latest</button>`;
 }
 
 function render(){
@@ -2374,7 +2414,16 @@ function render(){
  document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></a>`).join("");
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
- document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,13).map(storyCard).join("");
+ latestFeedItems = sorted.concat(fallbackStories).filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+ renderPagedFeed({
+  items: latestFeedItems,
+  page: latestPage,
+  pageSize: latestPageSize,
+  gridId: "latestGrid",
+  pagerId: "latestPager",
+  pageKey: "latest",
+  emptyHtml: `<article class="mini-card"><h3>No latest news found</h3><p class="summary">Please refresh news or choose another category.</p></article>`
+ });
  renderReporterPublished();
  document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><img loading="lazy" src="${escapeAttr(s.image)}" alt="" onerror="imageFallback(event)"><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
  const counts = categories.map(([id,label],i)=>({id,label:categoryLabel(id,label),count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
@@ -2474,6 +2523,7 @@ function animateCounters(){
 }
 
 async function loadNews(cat="telangana"){
+ latestPage = 1;
  try{
   const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}&refresh=${Date.now()}`, {cache:"no-store"});
   if(!res.ok) throw new Error("news api failed");
@@ -2526,6 +2576,7 @@ function setupDistricts(){
 
 async function loadDistrictNews(state, district){
  if(!state || !district) return loadNews(document.querySelector(".nav a.active")?.dataset.cat || "telangana");
+ latestPage = 1;
  try{
   const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}`, {cache:"no-store"});
   if(!res.ok) throw new Error("district news api failed");
@@ -2778,6 +2829,30 @@ document.addEventListener("click", event=>{
   event.preventDefault();
   engagement.classList.toggle("active");
   if(engagement.id === "storyComment") alert("Comment workspace will be connected to the user profile system in the production backend.");
+  return;
+ }
+ const pageButton = event.target.closest("[data-page-action]");
+ if(pageButton){
+  event.preventDefault();
+  const [target, action] = pageButton.dataset.pageAction.split(":");
+  const total = target === "latest" ? Math.max(1, Math.ceil(latestFeedItems.length / latestPageSize)) : Math.max(1, Math.ceil(reporterFeedItems.length / reporterPageSize));
+  if(target === "latest"){
+   latestPage = action === "next" ? Math.min(total, latestPage + 1) : action === "prev" ? Math.max(1, latestPage - 1) : 1;
+   renderPagedFeed({
+    items: latestFeedItems,
+    page: latestPage,
+    pageSize: latestPageSize,
+    gridId: "latestGrid",
+    pagerId: "latestPager",
+    pageKey: "latest",
+    emptyHtml: `<article class="mini-card"><h3>No latest news found</h3><p class="summary">Please refresh news or choose another category.</p></article>`
+   });
+   document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
+  }else{
+   reporterPage = action === "next" ? Math.min(total, reporterPage + 1) : action === "prev" ? Math.max(1, reporterPage - 1) : 1;
+   renderReporterPublished();
+   document.getElementById("reporterPublished")?.scrollIntoView({behavior:"smooth", block:"start"});
+  }
   return;
  }
  const reelPlay = event.target.closest(".reel-play");
@@ -4014,7 +4089,17 @@ document.getElementById("searchInput").addEventListener("input", event=>{
  });
  const reason = document.getElementById("preferenceReason");
  if(reason) reason.textContent = filtered.length ? `${filtered.length} matching stories found for "${event.target.value.trim()}".` : "No exact match found. Showing the latest available stories.";
- document.getElementById("latestGrid").innerHTML = (filtered.length ? filtered : stories).map(storyCard).join("");
+ latestPage = 1;
+ latestFeedItems = filtered.length ? filtered : stories;
+ renderPagedFeed({
+  items: latestFeedItems,
+  page: latestPage,
+  pageSize: latestPageSize,
+  gridId: "latestGrid",
+  pagerId: "latestPager",
+  pageKey: "latest",
+  emptyHtml: `<article class="mini-card"><h3>No matching news found</h3><p class="summary">Try a different keyword or refresh news.</p></article>`
+ });
 });
 document.getElementById("voiceSearchBtn")?.addEventListener("click", runVoiceSearch);
 

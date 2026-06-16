@@ -1083,6 +1083,7 @@ button{cursor:pointer}
      <a class="quick-pill" id="quickEpaper" href="#epaper">E-Paper</a>
      <a class="quick-pill" id="quickEditorial" href="#opinionDesk">Editorial</a>
      <a class="quick-pill" id="quickNewsroom" href="#publishingDesk">Newsroom Desk</a>
+     <button class="quick-pill" id="openReporterPublished" type="button">Reporter Published</button>
    </div>
    <div class="reader-tools">
     <button class="quick-pill" id="openExplainers" type="button">Explainers</button>
@@ -1227,6 +1228,11 @@ button{cursor:pointer}
   <section class="section">
    <div class="section-title"><h2 id="latestTitle">Latest News</h2><span class="chip">Live</span></div>
    <div class="story-grid" id="latestGrid"></div>
+  </section>
+
+  <section class="section" id="reporterPublished">
+   <div class="section-title"><h2>Reporter Published Stories</h2><span class="chip">Reviewed + Published</span></div>
+   <div class="story-grid" id="reporterPublishedGrid"></div>
   </section>
 
   <section class="section newsroom-desk" id="todaysEditionFull">
@@ -1499,7 +1505,7 @@ button{cursor:pointer}
 const categories = [
  ["latest","Latest News"],["politics","Politics"],["ap","Andhra Pradesh"],["telangana","Telangana"],
  ["district","District News"],["national","National"],["international","International"],["business","Business"],
- ["sports","Sports"],["entertainment","Entertainment"],["cinema","Cinema"],["technology","Technology"],
+ ["sports","Sports"],["cricket","Cricket"],["entertainment","Entertainment"],["cinema","Cinema"],["technology","Technology"],
  ["education","Education"],["health","Health"],["crime","Crime"],["weather","Weather"],["jobs","Jobs"],
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
@@ -2333,6 +2339,23 @@ async function renderWeather(){
  renderLocalAlerts();
 }
 
+function renderReporterPublished(){
+ const host = document.getElementById("reporterPublishedGrid");
+ if(!host) return;
+ const published = publishedCmsStories()
+  .filter(story=>story.reporterUpload || String(story.sourceLabel || "").toLowerCase().includes("reporter"))
+  .sort((a,b)=>new Date(b.publishedAt || b.updatedAt || 0) - new Date(a.publishedAt || a.updatedAt || 0));
+ if(!published.length){
+  host.innerHTML = `<article class="mini-card">
+   <span class="tag">Newsroom</span>
+   <h3>No reporter-published stories yet</h3>
+   <p class="summary">Reporter stories will appear here after reviewer approval and admin publication.</p>
+  </article>`;
+  return;
+ }
+ host.innerHTML = published.slice(0,9).map(storyCard).join("");
+}
+
 function render(){
  const sorted = [...stories].sort((a,b)=>b.views-a.views);
  heroStories = normalizeItems([...globalTopStories, ...sorted]).slice(0,8);
@@ -2352,6 +2375,7 @@ function render(){
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
  document.getElementById("latestGrid").innerHTML = sorted.concat(fallbackStories).slice(0,13).map(storyCard).join("");
+ renderReporterPublished();
  document.getElementById("mostViewed").innerHTML = sorted.slice(0,7).map(s=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><img loading="lazy" src="${escapeAttr(s.image)}" alt="" onerror="imageFallback(event)"><h3>${s.title}</h3><small>${readMinutes(s)} min • ${Intl.NumberFormat("en-IN").format(s.views)}</small></a>`).join("");
  const counts = categories.map(([id,label],i)=>({id,label:categoryLabel(id,label),count:Math.round((sorted[i%sorted.length]?.views || 30000)/900)}));
  document.getElementById("categoryGrid").innerHTML = counts.map(c=>{
@@ -3016,6 +3040,10 @@ document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${
 document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
 document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
 document.getElementById("openExplainers").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("openReporterPublished")?.addEventListener("click",()=>{
+ renderReporterPublished();
+ document.getElementById("reporterPublished")?.scrollIntoView({behavior:"smooth", block:"start"});
+});
 document.getElementById("openEdition").addEventListener("click",async ()=>{
  await refreshAllNews();
  openTodayEdition();

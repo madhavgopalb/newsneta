@@ -25,6 +25,7 @@ const FEEDS = {
   international: googleNewsUrl("World Telugu international news"),
   cinema: googleNewsUrl("Telugu cinema news"),
   sports: googleNewsUrl("Sports Telugu cricket"),
+  cricket: googleNewsUrl("Cricket Telugu India IPL T20 match score"),
   technology: googleNewsUrl("Technology Telugu news"),
   business: googleNewsUrl("Business Telugu news"),
   viral: googleNewsUrl("Viral Telugu news")
@@ -93,6 +94,7 @@ const CATEGORY_LABELS = {
   international: "International",
   cinema: "Cinema",
   sports: "Sports",
+  cricket: "Cricket",
   technology: "Technology",
   business: "Business",
   viral: "Viral"
@@ -119,6 +121,7 @@ function queryFor(cat, district) {
     international: "World Telugu news",
     cinema: "Telugu cinema news",
     sports: "Sports Telugu",
+    cricket: "Cricket Telugu India IPL T20 match score",
     technology: "Technology Telugu news",
     business: "Business Telugu news",
     viral: "Viral Telugu news"

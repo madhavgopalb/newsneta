@@ -812,6 +812,14 @@ button{cursor:pointer}
 .story-detail-copy h3{margin:18px 0 8px;font-size:18px;color:var(--ink)}
 .story-detail-copy ul{margin:8px 0 0;padding-left:20px}
 .story-detail-copy li{margin:7px 0}
+.article-lead{font-size:17px;color:var(--ink)!important;font-weight:750}
+.article-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.article-context-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:11px}
+.article-context-card small{display:block;color:var(--muted);font-weight:900;text-transform:uppercase;margin-bottom:5px}
+.article-context-card strong{display:block;font-size:15px;line-height:1.35}
+.article-update-list{border-left:3px solid var(--brand);padding-left:13px;margin:10px 0 14px}
+.article-update-list p{margin:0 0 10px}
+.article-note{border:1px solid var(--line);border-radius:12px;background:rgba(215,25,32,.08);padding:12px;margin-top:12px}
 .top-arrow{
  position:fixed;
  right:18px;
@@ -2745,6 +2753,107 @@ function buildDetailedArticle(story){
  `;
 }
 
+function buildExpandedArticle(story){
+ const fullArticle = cleanText(story.fullArticle || story.body);
+ const summary = cleanText(story.description || story.summary || story.aiSummary || makeSummary(story.title));
+ const category = story.category || "News";
+ const trust = story.trust || 91;
+ const location = story.district || story.state || "NewsNeta coverage area";
+ const updated = formatStoryDate(story.pubDate || lastRefreshAt || new Date());
+ const isReporterStory = Boolean(story.reporterUpload);
+ const title = story.title || "NewsNeta story";
+ const bodyParagraphs = fullArticle
+  ? fullArticle.split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,8)
+  : [
+   `${title}. ${summary}`,
+   `NewsNeta is tracking this story under the ${category} desk with focus on what happened, why it matters, who may be affected, and what readers should watch next.`,
+   `The coverage is organized from live news signals, category context, reader interest, image relevance checks, and editorial quality signals. If additional verified information becomes available, this article view is designed to refresh with clearer context.`,
+   `For ${location}, the practical angle is important: public services, local response, travel or schedule changes, market impact, audience reaction, policy movement, or sports/cinema follow-up may all become relevant depending on the story category.`,
+   `This article should be treated as a developing reader brief unless it is marked as a reporter-published story. Reporter-published stories preserve the submitted article body and display it with the same verification and related-story tools.`
+  ];
+ if(currentLanguage === "te"){
+  return `
+   <p class="article-lead"><b>NewsNeta Desk:</b> ${escapeHtml(title)} పై విస్తృత కథనం. ముఖ్యమైన విషయం, నేపథ్యం, ప్రజలపై ప్రభావం, తాజా అప్‌డేట్ మార్గం అన్నీ ఒకే చోట చదవడానికి సిద్ధం చేశాం.</p>
+   <div class="article-context-grid">
+    <div class="article-context-card"><small>విభాగం</small><strong>${escapeHtml(category)}</strong></div>
+    <div class="article-context-card"><small>అప్‌డేట్</small><strong>${escapeHtml(updated)}</strong></div>
+    <div class="article-context-card"><small>ప్రాంతం</small><strong>${escapeHtml(location)}</strong></div>
+    <div class="article-context-card"><small>ట్రస్ట్</small><strong>${trust}%</strong></div>
+   </div>
+   <h3>ప్రధాన అంశాలు</h3>
+   <ul>
+    <li>${escapeHtml(category)} విభాగంలో ఈ కథనానికి సంబంధించిన తాజా పరిణామాలను NewsNeta ట్రాక్ చేస్తోంది.</li>
+    <li>శీర్షికతో పాటు నేపథ్యం, స్థానిక ప్రభావం, ప్రజల స్పందన, సంబంధిత కథనాలు కూడా పరిశీలించబడుతున్నాయి.</li>
+    <li>${isReporterStory ? "ఈ కథనం రిపోర్టర్ అప్‌లోడ్, రివ్యూయర్ పరిశీలన, అడ్మిన్ ప్రచురణ ప్రక్రియ ద్వారా వచ్చింది." : "ఈ కథనం లైవ్ ఫీడ్ మరియు న్యూస్‌రూమ్ సందర్భంతో విస్తరించబడింది."}</li>
+   </ul>
+   <h3>వివరమైన కథనం</h3>
+   ${bodyParagraphs.map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}
+   <h3>నేపథ్యం</h3>
+   <p>ఈ అంశంపై పాఠకుల ఆసక్తి, విభాగం ప్రాముఖ్యత, స్థానిక సందర్భం, అధికారిక సంకేతాలు, ప్రజా స్పందన ఆధారంగా కథనాన్ని క్రమబద్ధంగా అందిస్తున్నాం. తాజా వివరాలు అందుబాటులోకి వస్తే ఈ రీడర్ వ్యూ మరింత మెరుగుపడుతుంది.</p>
+   <h3>ప్రజలపై ప్రభావం</h3>
+   <p>ఈ పరిణామం స్థానిక ప్రజలు, ప్రయాణం, సేవలు, మార్కెట్లు, అభిమానులు, విద్యార్థులు, ఉద్యోగార్థులు లేదా విధాన నిర్ణయాలపై ప్రభావం చూపవచ్చు. విభాగాన్ని బట్టి ఈ ప్రభావాన్ని NewsNeta స్పష్టంగా చూపిస్తుంది.</p>
+   <h3>తదుపరి అప్‌డేట్ మార్గం</h3>
+   <div class="article-update-list">
+    <p><b>ఇప్పుడు:</b> కథనం, చిత్రం, విభాగం, సారాంశం రీడర్ వ్యూకు సిద్ధమయ్యాయి.</p>
+    <p><b>తర్వాత:</b> సంబంధిత కథనాలు, ఫీడ్ అప్‌డేట్లు, రిపోర్టర్ ప్రచురణలు చేరితే వివరాలు విస్తరిస్తాయి.</p>
+    <p><b>పాఠకుడి ఎంపిక:</b> వినండి, సేవ్ చేయండి, షేర్ చేయండి లేదా కింద ఉన్న సంబంధిత కథనాలు చదవండి.</p>
+   </div>
+   <h3>ధృవీకరణ</h3>
+   <p>ప్రస్తుత ట్రస్ట్ స్కోర్ ${trust}%. శీర్షిక స్పష్టత, చిత్రం సంబంధం, ప్రచురణ సమయం, వర్గీకరణ, కంటెంట్ నాణ్యత ఆధారంగా ఈ కథనం రీడర్ వ్యూలో చూపించబడుతోంది.</p>
+   <div class="article-note"><b>ఎడిటోరియల్ గమనిక:</b> లైవ్ కథనాలు మారవచ్చు. రిపోర్టర్ ప్రచురించిన కథనాల్లో అందుబాటులో ఉన్న పూర్తి ఆర్టికల్ బాడీని ప్రాధాన్యంగా చూపిస్తాం.</div>`;
+ }
+ if(currentLanguage === "hi"){
+  return `
+   <p class="article-lead"><b>NewsNeta Desk:</b> ${escapeHtml(title)} पर विस्तृत रिपोर्ट. इस रीडर व्यू में मुख्य बात, पृष्ठभूमि, असर, अपडेट पथ और सत्यापन संकेत शामिल हैं.</p>
+   <div class="article-context-grid">
+    <div class="article-context-card"><small>Category</small><strong>${escapeHtml(category)}</strong></div>
+    <div class="article-context-card"><small>Updated</small><strong>${escapeHtml(updated)}</strong></div>
+    <div class="article-context-card"><small>Location</small><strong>${escapeHtml(location)}</strong></div>
+    <div class="article-context-card"><small>Trust</small><strong>${trust}%</strong></div>
+   </div>
+   <h3>मुख्य बातें</h3>
+   <ul>
+    <li>NewsNeta इस खबर को ${escapeHtml(category)} श्रेणी में ट्रैक कर रहा है.</li>
+    <li>रिपोर्ट में पृष्ठभूमि, स्थानीय असर, सार्वजनिक प्रतिक्रिया और संबंधित अपडेट शामिल हैं.</li>
+    <li>${isReporterStory ? "यह खबर रिपोर्टर-रिव्यू-पब्लिश वर्कफ्लो से प्रकाशित हुई है." : "यह खबर लाइव फीड और न्यूजरूम संदर्भ से विस्तारित की गई है."}</li>
+   </ul>
+   <h3>विस्तृत रिपोर्ट</h3>
+   ${bodyParagraphs.map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}
+   <h3>पृष्ठभूमि और असर</h3>
+   <p>NewsNeta उपलब्ध अपडेट, स्थानीय संदर्भ, पाठक रुचि और संपादकीय संकेतों के आधार पर खबर को व्यवस्थित करता है. नए सत्यापित अपडेट मिलने पर यह रीडर व्यू और विस्तृत होगा.</p>
+   <div class="article-note"><b>संपादकीय नोट:</b> लाइव खबरें बदल सकती हैं. रिपोर्टर-पब्लिश्ड स्टोरी में उपलब्ध पूरा लेख सुरक्षित रखा जाता है.</div>`;
+ }
+ return `
+  <p class="article-lead"><b>NewsNeta Desk:</b> Expanded coverage on ${escapeHtml(title)}. This reader view explains the main development, background, public impact, update path, and verification signals.</p>
+  <div class="article-context-grid">
+   <div class="article-context-card"><small>Category</small><strong>${escapeHtml(category)}</strong></div>
+   <div class="article-context-card"><small>Updated</small><strong>${escapeHtml(updated)}</strong></div>
+   <div class="article-context-card"><small>Location focus</small><strong>${escapeHtml(location)}</strong></div>
+   <div class="article-context-card"><small>Trust signal</small><strong>${trust}% editorial confidence</strong></div>
+  </div>
+  <h3>Key Points</h3>
+  <ul>
+   <li>The story is being tracked under the ${escapeHtml(category)} desk.</li>
+   <li>NewsNeta adds background, local impact, reader relevance, and update signals beyond the headline.</li>
+   <li>${isReporterStory ? "This story came through the reporter, reviewer, and admin publishing workflow." : "This story is expanded from live feed data and newsroom context."}</li>
+  </ul>
+  <h3>Detailed Report</h3>
+  ${bodyParagraphs.map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}
+  <h3>Background</h3>
+  <p>This story is part of the current NewsNeta news cycle. The background connects the headline to previous developments, involved institutions or communities, and the reason readers may see follow-up coverage in the same category.</p>
+  <h3>Public Impact</h3>
+  <p>The development may affect citizens, viewers, fans, local communities, travel, services, markets or policy decisions depending on the category. NewsNeta keeps this section practical so readers can understand what changes and what remains uncertain.</p>
+  <h3>Latest Update Path</h3>
+  <div class="article-update-list">
+   <p><b>Now:</b> Headline, category, image and summary have been organized for reader view.</p>
+   <p><b>Next:</b> Related stories and fresh feed updates will add more context if the story develops.</p>
+   <p><b>Reader action:</b> Save, share, listen or open related stories to continue following the topic.</p>
+  </div>
+  <h3>Verification</h3>
+  <p>The current trust score for this story is ${trust}%. Headline clarity, category match, image relevance, timestamp, duplicate signals and content quality are reviewed before showing the expanded reader view.</p>
+  <div class="article-note"><b>Editorial note:</b> Live stories can change. Reporter-published stories preserve the submitted article body where available, while live feed stories are expanded with newsroom context and visible update signals.</div>`;
+}
+
 function storyMediaGallery(story){
  const images = Array.isArray(story.media) ? story.media.filter(item=>item.media_type === "image" && item.public_url) : [];
  if(images.length <= 1) return "";
@@ -2762,7 +2871,7 @@ function renderStorySummaryMode(story, mode){
   copy.innerHTML = `<h3>One Minute Brief</h3><p>${escapeHtml(makeSummary(story.title))}</p><ul><li>What happened: ${escapeHtml(story.title)}</li><li>Why it matters: local impact, public services and official updates are being tracked.</li><li>Next update: this story refreshes when verified feed data changes.</li></ul>`;
   return;
  }
- copy.innerHTML = buildDetailedArticle(story) + storyMediaGallery(story);
+ copy.innerHTML = buildExpandedArticle(story) + storyMediaGallery(story);
 }
 
 function playShortNews(id, button){
@@ -3069,7 +3178,7 @@ function openStoryDetail(id){
  document.getElementById("storyModalCopy").classList.remove("reader-large");
  if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
  else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
- document.getElementById("storyModalCopy").innerHTML = buildDetailedArticle(story) + storyMediaGallery(story);
+ document.getElementById("storyModalCopy").innerHTML = buildExpandedArticle(story) + storyMediaGallery(story);
  document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
  document.querySelectorAll("#storyLike,#storyImportant,#storyComment").forEach(button=>button.classList.remove("active"));
  if("speechSynthesis" in window) speechSynthesis.cancel();

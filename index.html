@@ -2510,11 +2510,15 @@ async function loadDistrictNews(state, district){
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : newsSourceMode;
   const liveItems = normalizeItems(data.items || []);
-  stories = (liveItems.length ? liveItems : normalizeItems(fallbackStories))
+  const cmsPublished = publishedCmsDistrictStories(state, district);
+  const baseItems = (liveItems.length ? liveItems : normalizeItems(fallbackStories))
    .map(story=>({...story, category: district}));
+  stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
  }catch(error){
   newsSourceMode = "Static preview demo";
-  stories = normalizeItems(fallbackStories).map(story=>({...story, category: district || "District"}));
+  const cmsPublished = publishedCmsDistrictStories(state, district);
+  const baseItems = normalizeItems(fallbackStories).map(story=>({...story, category: district || "District"}));
+  stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
  }
  const latestTitle = document.getElementById("latestTitle");
  if(latestTitle) latestTitle.textContent = `${district} District News`;
@@ -3282,6 +3286,18 @@ function publishedCmsStories(cat){
   });
 }
 
+function publishedCmsDistrictStories(state, district){
+ const requestedState = categoryIdForValue(state);
+ const requestedDistrict = String(district || "").toLowerCase();
+ return publishedCmsStories()
+  .filter(story=>{
+   const storyState = categoryIdForValue(story.state);
+   const storyDistrict = String(story.district || "").toLowerCase();
+   return (!state || storyState === requestedState || storyState === state) && (!district || storyDistrict === requestedDistrict);
+  })
+  .map(story=>({...story, category: district || story.category}));
+}
+
 function cmsQueueForRole(role){
  return cmsArticles.filter(article => article.status !== "deleted").map(article=>({
   ...article,
@@ -3985,8 +4001,23 @@ window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
 window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
 window.newsnetaLiveWidgetTimer = setInterval(renderLiveWidgets, 30 * 1000);
+document.addEventListener("visibilitychange",()=>{
+ if(!document.hidden && (!lastRefreshAt || Date.now() - lastRefreshAt.getTime() > 90 * 1000)) refreshAllNews();
+});
+window.addEventListener("online", refreshAllNews);
 setTimeout(()=>document.getElementById("notify").classList.add("show"),2200);
-if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker" in navigator){
+ let refreshingForNewWorker = false;
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{
+  if(refreshingForNewWorker) return;
+  refreshingForNewWorker = true;
+  location.reload();
+ });
+ navigator.serviceWorker.register("sw.js").then(registration=>{
+  registration.update?.();
+  setInterval(()=>registration.update?.(), 15 * 60 * 1000);
+ }).catch(()=>{});
+}
 </script>
 </body>
 </html>

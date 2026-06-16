@@ -126,13 +126,13 @@ function queryFor(cat, district) {
   return queries[cat] || queries.telangana;
 }
 
-function json(statusCode, body, cacheSeconds = 300) {
+function json(statusCode, body, cacheSeconds = 0) {
   return {
     statusCode,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": `public, max-age=${cacheSeconds}, stale-while-revalidate=60`
+      "Cache-Control": cacheSeconds > 0 ? `public, max-age=${cacheSeconds}, stale-while-revalidate=60` : "no-store, max-age=0, must-revalidate"
     },
     body: JSON.stringify(body)
   };

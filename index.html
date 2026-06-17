@@ -425,6 +425,9 @@ button{cursor:pointer}
 .panel-title,.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
 .panel-title h3,.section-title h2{margin:0;font-size:18px}
 .counter-list{display:grid;gap:10px}
+.news-panel-tabs{display:none;gap:6px}
+.news-panel-tab{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);min-height:32px;padding:0 10px;font-weight:900}
+.news-panel-tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
 .counter-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:0 0 10px;text-align:left;color:inherit}
 .counter-row[href]{cursor:pointer}
 .counter-row[href]:hover strong{color:var(--brand)}
@@ -1000,8 +1003,8 @@ button{cursor:pointer}
  .ticker-track{font-size:13px}
  .mobile-news-tabs{display:flex}
  .edition-strip{display:none}
- .hero-grid{gap:10px;margin-bottom:10px}
- .hero{min-height:288px;aspect-ratio:auto;max-height:360px;border-radius:4px;margin-left:0;margin-right:0;box-shadow:none}
+ .hero-grid{gap:10px;margin:0 -12px 10px}
+ .hero{min-height:288px;aspect-ratio:auto;max-height:360px;border-radius:0;margin-left:0;margin-right:0;box-shadow:none}
  .hero::before{background:linear-gradient(0deg,rgba(0,0,0,.82),rgba(0,0,0,.18) 62%),var(--hero-image,linear-gradient(135deg,#111,#333))}
  .hero-content{padding:16px 14px 54px}
  .hero h2{font-size:clamp(23px,7vw,32px);line-height:1.14;-webkit-line-clamp:3;margin:10px 0 8px}
@@ -1009,8 +1012,11 @@ button{cursor:pointer}
  .hero .tag{padding:6px 9px;font-size:11px}
  .hero-actions{display:none}
  .hero-carousel-controls{left:12px;right:12px;bottom:12px}
- .side-stack{grid-template-columns:1fr}
- .side-stack .glass-panel:not(:first-of-type){display:none}
+ .side-stack{grid-template-columns:1fr;margin:0 0 10px}
+ .weather-rail,.side-stack .glass-panel:last-child{display:none}
+ .side-stack .glass-panel{display:block;border-radius:6px;box-shadow:none}
+ .news-panel-tabs{display:flex}
+ .panel-live-tag{display:none}
  .side-stack .weather-grid{grid-template-columns:1fr}
  .desk-lanes{grid-template-columns:1fr}
  .reader-row{grid-template-columns:76px 1fr}
@@ -1187,7 +1193,14 @@ button{cursor:pointer}
      <div class="weather-updated" id="weatherUpdated">Weather loading...</div>
     </aside>
     <aside class="glass-panel">
-     <div class="panel-title"><h3 id="trendingTitle">Trending Telugu News</h3><span class="tag">Live</span></div>
+     <div class="panel-title">
+      <h3 id="trendingTitle">Trending Telugu News</h3>
+      <div class="news-panel-tabs" aria-label="Trending and latest news">
+       <button class="news-panel-tab active" id="sideTrendingTab" type="button">Trending</button>
+       <button class="news-panel-tab" id="sideLatestTab" type="button">Latest</button>
+      </div>
+      <span class="tag panel-live-tag">Live</span>
+     </div>
      <div class="counter-list" id="trendingList"></div>
     </aside>
     <aside class="glass-panel">
@@ -1741,6 +1754,7 @@ let latestPage = 1;
 let reporterPage = 1;
 let latestFeedItems = [];
 let reporterFeedItems = [];
+let sideNewsMode = "trending";
 let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
 let activeEditionTopic = "Top";
@@ -2410,6 +2424,18 @@ function renderPagedFeed({items, page, pageSize, gridId, pagerId, pageKey, empty
   <button class="pager-btn" type="button" data-page-action="${pageKey}:first" ${safePage <= 1 ? "disabled" : ""}>Latest</button>`;
 }
 
+function renderSideNewsPanel(sorted){
+ const list = document.getElementById("trendingList");
+ if(!list) return;
+ const latest = [...stories].sort((a,b)=>new Date(b.pubDate || b.publishedAt || 0) - new Date(a.pubDate || a.publishedAt || 0));
+ const items = sideNewsMode === "latest" ? latest : sorted;
+ const title = document.getElementById("trendingTitle");
+ if(title) title.textContent = sideNewsMode === "latest" ? "Latest News" : t("trending");
+ document.getElementById("sideTrendingTab")?.classList.toggle("active", sideNewsMode === "trending");
+ document.getElementById("sideLatestTab")?.classList.toggle("active", sideNewsMode === "latest");
+ list.innerHTML = items.slice(0,5).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round((s.views || 30000)/1000)}">0K</span></a>`).join("");
+}
+
 function render(){
  const sorted = [...stories].sort((a,b)=>b.views-a.views);
  heroStories = normalizeItems([...globalTopStories, ...sorted]).slice(0,8);
@@ -2425,7 +2451,7 @@ function render(){
  const tickerText = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
  const tickerTrack = document.getElementById("tickerTrack");
  tickerTrack.innerHTML = `<span class="ticker-copy">${escapeHtml(tickerText)}</span>`;
- document.getElementById("trendingList").innerHTML = sorted.slice(0,5).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round(s.views/1000)}">0K</span></a>`).join("");
+ renderSideNewsPanel(sorted);
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
  latestFeedItems = sorted.concat(fallbackStories).filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
@@ -2768,6 +2794,13 @@ function buildExpandedArticle(story){
  const updated = formatStoryDate(story.pubDate || lastRefreshAt || new Date());
  const isReporterStory = Boolean(story.reporterUpload);
  const title = story.title || "NewsNeta story";
+ const cleanParagraphs = (fullArticle || summary || title).split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,7);
+ const sourceNote = isReporterStory ? "Reporter published story" : `${category} update`;
+ return `
+  <p class="article-lead"><b>NewsNeta Desk:</b> ${escapeHtml(title)}</p>
+  ${cleanParagraphs.map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}
+  <p class="summary">${escapeHtml(sourceNote)} • ${escapeHtml(updated)} • ${escapeHtml(location)}${trust ? ` • Trust ${trust}%` : ""}</p>
+ `;
  const bodyParagraphs = fullArticle
   ? fullArticle.split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,8)
   : [
@@ -3246,6 +3279,16 @@ document.getElementById("mobileLatestTab")?.addEventListener("click",async ()=>{
  await loadNews("latest");
  document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("active", a.dataset.cat === "latest"));
  document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
+});
+document.getElementById("sideTrendingTab")?.addEventListener("click",()=>{
+ sideNewsMode = "trending";
+ renderSideNewsPanel([...stories].sort((a,b)=>(b.views || 0)-(a.views || 0)));
+ animateCounters();
+});
+document.getElementById("sideLatestTab")?.addEventListener("click",()=>{
+ sideNewsMode = "latest";
+ renderSideNewsPanel([...stories].sort((a,b)=>(b.views || 0)-(a.views || 0)));
+ animateCounters();
 });
 document.getElementById("openReporterPublished")?.addEventListener("click",()=>{
  renderReporterPublished();

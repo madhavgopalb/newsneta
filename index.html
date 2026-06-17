@@ -159,25 +159,40 @@ button{cursor:pointer}
 .admin-login-btn{background:var(--brand);color:#fff;border-color:var(--brand)}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 6px rgba(215,25,32,.16);animation:pulse 1.4s infinite}
 .nav-menu-row{
- max-width:1240px;
- margin:0 auto;
- display:grid;
- grid-template-columns:1fr;
- gap:10px;
- align-items:center;
- padding:0 16px 12px;
+ max-width:none;
+ margin:0;
+ display:block;
+ background:#159bd8;
+ padding:0 16px;
 }
 .nav{
  display:flex;
  flex-wrap:nowrap;
- gap:8px;
+ gap:0;
  overflow:auto;
  scrollbar-width:none;
  min-width:0;
- padding-bottom:2px;
+ max-width:1240px;
+ min-height:58px;
+ margin:0 auto;
+ padding:0;
+ align-items:center;
 }
 .nav::-webkit-scrollbar{display:none}
-.nav a,.chip{
+.nav a{
+ flex:0 0 auto;
+ border:0;
+ background:transparent;
+ color:#fff;
+ padding:18px 13px;
+ border-radius:0;
+ font-weight:900;
+ font-size:15px;
+ white-space:nowrap;
+ touch-action:manipulation;
+}
+.nav a.active{background:rgba(255,255,255,.16);color:#fff}
+.chip{
  flex:0 0 auto;
  border:1px solid var(--line);
  background:var(--surface);
@@ -188,7 +203,7 @@ button{cursor:pointer}
  font-size:14px;
  touch-action:manipulation;
 }
-.nav a.active,.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .nav-districts{
  display:none;
  grid-template-columns:minmax(240px,420px) auto;
@@ -333,44 +348,49 @@ button{cursor:pointer}
 .topic-chips{display:flex;gap:8px;flex-wrap:wrap}
 .topic-chip{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:8px 12px;font-weight:900}
 .topic-chip.active{background:var(--ink);color:var(--bg)}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(330px,.92fr);gap:18px;align-items:start;margin-bottom:18px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.72fr) minmax(360px,.9fr);gap:32px;align-items:stretch;margin:36px 0 22px}
 .hero{
  width:100%;
  max-width:100%;
  min-width:0;
- min-height:520px;
+ min-height:0;
  aspect-ratio:auto;
  position:relative;
  overflow:hidden;
  border-radius:6px;
- background:#111;
- box-shadow:0 10px 26px rgba(15,23,42,.14);
+ background:var(--surface);
+ border:1px solid var(--line);
+ box-shadow:0 8px 22px rgba(15,23,42,.08);
  isolation:isolate;
+ display:flex;
+ flex-direction:column;
 }
 .hero::before{
  content:"";
- position:absolute;
- inset:0;
+ position:relative;
+ display:block;
+ width:100%;
+ min-height:454px;
+ flex:1 1 auto;
  background:
-  linear-gradient(90deg,rgba(0,0,0,.86),rgba(0,0,0,.46),rgba(0,0,0,.14)),
-  linear-gradient(0deg,rgba(0,0,0,.72),transparent 48%),
+  linear-gradient(0deg,rgba(0,0,0,.26),transparent 42%),
   var(--hero-image,linear-gradient(135deg,#111,#333));
  background-size:cover;
  background-position:center;
- z-index:-1;
  transition:opacity .35s ease;
 }
-.hero-content{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:28px;max-width:720px;color:#fff}
+.hero-content{height:auto;display:flex;flex-direction:column;justify-content:flex-start;padding:18px 12px 20px;max-width:none;color:var(--ink);background:var(--surface)}
 .kicker{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.08em}
 .tag{display:inline-flex;align-items:center;gap:6px;width:max-content;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:7px 10px;backdrop-filter:blur(12px);font-weight:800;font-size:12px}
-.hero h2{font-size:clamp(30px,4.2vw,52px);line-height:1.08;margin:14px 0 10px;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.hero p{font-size:17px;max-width:62ch;color:#f1f5f9;margin:0 0 16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hero .tag,.hero .hero-source,.hero .hero-actions{display:none}
+.hero h2{font-size:clamp(26px,2.6vw,36px);line-height:1.24;margin:0 0 8px;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hero p{font-size:15px;max-width:72ch;color:var(--muted);margin:0;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap}
 .hero-carousel-controls{
  position:absolute;
  left:18px;
  right:18px;
- bottom:18px;
+ bottom:106px;
  display:flex;
  align-items:center;
  justify-content:space-between;
@@ -413,7 +433,7 @@ button{cursor:pointer}
 }
 .primary-btn{background:#fff;color:#111827}
 .ghost-btn{background:rgba(255,255,255,.14);color:#fff}
-.side-stack{display:grid;gap:14px;align-content:start;min-width:0}
+.side-stack{display:grid;gap:0;align-content:stretch;min-width:0}
 .glass-panel,.section,.news-card,.mini-card,.admin-card{
  border:1px solid var(--line);
  background:var(--surface);
@@ -422,12 +442,22 @@ button{cursor:pointer}
  box-shadow:0 6px 18px rgba(15,23,42,.07);
 }
 .glass-panel{padding:16px}
+.side-stack .weather-rail,.side-stack .glass-panel:last-child{display:none}
+.side-stack .glass-panel{height:100%;padding:0;overflow:hidden}
+.side-stack .panel-title{display:block;margin:0}
+.side-stack .panel-title h3,.panel-live-tag{display:none}
+.side-stack .counter-list{max-height:390px;overflow:auto;padding:8px 18px 0;scrollbar-color:rgba(21,155,216,.35) transparent}
+.side-stack .counter-row{padding:14px 0}
+.side-stack .counter-row strong{font-size:17px;line-height:1.42}
 .panel-title,.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
 .panel-title h3,.section-title h2{margin:0;font-size:18px}
 .counter-list{display:grid;gap:10px}
-.news-panel-tabs{display:none;gap:6px}
-.news-panel-tab{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);min-height:32px;padding:0 10px;font-weight:900}
-.news-panel-tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.news-panel-tabs{display:flex;gap:0;background:#f5f7fb;padding:16px 12px 0}
+[data-theme="dark"] .news-panel-tabs{background:#111827}
+.news-panel-tab{flex:1;border:0;border-radius:0;background:#fff;color:#101827;min-height:50px;padding:0 10px;font-weight:900;font-size:17px}
+[data-theme="dark"] .news-panel-tab{background:#182132;color:#dbeafe}
+.news-panel-tab.active{background:#159bd8;border-color:#159bd8;color:#fff}
+.side-view-all{width:calc(100% - 24px);margin:12px;border:1px solid #159bd8;background:transparent;color:#159bd8;min-height:46px;font-weight:900;font-size:15px}
 .counter-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:0 0 10px;text-align:left;color:inherit}
 .counter-row[href]{cursor:pointer}
 .counter-row[href]:hover strong{color:var(--brand)}
@@ -954,7 +984,7 @@ button{cursor:pointer}
  .search-wrap{grid-column:1/-1;order:3}
  .home-desk,.hero-grid,.grid-2,.wide-grid,.preference-grid{grid-template-columns:1fr}
  .hero{min-height:460px}
- .side-stack{grid-template-columns:1fr 1fr}
+ .side-stack{grid-template-columns:1fr}
  .weather-rail{grid-column:1/-1}
  .side-stack .weather-grid{grid-template-columns:repeat(2,1fr)}
  .desk-lanes{grid-template-columns:repeat(2,1fr)}
@@ -990,11 +1020,12 @@ button{cursor:pointer}
  .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:calc(100% - 24px);min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
- .nav-menu-row{display:block;padding:0 0 8px;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
- .nav{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:9px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+ .nav-menu-row{display:block;padding:0;background:#159bd8;border-top:0;border-bottom:0}
+ .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px}
  .nav a{scroll-snap-align:start}
  .nav-districts{grid-template-columns:1fr}
- .nav a,.chip{font-size:13px;padding:8px 11px}
+ .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0}
+ .chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
  .menu-refresh{min-width:100%}
  .refresh-inline{padding:0 12px 8px;font-size:11px;line-height:1.35}
@@ -1004,15 +1035,25 @@ button{cursor:pointer}
  .mobile-news-tabs{display:flex}
  .edition-strip{display:none}
  .hero-grid{gap:10px;margin:0 -12px 10px}
- .hero{min-height:288px;aspect-ratio:auto;max-height:360px;border-radius:0;margin-left:0;margin-right:0;box-shadow:none}
- .hero::before{background:linear-gradient(0deg,rgba(0,0,0,.82),rgba(0,0,0,.18) 62%),var(--hero-image,linear-gradient(135deg,#111,#333))}
- .hero-content{padding:16px 14px 54px}
+ .hero{min-height:0;aspect-ratio:auto;max-height:none;border-radius:0;margin-left:0;margin-right:0;box-shadow:none;border:0;background:var(--surface)}
+ .hero::before{min-height:232px;background:linear-gradient(0deg,rgba(0,0,0,.28),transparent 54%),var(--hero-image,linear-gradient(135deg,#111,#333))}
+ .hero-content{padding:12px 14px 14px;background:var(--surface);color:var(--ink)}
+ .hero .tag,.hero .hero-source,.hero .hero-actions{display:none}
  .hero h2{font-size:clamp(23px,7vw,32px);line-height:1.14;-webkit-line-clamp:3;margin:10px 0 8px}
- .hero p{font-size:14px;-webkit-line-clamp:2;margin-bottom:10px}
+ .hero p{font-size:14px;-webkit-line-clamp:2;margin-bottom:0;color:var(--muted)}
  .hero .tag{padding:6px 9px;font-size:11px}
  .hero-actions{display:none}
- .hero-carousel-controls{left:12px;right:12px;bottom:12px}
- .side-stack{display:none}
+ .hero-carousel-controls{left:10px;right:10px;bottom:118px}
+ .hero-arrow{width:30px;height:30px;font-size:18px}
+ .hero-dot{width:7px;height:7px}
+ .hero-dot.active{width:22px}
+ .side-stack{display:block;margin:0 12px 12px}
+ .side-stack .glass-panel{height:auto;border-radius:6px}
+ .side-stack .counter-list{max-height:320px;padding:6px 14px 0}
+ .side-stack .counter-row strong{font-size:15px}
+ .news-panel-tabs{padding:10px 10px 0}
+ .news-panel-tab{min-height:44px;font-size:15px}
+ .side-view-all{min-height:42px;margin:10px;width:calc(100% - 20px)}
  .desk-lanes{grid-template-columns:1fr}
  .reader-row{grid-template-columns:76px 1fr}
  .reader-row img{width:76px}
@@ -1189,14 +1230,15 @@ button{cursor:pointer}
     </aside>
     <aside class="glass-panel">
      <div class="panel-title">
-      <h3 id="trendingTitle">Trending Telugu News</h3>
+     <h3 id="trendingTitle">Trending Telugu News</h3>
       <div class="news-panel-tabs" aria-label="Trending and latest news">
-       <button class="news-panel-tab active" id="sideTrendingTab" type="button">Trending</button>
-       <button class="news-panel-tab" id="sideLatestTab" type="button">Latest</button>
+       <button class="news-panel-tab active" id="sideLatestTab" type="button">Latest News</button>
+       <button class="news-panel-tab" id="sideTrendingTab" type="button">Most Popular</button>
       </div>
       <span class="tag panel-live-tag">Live</span>
      </div>
      <div class="counter-list" id="trendingList"></div>
+     <button class="side-view-all" id="sideViewAll" type="button">View All ></button>
     </aside>
     <aside class="glass-panel">
      <div class="panel-title"><h3 id="factCheckTitle">Fact Check Signal</h3><span>91%</span></div>
@@ -1749,7 +1791,7 @@ let latestPage = 1;
 let reporterPage = 1;
 let latestFeedItems = [];
 let reporterFeedItems = [];
-let sideNewsMode = "trending";
+let sideNewsMode = "latest";
 let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
 let activeEditionTopic = "Top";
@@ -2425,10 +2467,10 @@ function renderSideNewsPanel(sorted){
  const latest = [...stories].sort((a,b)=>new Date(b.pubDate || b.publishedAt || 0) - new Date(a.pubDate || a.publishedAt || 0));
  const items = sideNewsMode === "latest" ? latest : sorted;
  const title = document.getElementById("trendingTitle");
- if(title) title.textContent = sideNewsMode === "latest" ? "Latest News" : t("trending");
+ if(title) title.textContent = sideNewsMode === "latest" ? "Latest News" : "Most Popular";
  document.getElementById("sideTrendingTab")?.classList.toggle("active", sideNewsMode === "trending");
  document.getElementById("sideLatestTab")?.classList.toggle("active", sideNewsMode === "latest");
- list.innerHTML = items.slice(0,5).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round((s.views || 30000)/1000)}">0K</span></a>`).join("");
+ list.innerHTML = items.slice(0,7).map((s,i)=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}"><strong>${i+1}. ${s.title}</strong><span class="counter" data-target="${Math.round((s.views || 30000)/1000)}">0K</span></a>`).join("");
 }
 
 function render(){
@@ -3284,6 +3326,9 @@ document.getElementById("sideLatestTab")?.addEventListener("click",()=>{
  sideNewsMode = "latest";
  renderSideNewsPanel([...stories].sort((a,b)=>(b.views || 0)-(a.views || 0)));
  animateCounters();
+});
+document.getElementById("sideViewAll")?.addEventListener("click",()=>{
+ document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
 });
 document.getElementById("openReporterPublished")?.addEventListener("click",()=>{
  renderReporterPublished();

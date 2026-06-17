@@ -161,7 +161,10 @@ button{cursor:pointer}
 .nav-menu-row{
  max-width:none;
  margin:0;
- display:block;
+ display:grid;
+ grid-template-columns:minmax(0,1fr) auto;
+ gap:12px;
+ align-items:center;
  background:#159bd8;
  padding:0 16px;
 }
@@ -196,6 +199,22 @@ button{cursor:pointer}
  touch-action:manipulation;
 }
 .nav a.active{background:rgba(255,255,255,.16);color:#fff}
+.main-socials{
+ display:flex;
+ align-items:center;
+ justify-content:flex-end;
+ gap:9px;
+ min-height:58px;
+ flex:0 0 auto;
+}
+.main-socials .share-icon{width:34px;height:34px;border:0;box-shadow:none;background:#fff;color:#111827}
+.main-socials .share-icon.facebook{color:#1877f2}
+.main-socials .share-icon.whatsapp{color:#25d366}
+.main-socials .share-icon.twitter{color:#111827}
+.main-socials .share-icon.instagram{color:#e1306c}
+.main-socials .share-icon svg,.share-icon svg{width:19px;height:19px;display:block}
+.main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:21px;height:21px}
+.main-socials .share-icon:focus-visible,.share-icon:focus-visible{outline:3px solid rgba(255,255,255,.64);outline-offset:2px}
 .chip{
  flex:0 0 auto;
  border:1px solid var(--line);
@@ -852,10 +871,10 @@ button{cursor:pointer}
  box-shadow:0 8px 20px rgba(15,23,42,.1);
  cursor:pointer;
 }
-.share-icon.whatsapp{background:#25d366}
-.share-icon.facebook{background:#1877f2}
-.share-icon.twitter{background:#111827}
-.share-icon.instagram{background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)}
+.share-icon.whatsapp{background:#fff;color:#25d366}
+.share-icon.facebook{background:#1877f2;color:#fff}
+.share-icon.twitter{background:#fff;color:#111827}
+.share-icon.instagram{background:#fff;color:#e1306c}
 .story-info-strip{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
 .story-info-strip span{border:1px solid var(--line);border-radius:999px;background:rgba(127,139,160,.1);color:var(--muted);padding:7px 10px;font:800 12px/1 Inter,sans-serif}
 .story-detail-copy.reader-large{font-size:18px}
@@ -1026,10 +1045,14 @@ button{cursor:pointer}
  .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:calc(100% - 24px);min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
- .nav-menu-row{display:block;padding:0;background:#159bd8;border-top:0;border-bottom:0}
+ .nav-menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;padding:0 8px;background:#159bd8;border-top:0;border-bottom:0}
  .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
  .nav a{scroll-snap-align:start}
- .nav-districts{grid-template-columns:1fr}
+ .nav-districts{grid-template-columns:1fr;grid-column:1/-1;padding:8px 0}
+ .main-socials{min-height:48px;gap:6px;padding-right:2px}
+ .main-socials .share-icon{width:30px;height:30px}
+ .main-socials .share-icon svg,.share-icon svg{width:17px;height:17px}
+ .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:19px;height:19px}
  .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0;min-height:48px;display:inline-flex;align-items:center}
  .chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
@@ -1104,6 +1127,8 @@ button{cursor:pointer}
  .ai-panel{bottom:calc(132px + env(safe-area-inset-bottom));right:12px}
  .story-modal{max-height:92vh}
  .story-modal-body{padding:14px}
+ .article-toolbar .share-icons{width:100%;justify-content:flex-start}
+ .article-toolbar .share-icon{width:40px;height:40px}
  .story-modal-actions .pill-btn{width:100%}
  .notify{bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px}
 }
@@ -1164,9 +1189,23 @@ button{cursor:pointer}
     <a href="#latestGrid" data-cat="ap">Andhra Pradesh</a>
     <a href="#latestGrid" data-cat="telangana">Telangana</a>
     <a href="#latestGrid" data-cat="cinema">Cinema</a>
-    <a href="#latestGrid" data-cat="sports">Sports</a>
+   <a href="#latestGrid" data-cat="sports">Sports</a>
     <a href="#latestGrid" data-cat="technology">Technology</a>
    </nav>
+   <div class="main-socials" aria-label="NewsNeta social links">
+    <a class="share-icon facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="NewsNeta on Facebook">
+     <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.2 8.4V6.7c0-.8.2-1.2 1.3-1.2H17V2.3c-.7-.1-1.5-.2-2.3-.2-2.8 0-4.7 1.7-4.7 4.8v1.5H7v3.6h3v9.9h4.2V12H17l.5-3.6h-3.3z"/></svg>
+    </a>
+    <a class="share-icon whatsapp" href="https://api.whatsapp.com/send?text=NewsNeta%20https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="Share NewsNeta on WhatsApp">
+     <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3.2A12.7 12.7 0 0 0 5 22.3L3.4 28.8l6.7-1.6A12.7 12.7 0 1 0 16 3.2zm0 22.9c-2 0-3.9-.6-5.6-1.7l-.4-.2-4 .9 1-3.8-.3-.4A10.2 10.2 0 1 1 16 26.1zm5.7-7.6c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.2-.3.2-.6.1a8.4 8.4 0 0 1-2.5-1.5 9.2 9.2 0 0 1-1.7-2.1c-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.6c.2.2 2.4 3.7 5.9 5.2.8.4 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 1.8-.7 2.1-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4z"/></svg>
+    </a>
+    <a class="share-icon twitter" href="https://twitter.com/intent/tweet?text=NewsNeta&url=https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="Share NewsNeta on X">
+     <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.9 10.5 21.3 2h-1.8l-6.4 7.3L8 2H2l7.8 11.2L2 22h1.8l6.8-7.7 5.4 7.7h6l-8.1-11.5zm-2.4 2.7-.8-1.1L4.4 3.3h2.7l5 7 .8 1.1 6.6 9.3h-2.7l-5.3-7.5z"/></svg>
+    </a>
+    <a class="share-icon instagram" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="NewsNeta on Instagram">
+     <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M7.5 2.8h9A4.7 4.7 0 0 1 21.2 7.5v9a4.7 4.7 0 0 1-4.7 4.7h-9a4.7 4.7 0 0 1-4.7-4.7v-9a4.7 4.7 0 0 1 4.7-4.7z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M8.4 12a3.6 3.6 0 1 0 7.2 0 3.6 3.6 0 0 0-7.2 0z"/><path fill="currentColor" d="M17.4 6.4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+    </a>
+   </div>
    <div class="nav-districts" aria-label="District news menu">
     <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>
     <select class="menu-select" id="apMenuSelect" aria-label="Andhra Pradesh district news"></select>
@@ -1549,13 +1588,21 @@ button{cursor:pointer}
      <button class="pill-btn" id="storySave" type="button">Save</button>
      <div class="voice-tools" aria-label="Voice reader controls">
       <select id="storyVoiceMode" aria-label="Voice profile"><option value="auto">Auto voice</option><option value="female">Female Telugu</option><option value="male">Male Telugu</option></select>
-      <input id="storyVoiceSpeed" type="range" min="0.75" max="1.25" step="0.05" value="0.92" aria-label="Voice speed">
+     <input id="storyVoiceSpeed" type="range" min="0.75" max="1.25" step="0.05" value="0.92" aria-label="Voice speed">
      </div>
      <div class="share-icons" aria-label="Share this news">
-      <button class="share-icon whatsapp" data-social-share="whatsapp" type="button" aria-label="Share on WhatsApp">WA</button>
-      <button class="share-icon facebook" data-social-share="facebook" type="button" aria-label="Share on Facebook">f</button>
-      <button class="share-icon twitter" data-social-share="twitter" type="button" aria-label="Share on X">X</button>
-      <button class="share-icon instagram" data-social-share="instagram" type="button" aria-label="Copy link for Instagram">IG</button>
+      <button class="share-icon whatsapp" data-social-share="whatsapp" type="button" aria-label="Share on WhatsApp">
+       <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3.2A12.7 12.7 0 0 0 5 22.3L3.4 28.8l6.7-1.6A12.7 12.7 0 1 0 16 3.2zm0 22.9c-2 0-3.9-.6-5.6-1.7l-.4-.2-4 .9 1-3.8-.3-.4A10.2 10.2 0 1 1 16 26.1zm5.7-7.6c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.2-.3.2-.6.1a8.4 8.4 0 0 1-2.5-1.5 9.2 9.2 0 0 1-1.7-2.1c-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.6c.2.2 2.4 3.7 5.9 5.2.8.4 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 1.8-.7 2.1-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4z"/></svg>
+      </button>
+      <button class="share-icon facebook" data-social-share="facebook" type="button" aria-label="Share on Facebook">
+       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.2 8.4V6.7c0-.8.2-1.2 1.3-1.2H17V2.3c-.7-.1-1.5-.2-2.3-.2-2.8 0-4.7 1.7-4.7 4.8v1.5H7v3.6h3v9.9h4.2V12H17l.5-3.6h-3.3z"/></svg>
+      </button>
+      <button class="share-icon twitter" data-social-share="twitter" type="button" aria-label="Share on X">
+       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.9 10.5 21.3 2h-1.8l-6.4 7.3L8 2H2l7.8 11.2L2 22h1.8l6.8-7.7 5.4 7.7h6l-8.1-11.5zm-2.4 2.7-.8-1.1L4.4 3.3h2.7l5 7 .8 1.1 6.6 9.3h-2.7l-5.3-7.5z"/></svg>
+      </button>
+      <button class="share-icon instagram" data-social-share="instagram" type="button" aria-label="Copy link for Instagram">
+       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M7.5 2.8h9A4.7 4.7 0 0 1 21.2 7.5v9a4.7 4.7 0 0 1-4.7 4.7h-9a4.7 4.7 0 0 1-4.7-4.7v-9a4.7 4.7 0 0 1 4.7-4.7z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M8.4 12a3.6 3.6 0 1 0 7.2 0 3.6 3.6 0 0 0-7.2 0z"/><path fill="currentColor" d="M17.4 6.4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+      </button>
      </div>
     </div>
     <div class="summary-modes" aria-label="Summary modes">

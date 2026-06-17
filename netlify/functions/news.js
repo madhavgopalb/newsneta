@@ -18,6 +18,7 @@ function googleNewsUrl(query) {
 }
 
 const FEEDS = {
+  latest: googleNewsUrl("Telugu breaking latest news Telangana Andhra Pradesh India"),
   politics: googleNewsUrl("Telugu politics India"),
   telangana: googleNewsUrl("Telangana Telugu news"),
   ap: googleNewsUrl("Andhra Pradesh Telugu news"),
@@ -87,6 +88,7 @@ const IMAGE_SETS = {
 };
 
 const CATEGORY_LABELS = {
+  latest: "Latest",
   politics: "Politics",
   telangana: "Telangana",
   ap: "Andhra Pradesh",
@@ -114,6 +116,7 @@ function queryFor(cat, district) {
     return `${district} ${state} Telugu news`;
   }
   const queries = {
+    latest: "Telugu breaking latest news Telangana Andhra Pradesh India",
     politics: "Telugu politics India",
     telangana: "Telangana Telugu news",
     ap: "Andhra Pradesh Telugu news",

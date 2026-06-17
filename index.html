@@ -113,6 +113,7 @@ button{cursor:pointer}
 .brand h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .brand small{display:none}
 .search-wrap{position:relative}
+.mobile-search-toggle,.mobile-news-tabs{display:none}
 .search-wrap input{
  width:100%;
  height:44px;
@@ -234,6 +235,27 @@ button{cursor:pointer}
 .ticker-label{position:relative;z-index:2;flex:0 0 auto;display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;background:var(--brand);padding:7px 9px;border-radius:999px;white-space:nowrap}
 .ticker-track{flex:1;min-width:0;overflow:hidden;white-space:nowrap;color:#f8fafc;font-size:14px}
 .ticker-copy{display:inline-block;min-width:max-content;padding-left:100%;animation:marquee 34s linear infinite;will-change:transform}
+.mobile-news-tabs{
+ max-width:1240px;
+ margin:0 auto;
+ padding:8px 12px;
+ gap:8px;
+ background:var(--surface);
+ border-bottom:1px solid var(--line);
+ overflow:auto;
+ scrollbar-width:none;
+}
+.mobile-news-tabs::-webkit-scrollbar{display:none}
+.mobile-news-tab{
+ flex:1 0 148px;
+ border:1px solid var(--line);
+ border-radius:999px;
+ background:rgba(127,139,160,.08);
+ color:var(--ink);
+ min-height:40px;
+ font-weight:900;
+}
+.mobile-news-tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
 .edition-strip{border-bottom:1px solid var(--line);background:var(--surface)}
 .edition-inner{max-width:1240px;margin:0 auto;padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
 .quick-editions,.reader-tools{display:flex;gap:8px;overflow:auto;scrollbar-width:none}
@@ -951,7 +973,7 @@ button{cursor:pointer}
  .app-shell{overflow-x:hidden}
  .page{padding:12px 12px calc(90px + env(safe-area-inset-bottom))}
  .topbar{position:sticky}
- .header{grid-template-columns:1fr auto;padding:7px 12px;gap:8px}
+ .header{grid-template-columns:1fr auto;padding:7px 12px 4px;gap:8px}
  .brand{max-width:calc(100vw - 136px);height:62px}
  .brand-logo{width:100%;height:62px;max-width:292px;max-height:62px;object-fit:contain;transform:none;transform-origin:center}
  .brand h1{font-size:18px}
@@ -960,11 +982,14 @@ button{cursor:pointer}
  .language-select{min-height:40px;max-width:112px;padding:0 8px;font-size:12px}
  .icon-btn,.pill-btn{min-width:40px;height:40px}
  .pill-btn .label{display:none}
- .search-wrap input{height:42px;font-size:16px}
- .pill-btn.menu-toggle{display:inline-flex;width:44px;padding:0;font-size:20px}
- .nav-menu-row{grid-template-columns:1fr;padding:0 12px 8px;gap:8px}
- .nav{display:none;gap:7px;flex-wrap:wrap;overflow:visible;max-height:46vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px}
- .nav-menu-row.menu-open .nav{display:flex}
+ .search-wrap{display:none;grid-column:1/-1;order:3}
+ .topbar.search-open .search-wrap{display:block}
+ .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:calc(100% - 24px);min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900}
+ .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
+ .pill-btn.menu-toggle{display:none}
+ .nav-menu-row{display:block;padding:0 0 8px;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+ .nav{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:9px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+ .nav a{scroll-snap-align:start}
  .nav-districts{grid-template-columns:1fr}
  .nav a,.chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
@@ -973,6 +998,8 @@ button{cursor:pointer}
  .ticker{position:relative;top:auto}
  .ticker-inner{padding:8px 12px}
  .ticker-track{font-size:13px}
+ .mobile-news-tabs{display:flex}
+ .edition-strip{display:none}
  .hero{min-height:430px;aspect-ratio:auto;max-height:560px;border-radius:6px;margin-left:0;margin-right:0}
  .hero-content{padding:22px 18px}
  .hero h2{font-size:clamp(27px,9vw,42px)}
@@ -1068,6 +1095,7 @@ button{cursor:pointer}
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
    </div>
   </header>
+  <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-expanded="false" aria-controls="searchInput">Search News</button>
   <div class="nav-menu-row" aria-label="Main menu">
    <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="categoryNav">☰</button>
    <nav class="nav" aria-label="News categories" id="categoryNav"></nav>
@@ -1086,6 +1114,11 @@ button{cursor:pointer}
    <div class="ticker-track" id="tickerTrack"><span class="ticker-copy">తాజా వార్తలు లోడ్ అవుతున్నాయి...</span></div>
  </div>
 </div>
+
+ <div class="mobile-news-tabs" aria-label="Mobile news tabs">
+  <button class="mobile-news-tab active" id="mobileBreakingTab" type="button">Breaking News</button>
+  <button class="mobile-news-tab" id="mobileLatestTab" type="button">Latest News</button>
+ </div>
 
  <div class="edition-strip" aria-label="NewsNeta quick services">
   <div class="edition-inner">
@@ -2616,7 +2649,7 @@ async function refreshAllNews(){
   button.dataset.originalText = button.dataset.originalText || button.textContent;
   button.textContent = "Refreshing...";
  });
- const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "telangana";
+ const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "latest";
  try{
   if(activeDistrictFilter){
    await loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district);
@@ -3222,6 +3255,25 @@ document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${
 document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
 document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
 document.getElementById("openExplainers").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
+document.getElementById("mobileSearchToggle")?.addEventListener("click",()=>{
+ const topbar = document.querySelector(".topbar");
+ const isOpen = topbar?.classList.toggle("search-open");
+ const button = document.getElementById("mobileSearchToggle");
+ if(button) button.setAttribute("aria-expanded", String(Boolean(isOpen)));
+ if(isOpen) setTimeout(()=>document.getElementById("searchInput")?.focus(), 50);
+});
+document.getElementById("mobileBreakingTab")?.addEventListener("click",()=>{
+ document.getElementById("mobileBreakingTab")?.classList.add("active");
+ document.getElementById("mobileLatestTab")?.classList.remove("active");
+ document.getElementById("hero")?.scrollIntoView({behavior:"smooth", block:"start"});
+});
+document.getElementById("mobileLatestTab")?.addEventListener("click",async ()=>{
+ document.getElementById("mobileLatestTab")?.classList.add("active");
+ document.getElementById("mobileBreakingTab")?.classList.remove("active");
+ await loadNews("latest");
+ document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("active", a.dataset.cat === "latest"));
+ document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
+});
 document.getElementById("openReporterPublished")?.addEventListener("click",()=>{
  renderReporterPublished();
  document.getElementById("reporterPublished")?.scrollIntoView({behavior:"smooth", block:"start"});
@@ -4228,9 +4280,17 @@ window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
 window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
 window.newsnetaLiveWidgetTimer = setInterval(renderLiveWidgets, 30 * 1000);
+function refreshMobileFreshness(force = false){
+ const isMobileViewport = matchMedia("(max-width: 768px)").matches;
+ if(!isMobileViewport && !force) return;
+ const staleMs = lastRefreshAt ? Date.now() - lastRefreshAt.getTime() : Infinity;
+ if(force || staleMs > 60 * 1000) refreshAllNews().then(renderReporterPublished).catch(()=>renderReporterPublished());
+}
 document.addEventListener("visibilitychange",()=>{
  if(!document.hidden && (!lastRefreshAt || Date.now() - lastRefreshAt.getTime() > 90 * 1000)) refreshAllNews();
 });
+window.addEventListener("pageshow", event=>refreshMobileFreshness(Boolean(event.persisted)));
+window.addEventListener("focus", ()=>refreshMobileFreshness(false));
 window.addEventListener("online", refreshAllNews);
 setTimeout(()=>document.getElementById("notify").classList.add("show"),2200);
 if("serviceWorker" in navigator){

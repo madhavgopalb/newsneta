@@ -163,17 +163,32 @@ button{cursor:pointer}
  max-width:none;
  margin:0;
  display:grid;
- grid-template-columns:minmax(0,1fr) auto;
- gap:12px;
+ grid-template-columns:auto minmax(0,1fr) auto auto;
+ gap:6px;
  align-items:center;
  background:#159bd8;
  padding:0 16px;
 }
+.nav-scroll-btn{
+ width:34px;
+ height:34px;
+ border-radius:999px;
+ border:1px solid rgba(255,255,255,.44);
+ background:rgba(255,255,255,.16);
+ color:#fff;
+ display:grid;
+ place-items:center;
+ font-size:20px;
+ font-weight:900;
+ line-height:1;
+}
+.nav-scroll-btn:disabled{opacity:.35;cursor:not-allowed}
 .nav{
  display:flex;
  flex-wrap:nowrap;
  gap:0;
- overflow:visible;
+ overflow-x:auto;
+ overflow-y:visible;
  scrollbar-width:none;
  min-width:0;
  max-width:1240px;
@@ -1100,8 +1115,9 @@ button{cursor:pointer}
  .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:calc(100% - 24px);min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
- .nav-menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;padding:0 8px;background:#159bd8;border-top:0;border-bottom:0}
- .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 142px 0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
+ .nav-menu-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:4px;align-items:center;padding:0 6px;background:#159bd8;border-top:0;border-bottom:0}
+ .nav-scroll-btn{width:30px;height:30px;font-size:18px}
+ .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
  .nav a{scroll-snap-align:start}
  .nav-districts{display:none!important}
  .nav-item{position:static}
@@ -1117,8 +1133,9 @@ button{cursor:pointer}
   z-index:140;
  }
  .district-submenu a{font-size:14px;padding:10px 16px}
- .main-socials{position:absolute;right:8px;top:0;min-height:48px;gap:6px;padding-right:2px;background:#159bd8;z-index:95}
+ .main-socials{position:static;min-height:48px;gap:4px;padding-right:0;background:#159bd8;z-index:95}
  .main-socials .share-icon{width:30px;height:30px}
+ .main-socials .share-icon.instagram{display:none}
  .main-socials .share-icon svg,.share-icon svg{width:17px;height:17px}
  .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:19px;height:19px}
  .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0;min-height:48px;display:inline-flex;align-items:center}
@@ -1250,6 +1267,7 @@ button{cursor:pointer}
   <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-expanded="false" aria-controls="searchInput">Search News</button>
   <div class="nav-menu-row" aria-label="Main menu">
    <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="categoryNav">☰</button>
+   <button class="nav-scroll-btn" id="navScrollPrev" type="button" aria-label="Previous menu items">‹</button>
    <nav class="nav" aria-label="News categories" id="categoryNav">
     <a href="#home" data-home="true" class="active" aria-label="Home">Home</a>
     <a href="#latestGrid" data-cat="latest">Latest</a>
@@ -1260,6 +1278,7 @@ button{cursor:pointer}
    <a href="#latestGrid" data-cat="sports">Sports</a>
     <a href="#latestGrid" data-cat="technology">Technology</a>
    </nav>
+   <button class="nav-scroll-btn" id="navScrollNext" type="button" aria-label="Next menu items">›</button>
    <div class="main-socials" aria-label="NewsNeta social links">
     <a class="share-icon facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="NewsNeta on Facebook">
      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.2 8.4V6.7c0-.8.2-1.2 1.3-1.2H17V2.3c-.7-.1-1.5-.2-2.3-.2-2.8 0-4.7 1.7-4.7 4.8v1.5H7v3.6h3v9.9h4.2V12H17l.5-3.6h-3.3z"/></svg>
@@ -2133,6 +2152,22 @@ function setupNav(){
    });
   }
  });
+ const prev = document.getElementById("navScrollPrev");
+ const next = document.getElementById("navScrollNext");
+ const updateNavButtons = ()=>{
+  if(!prev || !next) return;
+  prev.disabled = nav.scrollLeft <= 4;
+  next.disabled = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 4;
+ };
+ const scrollMenu = direction=>{
+  nav.scrollBy({left:direction * Math.max(180, Math.round(nav.clientWidth * .72)), behavior:"smooth"});
+  setTimeout(updateNavButtons, 280);
+ };
+ prev?.addEventListener("click",()=>scrollMenu(-1));
+ next?.addEventListener("click",()=>scrollMenu(1));
+ nav.addEventListener("scroll", updateNavButtons, {passive:true});
+ window.addEventListener("resize", updateNavButtons);
+ setTimeout(updateNavButtons, 0);
 }
 
 function makeSummary(title){
@@ -3433,7 +3468,11 @@ function openStoryDetail(id){
  else navigator.clipboard?.writeText(`${story.title} - ${location.href}`);
  };
  document.getElementById("storySave").onclick = ()=>localStorage.setItem("newsneta-saved-story", JSON.stringify({title:story.title, savedAt:new Date().toISOString()}));
- document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
+ document.getElementById("storyContinue").onclick = ()=>{
+  document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
+  renderStorySummaryMode(story, "full");
+  document.getElementById("storyModalCopy")?.scrollIntoView({behavior:"smooth", block:"start"});
+ };
  document.getElementById("storyBackdrop").classList.add("open");
  document.querySelector(".story-modal")?.scrollTo({top:0, behavior:"smooth"});
  document.body.classList.add("lock");
@@ -3478,7 +3517,11 @@ function openStoryDetail(id){
   button.onclick = ()=>shareStoryTo(button.dataset.socialShare, story);
  });
  document.getElementById("storySave").onclick = ()=>localStorage.setItem("newsneta-saved-story", JSON.stringify({title:story.title, savedAt:new Date().toISOString()}));
- document.getElementById("storyContinue").onclick = ()=>window.open(story.link || "#", "_blank", "noopener");
+ document.getElementById("storyContinue").onclick = ()=>{
+  document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
+  renderStorySummaryMode(story, "full");
+  document.getElementById("storyModalCopy")?.scrollIntoView({behavior:"smooth", block:"start"});
+ };
  document.getElementById("storyBackdrop").classList.add("open");
  document.body.classList.add("lock");
  scrollStoryModalToTop();

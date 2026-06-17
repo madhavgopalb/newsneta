@@ -265,7 +265,7 @@ button{cursor:pointer}
 .page{max-width:1240px;margin:0 auto;padding:14px 16px 96px}
 .home-desk{
  display:grid;
- grid-template-columns:1.2fr .8fr;
+ grid-template-columns:1fr;
  gap:16px;
  margin-bottom:18px;
 }
@@ -1000,12 +1000,17 @@ button{cursor:pointer}
  .ticker-track{font-size:13px}
  .mobile-news-tabs{display:flex}
  .edition-strip{display:none}
- .hero{min-height:430px;aspect-ratio:auto;max-height:560px;border-radius:6px;margin-left:0;margin-right:0}
- .hero-content{padding:22px 18px}
- .hero h2{font-size:clamp(27px,9vw,42px)}
- .hero p{font-size:15px}
+ .hero-grid{gap:10px;margin-bottom:10px}
+ .hero{min-height:288px;aspect-ratio:auto;max-height:360px;border-radius:4px;margin-left:0;margin-right:0;box-shadow:none}
+ .hero::before{background:linear-gradient(0deg,rgba(0,0,0,.82),rgba(0,0,0,.18) 62%),var(--hero-image,linear-gradient(135deg,#111,#333))}
+ .hero-content{padding:16px 14px 54px}
+ .hero h2{font-size:clamp(23px,7vw,32px);line-height:1.14;-webkit-line-clamp:3;margin:10px 0 8px}
+ .hero p{font-size:14px;-webkit-line-clamp:2;margin-bottom:10px}
+ .hero .tag{padding:6px 9px;font-size:11px}
+ .hero-actions{display:none}
  .hero-carousel-controls{left:12px;right:12px;bottom:12px}
  .side-stack{grid-template-columns:1fr}
+ .side-stack .glass-panel:not(:first-of-type){display:none}
  .side-stack .weather-grid{grid-template-columns:1fr}
  .desk-lanes{grid-template-columns:1fr}
  .reader-row{grid-template-columns:76px 1fr}
@@ -1035,7 +1040,13 @@ button{cursor:pointer}
  .cms-form-actions .pill-btn{width:100%}
  .cms-feature-grid{grid-template-columns:1fr}
  .workflow-lane{grid-template-columns:1fr}
- .section{padding:14px;margin-top:14px}
+ .section{padding:12px;margin-top:10px;border-radius:6px;box-shadow:none}
+ .home-panel{padding:12px;border-radius:6px;box-shadow:none}
+ .panel-title h3,.section-title h2{font-size:17px}
+ .news-card{border-radius:6px;box-shadow:none}
+ .news-card .thumb{aspect-ratio:16/9}
+ #latestGrid .news-card:first-child h3{font-size:20px}
+ #latestGrid .news-card:first-child .thumb{min-height:0}
  .reels{grid-auto-columns:86vw;scroll-snap-type:x mandatory}
  .reel{min-height:70svh}
  .news-card:hover{transform:none}
@@ -1197,44 +1208,6 @@ button{cursor:pointer}
     </div>
     <div class="live-list" id="homeLiveList"></div>
    </div>
-   <aside class="home-panel">
-    <div class="section-title"><h2 id="complianceTitle">Legal & Editorial Compliance</h2><span class="chip" id="complianceChip">Checklist</span></div>
-    <div class="dashboard-table" id="compliancePanel">
-     <div class="dash-row"><span>Source and claim verification</span><b>Required</b></div>
-     <div class="dash-row"><span>Defamation, privacy and takedown review</span><b>Required</b></div>
-     <div class="dash-row"><span>Corrections and grievance workflow</span><b>Enabled</b></div>
-    </div>
-   </aside>
-  </section>
-
-  <section class="section" id="personalizationHub">
-   <div class="section-title"><h2>For You Preferences</h2><span class="chip">AI Personalization</span></div>
-   <div class="preference-grid">
-    <article class="preference-panel">
-     <strong>Choose your edition</strong>
-     <p class="summary">Select topics and a default district. NewsNeta uses these choices to tune recommendations on this device.</p>
-     <div class="pref-chip-row" id="preferenceChips"></div>
-     <div class="pref-chip-row">
-      <select id="defaultDistrictSelect" aria-label="Default district"></select>
-      <button class="pill-btn admin-login-btn" id="savePreferences" type="button">Save Preferences</button>
-     </div>
-     <div class="summary-output" id="preferenceReason">Recommended stories will adapt after you save preferences.</div>
-    </article>
-    <article class="preference-panel">
-     <strong>Smart Search</strong>
-     <p class="summary">Search supports Telugu, English and common transliteration terms such as Hyderabad, Vijayawada, cricket and politics.</p>
-     <div class="dashboard-table" id="smartSearchSignals">
-      <div class="dash-row"><span>Telugu search</span><b>Enabled</b></div>
-      <div class="dash-row"><span>Voice search</span><b>Browser-ready</b></div>
-      <div class="dash-row"><span>Topic matching</span><b>Live feed</b></div>
-     </div>
-    </article>
-   </div>
-  </section>
-
-  <section class="section" id="districtDashboard">
-   <div class="section-title"><h2>District Dashboard</h2><span class="chip" id="districtDashboardChip">Hyperlocal</span></div>
-   <div class="district-dashboard" id="districtDashboardGrid"></div>
   </section>
 
   <section class="section" id="reels">
@@ -1828,7 +1801,7 @@ const uiText = {
   listen:"Play Article", playArticle:"Play Article", pauseAudio:"Pause Audio", resumeAudio:"Resume Audio", share:"Share", save:"Save", continue:"Continue Reading", topStory:"Top Story",
   editionTitle:"Today's NewsNeta Edition", editionText:"Latest top stories, live updates, weather, districts and most-read stories are refreshed from the home desk.",
   weather:"Weather & Forecast", auto:"Auto", refresh:"Refresh", trending:"Trending News", factCheck:"Fact Check Signal",
-  homeDesk:"Home: Latest & Live News", compliance:"Legal & Editorial Compliance", checklist:"Checklist", reels:"Short News Reels",
+  homeDesk:"Home: Latest & Live News", compliance:"Editorial Standards", checklist:"Checklist", reels:"Short News Reels",
   recommended:"Recommended News", personalized:"Personalized", mostRead:"Most Read Now", liveReaders:"Live readers",
   categoryWise:"Category-wise News", autoTagged:"Auto-tagged", stateEditions:"State Editions & Live Updates", newsDesk:"News Desk",
   publicPulse:"Public Pulse", interactivePolls:"Interactive Polls", pollSummary:"Vote once and see the live reader pulse update instantly.", storiesToday:"stories today", reads:"reads", minRead:"min read"

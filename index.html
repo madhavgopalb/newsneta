@@ -177,10 +177,14 @@ button{cursor:pointer}
  margin:0 auto;
  padding:0;
  align-items:center;
+ background:#159bd8;
 }
 .nav::-webkit-scrollbar{display:none}
 .nav a{
  flex:0 0 auto;
+ display:inline-flex;
+ align-items:center;
+ min-height:58px;
  border:0;
  background:transparent;
  color:#fff;
@@ -1023,10 +1027,10 @@ button{cursor:pointer}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
  .nav-menu-row{display:block;padding:0;background:#159bd8;border-top:0;border-bottom:0}
- .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px}
+ .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
  .nav a{scroll-snap-align:start}
  .nav-districts{grid-template-columns:1fr}
- .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0}
+ .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0;min-height:48px;display:inline-flex;align-items:center}
  .chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
  .menu-refresh{min-width:100%}
@@ -1153,7 +1157,16 @@ button{cursor:pointer}
   <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-expanded="false" aria-controls="searchInput">Search News</button>
   <div class="nav-menu-row" aria-label="Main menu">
    <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="categoryNav">☰</button>
-   <nav class="nav" aria-label="News categories" id="categoryNav"></nav>
+   <nav class="nav" aria-label="News categories" id="categoryNav">
+    <a href="#home" data-home="true" class="active" aria-label="Home">Home</a>
+    <a href="#latestGrid" data-cat="latest">Latest</a>
+    <a href="#latestGrid" data-cat="politics">Politics</a>
+    <a href="#latestGrid" data-cat="ap">Andhra Pradesh</a>
+    <a href="#latestGrid" data-cat="telangana">Telangana</a>
+    <a href="#latestGrid" data-cat="cinema">Cinema</a>
+    <a href="#latestGrid" data-cat="sports">Sports</a>
+    <a href="#latestGrid" data-cat="technology">Technology</a>
+   </nav>
    <div class="nav-districts" aria-label="District news menu">
     <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>
     <select class="menu-select" id="apMenuSelect" aria-label="Andhra Pradesh district news"></select>

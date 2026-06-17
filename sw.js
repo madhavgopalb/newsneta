@@ -1,4 +1,4 @@
-const CACHE_NAME = "newsneta-pwa-v50";
+const CACHE_NAME = "newsneta-pwa-v51";
 const APP_SHELL = [
   "/manifest.json",
   "/assets/newsneta-logo.jpg",

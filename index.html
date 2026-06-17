@@ -173,7 +173,7 @@ button{cursor:pointer}
  display:flex;
  flex-wrap:nowrap;
  gap:0;
- overflow:auto;
+ overflow:visible;
  scrollbar-width:none;
  min-width:0;
  max-width:1240px;
@@ -1101,23 +1101,23 @@ button{cursor:pointer}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
  .nav-menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;padding:0 8px;background:#159bd8;border-top:0;border-bottom:0}
- .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
+ .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 142px 0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
  .nav a{scroll-snap-align:start}
  .nav-districts{display:none!important}
  .nav-item{position:static}
  .nav-trigger{min-height:48px;padding:13px 12px;font-size:14px}
  .district-submenu{
-  position:absolute;
+  position:fixed;
   left:8px;
   right:8px;
-  top:auto;
+  top:100px;
   min-width:0;
   max-height:min(58vh,420px);
   border-radius:0 0 6px 6px;
-  z-index:90;
+  z-index:140;
  }
  .district-submenu a{font-size:14px;padding:10px 16px}
- .main-socials{min-height:48px;gap:6px;padding-right:2px}
+ .main-socials{position:absolute;right:8px;top:0;min-height:48px;gap:6px;padding-right:2px;background:#159bd8;z-index:95}
  .main-socials .share-icon{width:30px;height:30px}
  .main-socials .share-icon svg,.share-icon svg{width:17px;height:17px}
  .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:19px;height:19px}
@@ -1191,7 +1191,7 @@ button{cursor:pointer}
  .news-card:hover{transform:none}
  .bottom-nav{display:flex}
  .floating-ai{bottom:calc(78px + env(safe-area-inset-bottom));right:12px;max-width:calc(100vw - 86px);padding:10px 12px;font-size:13px}
- .top-arrow{left:12px;right:auto;bottom:calc(78px + env(safe-area-inset-bottom));width:42px;height:42px;font-size:20px;z-index:71}
+ .top-arrow{left:auto;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));width:42px;height:42px;font-size:20px;z-index:150;background:var(--brand);color:#fff;border-color:var(--brand)}
  .ai-panel{bottom:calc(132px + env(safe-area-inset-bottom));right:12px}
  .story-modal{max-height:92vh}
  .story-modal-body{padding:14px}
@@ -2010,6 +2010,16 @@ const categoryTranslations = {
 function t(key){
  return uiText[currentLanguage]?.[key] || uiText.te[key] || key;
 }
+
+Object.assign(categoryTranslations.en, {
+ latest:"Latest", district:"District News", cricket:"Cricket", entertainment:"Entertainment", education:"Education", health:"Health", crime:"Crime", weather:"Weather", jobs:"Jobs", lifestyle:"Lifestyle"
+});
+Object.assign(categoryTranslations.te, {
+ latest:"తాజా వార్తలు", politics:"రాజకీయాలు", telangana:"తెలంగాణ", ap:"ఆంధ్రప్రదేశ్", district:"జిల్లా వార్తలు", national:"జాతీయం", international:"అంతర్జాతీయం", business:"బిజినెస్", sports:"క్రీడలు", cricket:"క్రికెట్", entertainment:"వినోదం", cinema:"సినిమా", technology:"టెక్నాలజీ", education:"విద్య", health:"ఆరోగ్యం", crime:"క్రైమ్", weather:"వాతావరణం", jobs:"ఉద్యోగాలు", lifestyle:"లైఫ్ స్టైల్", viral:"వైరల్"
+});
+Object.assign(categoryTranslations.hi, {
+ latest:"ताजा खबरें", district:"जिला समाचार", cricket:"क्रिकेट", entertainment:"मनोरंजन", education:"शिक्षा", health:"स्वास्थ्य", crime:"क्राइम", weather:"मौसम", jobs:"नौकरियां", lifestyle:"लाइफस्टाइल"
+});
 
 function categoryLabel(id,label){
  return categoryTranslations[currentLanguage]?.[id] || label;
@@ -3545,7 +3555,8 @@ document.getElementById("readerQuestionBtn")?.addEventListener("click",()=>{
 });
 document.getElementById("topArrow").addEventListener("click",()=>window.scrollTo({top:0, behavior:"smooth"}));
 window.addEventListener("scroll",()=>{
- document.getElementById("topArrow").classList.toggle("show", window.scrollY > 520);
+ const topThreshold = matchMedia("(max-width: 640px)").matches ? 160 : 520;
+ document.getElementById("topArrow").classList.toggle("show", window.scrollY > topThreshold);
 },{passive:true});
 document.getElementById("themeBtn").addEventListener("click",()=>{
  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";

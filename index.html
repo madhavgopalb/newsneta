@@ -345,6 +345,8 @@ button{cursor:pointer}
 .future-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px;display:grid;gap:8px}
 .future-card span{font:900 12px/1 Inter,sans-serif;color:var(--brand);text-transform:uppercase}
 .future-card strong{font-size:17px}
+.page > section:has(.future-grid),
+.page > section.grid-2:has(#summaryInput){display:none!important}
 .topic-chips{display:flex;gap:8px;flex-wrap:wrap}
 .topic-chip{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:8px 12px;font-weight:900}
 .topic-chip.active{background:var(--ink);color:var(--bg)}

@@ -247,11 +247,11 @@ button{cursor:pointer}
 .nav-trigger::after{content:"⌄";font-size:14px;line-height:1}
 .nav-trigger.active,.nav-item.open>.nav-trigger,.nav-item:hover>.nav-trigger{background:rgba(255,255,255,.16)}
 .district-submenu{
- position:absolute;
- top:100%;
- left:0;
+ position:fixed;
+ top:154px;
+ left:max(16px,calc((100vw - 1240px)/2 + 16px));
  z-index:180;
- min-width:230px;
+ min-width:250px;
  max-height:360px;
  overflow:auto;
  display:none;
@@ -262,6 +262,7 @@ button{cursor:pointer}
  scrollbar-width:thin;
 }
 .nav-item:hover>.district-submenu,.nav-item.open>.district-submenu{display:block}
+.nav-item[data-state-menu="ap"]>.district-submenu{left:max(190px,calc((100vw - 1240px)/2 + 230px))}
 .district-submenu strong{
  display:block;
  padding:8px 16px;
@@ -440,8 +441,8 @@ button{cursor:pointer}
 .edition-card p{margin:0;color:var(--muted);font-size:14px}
 .edition-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .edition-board{display:grid;grid-template-columns:1.35fr .65fr;gap:14px}
-.edition-lead{display:grid;grid-template-columns:minmax(180px,.65fr) 1fr;gap:14px;align-items:center;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px}
-.edition-lead img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px}
+.edition-lead{display:grid;grid-template-columns:minmax(180px,.65fr) 1fr;gap:14px;align-items:center;width:100%;min-height:220px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px}
+.edition-lead img{width:100%;min-height:180px;aspect-ratio:16/10;object-fit:cover;border-radius:6px;background:#e5e7eb}
 .edition-lead h3{margin:4px 0 8px;font-size:24px;line-height:1.2}
 .edition-list{display:grid;gap:10px}
 .edition-list .reader-row{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
@@ -1155,6 +1156,7 @@ button{cursor:pointer}
   overscroll-behavior:contain;
   box-shadow:0 18px 44px rgba(15,23,42,.22);
  }
+ .nav-item[data-state-menu="ap"]>.district-submenu,.nav-item[data-state-menu="telangana"]>.district-submenu{left:8px;right:8px}
  .nav-item.open>.district-submenu{display:grid}
  .district-submenu strong{position:sticky;top:0;background:#fff;z-index:2}
  .district-submenu a{font-size:14px;padding:10px 16px}
@@ -1759,8 +1761,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v64";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v64";
+const APP_BUILD_VERSION = "newsneta-web-v65";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v65";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 

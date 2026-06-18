@@ -1759,8 +1759,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v62";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v62";
+const APP_BUILD_VERSION = "newsneta-web-v63";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v63";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -1964,6 +1964,8 @@ let lastRefreshAt = null;
 let refreshCount = 0;
 let nextRefreshAt = null;
 let newsSourceMode = "Static preview";
+let newsApiCacheMode = "starting";
+let newsApiServedAt = null;
 let activeDistrictFilter = null;
 const maxStoryAgeDays = 10;
 const latestPageSize = 9;
@@ -2878,15 +2880,20 @@ function animateCounters(){
 async function loadNews(cat="telangana"){
  latestPage = 1;
  try{
-  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}&refresh=${Date.now()}`, {cache:"no-store"});
+  const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
+  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}&refresh=${Date.now()}&view=${view}`, {cache:"no-store"});
   if(!res.ok) throw new Error("news api failed");
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
+  newsApiCacheMode = data.cache || "fresh";
+  newsApiServedAt = data.servedAt || data.updatedAt || new Date().toISOString();
   const liveItems = normalizeItems(data.items || []);
   const baseItems = liveItems.length ? liveItems : normalizeItems(fallbackStories);
   stories = mergePublishedStories(cat, baseItems);
  }catch(error){
   newsSourceMode = "Static preview demo";
+  newsApiCacheMode = "offline";
+  newsApiServedAt = new Date().toISOString();
   stories = mergePublishedStories(cat, normalizeItems(fallbackStories));
  }
  const latestTitle = document.getElementById("latestTitle");
@@ -2931,10 +2938,13 @@ async function loadDistrictNews(state, district){
  if(!state || !district) return loadNews(document.querySelector(".nav a.active")?.dataset.cat || "telangana");
  latestPage = 1;
  try{
-  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}`, {cache:"no-store"});
+  const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
+  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}&view=${view}`, {cache:"no-store"});
   if(!res.ok) throw new Error("district news api failed");
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : newsSourceMode;
+  newsApiCacheMode = data.cache || "fresh";
+  newsApiServedAt = data.servedAt || data.updatedAt || new Date().toISOString();
   const liveItems = normalizeItems(data.items || []);
   const cmsPublished = publishedCmsDistrictStories(state, district);
   const baseItems = (liveItems.length ? liveItems : normalizeItems(fallbackStories))
@@ -2942,6 +2952,8 @@ async function loadDistrictNews(state, district){
   stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
  }catch(error){
   newsSourceMode = "Static preview demo";
+  newsApiCacheMode = "offline";
+  newsApiServedAt = new Date().toISOString();
   const cmsPublished = publishedCmsDistrictStories(state, district);
   const baseItems = normalizeItems(fallbackStories).map(story=>({...story, category: district || "District"}));
   stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
@@ -2981,10 +2993,11 @@ function updateRefreshStatus(){
  const status = document.getElementById("refreshStatus");
  const menuStatus = document.getElementById("menuRefreshStatus");
  const time = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "pending";
+ const apiTime = newsApiServedAt ? new Date(newsApiServedAt).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "pending";
  const secondsLeft = nextRefreshAt ? Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000)) : 0;
  const countdown = secondsLeft ? `${Math.floor(secondsLeft / 60)}m ${String(secondsLeft % 60).padStart(2,"0")}s` : "starting";
  const mobileFlag = matchMedia("(max-width: 768px)").matches ? " • Mobile fresh" : "";
- const message = `Auto refresh every 5 min • ${newsSourceMode} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
+ const message = `Auto refresh every 5 min • ${newsSourceMode} • API ${newsApiCacheMode} ${apiTime} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
  if(status) status.textContent = message;
  if(menuStatus) menuStatus.textContent = message;
 }

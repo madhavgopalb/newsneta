@@ -372,11 +372,16 @@ async function articleImage(item, cat, district, index) {
 exports.handler = async function handler(event) {
   const cat = event.queryStringParameters?.cat || "telangana";
   const district = event.queryStringParameters?.district || "";
+  const forceRefresh = Boolean(event.queryStringParameters?.refresh || event.queryStringParameters?.force);
   const cacheKey = district ? `${cat}:${district.toLowerCase()}` : cat;
   const feedUrl = feedFor(cat, district);
 
-  if (CACHE[cacheKey] && Date.now() - CACHE[cacheKey].time < TTL) {
-    return json(200, CACHE[cacheKey].data);
+  if (!forceRefresh && CACHE[cacheKey] && Date.now() - CACHE[cacheKey].time < TTL) {
+    return json(200, {
+      ...CACHE[cacheKey].data,
+      cache: "memory",
+      servedAt: new Date().toISOString()
+    });
   }
 
   try {
@@ -391,7 +396,7 @@ exports.handler = async function handler(event) {
         items: licensedItems
       };
       CACHE[cacheKey] = { time: Date.now(), data };
-      return json(200, data);
+      return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
     }
 
     const feed = await parser.parseURL(feedUrl);
@@ -406,7 +411,7 @@ exports.handler = async function handler(event) {
         items: []
       };
       CACHE[cacheKey] = { time: Date.now(), data };
-      return json(200, data, 60);
+      return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
     }
     const imageResults = await Promise.all(
       rawItems.map((item, index) => articleImage(item, cat, district, index))
@@ -437,15 +442,17 @@ exports.handler = async function handler(event) {
     };
 
     CACHE[cacheKey] = { time: Date.now(), data };
-    return json(200, data);
+    return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
   } catch (error) {
     return json(200, {
       status: "fallback",
       category: cat,
       district: district || null,
       updatedAt: new Date().toISOString(),
+      servedAt: new Date().toISOString(),
+      cache: forceRefresh ? "bypass-fallback" : "fallback",
       items: [],
       error: String(error.message || error)
-    }, 60);
+    }, forceRefresh ? 0 : 60);
   }
 };

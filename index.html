@@ -1747,6 +1747,9 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
+const APP_BUILD_VERSION = "newsneta-web-v60";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v60";
+const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
 const districts = {
@@ -2962,7 +2965,8 @@ function updateRefreshStatus(){
  const time = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "pending";
  const secondsLeft = nextRefreshAt ? Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000)) : 0;
  const countdown = secondsLeft ? `${Math.floor(secondsLeft / 60)}m ${String(secondsLeft % 60).padStart(2,"0")}s` : "starting";
- const message = `Auto refresh every 5 min • ${newsSourceMode} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}`;
+ const mobileFlag = matchMedia("(max-width: 768px)").matches ? " • Mobile fresh" : "";
+ const message = `Auto refresh every 5 min • ${newsSourceMode} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
  if(status) status.textContent = message;
  if(menuStatus) menuStatus.textContent = message;
 }
@@ -4600,6 +4604,23 @@ window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
 window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
 window.newsnetaLiveWidgetTimer = setInterval(renderLiveWidgets, 30 * 1000);
+async function clearOldAppCaches(){
+ if(!("caches" in window)) return;
+ const keys = await caches.keys();
+ await Promise.all(keys
+  .filter(key=>key.startsWith(APP_CACHE_PREFIX) && key !== APP_ACTIVE_CACHE)
+  .map(key=>caches.delete(key)));
+}
+async function enforceFreshClientShell(){
+ const previousVersion = localStorage.getItem("newsneta-app-build");
+ if(previousVersion === APP_BUILD_VERSION) return;
+ localStorage.setItem("newsneta-app-build", APP_BUILD_VERSION);
+ await clearOldAppCaches();
+ if(navigator.serviceWorker?.controller){
+  navigator.serviceWorker.controller.postMessage({type:"CLEAR_RUNTIME_CACHE"});
+ }
+ updateRefreshStatus();
+}
 function refreshMobileFreshness(force = false){
  const isMobileViewport = matchMedia("(max-width: 768px)").matches;
  if(!isMobileViewport && !force) return;
@@ -4622,9 +4643,19 @@ if("serviceWorker" in navigator){
  });
  navigator.serviceWorker.register("sw.js").then(registration=>{
   registration.update?.();
+  if(registration.waiting) registration.waiting.postMessage({type:"SKIP_WAITING"});
+  registration.addEventListener("updatefound",()=>{
+   const worker = registration.installing;
+   worker?.addEventListener("statechange",()=>{
+    if(worker.state === "installed" && navigator.serviceWorker.controller){
+     worker.postMessage({type:"SKIP_WAITING"});
+    }
+   });
+  });
   setInterval(()=>registration.update?.(), 15 * 60 * 1000);
  }).catch(()=>{});
 }
+enforceFreshClientShell().catch(()=>{});
 </script>
 </body>
 </html>

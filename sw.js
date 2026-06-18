@@ -1,4 +1,4 @@
-const CACHE_NAME = "newsneta-pwa-v59";
+const CACHE_NAME = "newsneta-pwa-v60";
 const APP_SHELL = [
   "/manifest.json",
   "/assets/newsneta-logo.jpg",
@@ -24,6 +24,19 @@ self.addEventListener("activate", event => {
   );
 });
 
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+    return;
+  }
+  if (event.data?.type === "CLEAR_RUNTIME_CACHE") {
+    event.waitUntil(
+      caches.keys()
+        .then(keys => Promise.all(keys.filter(key => key.startsWith("newsneta-pwa-") && key !== CACHE_NAME).map(key => caches.delete(key))))
+    );
+  }
+});
+
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
@@ -41,6 +54,20 @@ self.addEventListener("fetch", event => {
   if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
     event.respondWith(
       fetch(request, { cache: "no-store" })
+        .then(response => {
+          if (response && response.ok) {
+            return new Response(response.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: {
+                ...Object.fromEntries(response.headers.entries()),
+                "Cache-Control": "no-store, max-age=0, must-revalidate",
+                "X-NewsNeta-SW": CACHE_NAME
+              }
+            });
+          }
+          return response;
+        })
         .catch(() => caches.match("/index.html"))
     );
     return;

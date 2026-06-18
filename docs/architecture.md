@@ -2,6 +2,40 @@
 
 NewsNeta is a Telugu-first AI news ecosystem designed for a mobile-first web app, PWA, Android/iOS wrappers, high-throughput news ingestion, real-time publishing, and AI-assisted newsroom workflows.
 
+## 0. Required Publishing And Delivery Flow
+
+```text
+NewsNeta CMS
+     |
+Editorial Workflow
+     |
+Review & Approval
+     |
+Publish Content
+     |
+-------------------
+|                 |
+REST/GraphQL API  Mobile API
+|                 |
+Next.js Website   Android / iOS
+|
+Desktop + Mobile Browser
+```
+
+| Platform | Codebase Contract | UI Contract |
+| --- | --- | --- |
+| Desktop Web | Shared public website code consuming published content APIs | Desktop newsroom layout |
+| Mobile Browser (Chrome/Safari) | Same public website code with responsive/adaptive components and the same published feed data | Mobile layout with the same content freshness |
+| Android App | Native/hybrid wrapper consuming the Mobile API and web deep links | Native mobile UI |
+| iOS App | Native/hybrid wrapper consuming the Mobile API and web deep links | Native mobile UI |
+
+### Current Implementation Notes
+
+- The current repository is a Netlify-hosted static/PWA implementation with a Netlify `news` function standing in for the public REST API.
+- Desktop and mobile browser share the same `index.html`, service worker, CMS workflow UI, category feeds, district feeds, and article renderer.
+- The CMS workflow exists in the browser prototype. For production, reporter/reviewer/admin articles must be persisted through the REST/GraphQL API and database so a story published on desktop is visible on mobile browser and app clients.
+- Android/iOS readiness is represented by the PWA manifest, app icons, and `android/twa-manifest.json`; store deployment still requires the wrapper build/signing/release process.
+
 ## 1. UI/UX Architecture
 
 ### Reader App

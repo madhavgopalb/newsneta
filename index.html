@@ -1759,8 +1759,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v63";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v63";
+const APP_BUILD_VERSION = "newsneta-web-v64";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v64";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -2214,6 +2214,12 @@ function makeSummary(title){
  return `${title} అనే అంశంపై NewsNeta ముఖ్యాంశాలను సంక్షిప్తంగా కుదించి, నేపథ్యం మరియు ప్రభావాన్ని త్వరగా అర్థమయ్యేలా చూపిస్తుంది.`;
 }
 
+function storySummary(story){
+ const direct = cleanText(story?.description || story?.summary || story?.aiSummary || story?.contentSnippet || "");
+ if(direct) return direct.length > 220 ? `${direct.slice(0, 217)}...` : direct;
+ return makeSummary(story?.title || "");
+}
+
 function escapeAttr(value){
  return String(value || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
@@ -2425,7 +2431,7 @@ function storyCard(story){
   </a>
   <div class="card-body">
    <a href="#" data-story-id="${escapeAttr(storyId)}"><h3>${story.title}</h3></a>
-   <p class="summary">${makeSummary(story.title)}</p>
+   <p class="summary">${escapeHtml(storySummary(story))}</p>
    <div class="meta"><span>${readMinutes(story)} min read • ${Intl.NumberFormat("en-IN").format(story.views)} views</span><button class="voice-btn" type="button" data-speak="${escapeAttr(story.title)}">Listen</button></div>
    <div class="refresh-note">Checked at ${refreshedAt}</div>
   </div>
@@ -2440,7 +2446,7 @@ function renderReel(story){
   <div class="reel-content">
    <span class="tag">${icon(story.category)} ${story.category}</span>
    <h3>${story.title}</h3>
-   <p>${makeSummary(story.title)}</p>
+   <p>${escapeHtml(storySummary(story))}</p>
    <div class="reel-caption"><span>Short briefing</span><span>${readMinutes(story)} min read</span><span>${story.trust || 91}% trust</span></div>
    <div class="reel-actions">
     <button class="round reel-play" data-reel-id="${escapeAttr(storyId)}" type="button" aria-label="Play short news">▶</button>
@@ -2493,13 +2499,14 @@ function renderTodayEdition(){
   <div>
    <span class="tag">${lead.category || "Top Story"}</span>
    <h3>${lead.title}</h3>
-   <p class="summary">${makeSummary(lead.title)}</p>
-   <button class="pill-btn admin-login-btn" type="button" data-story-id="${escapeAttr(lead.id || lead.link || lead.title)}">Read full story</button>
+   <p class="summary">${escapeHtml(storySummary(lead))}</p>
+   <button class="pill-btn admin-login-btn" type="button" data-edition-story-id="${escapeAttr(lead.id || lead.link || lead.title)}">Read full story</button>
   </div>
  </article>`;
  listHost.innerHTML = items.slice(1,7).map(story=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(story.id || story.link || story.title)}">
   <img loading="lazy" src="${escapeAttr(story.image)}" alt="" onerror="imageFallback(event)">
   <h3>${story.title}</h3>
+  <p class="summary">${escapeHtml(storySummary(story))}</p>
   <small>${story.category || "News"} • ${readMinutes(story)} min</small>
  </a>`).join("");
  const now = new Date();
@@ -2791,7 +2798,7 @@ function renderHeroSlide(){
  document.getElementById("hero").style.setProperty("--hero-image", `url("${heroStory.image}")`);
  document.getElementById("hero").dataset.storyId = heroStory.id || heroStory.link || heroStory.title;
  document.getElementById("heroTitle").textContent = heroStory.title;
- document.getElementById("heroSummary").textContent = makeSummary(heroStory.title);
+ document.getElementById("heroSummary").textContent = storySummary(heroStory);
  document.getElementById("heroSource").textContent = `${heroStory.category || t("topStory")} • ${Intl.NumberFormat("en-IN").format(heroStory.views || 0)} reads`;
  document.getElementById("heroDots").innerHTML = heroStories.map((_,index)=>`<button class="hero-dot ${index === heroIndex ? "active" : ""}" type="button" data-hero-index="${index}" aria-label="Top story ${index + 1}"></button>`).join("");
 }
@@ -2862,6 +2869,15 @@ function applyLanguage(){
 function moveHeroSlide(step){
  heroIndex = (heroIndex + step + heroStories.length) % heroStories.length;
  renderHeroSlide();
+}
+
+function startHeroAutoplay(){
+ window.clearInterval(window.newsnetaHeroTimer);
+ window.newsnetaHeroTimer = setInterval(()=>moveHeroSlide(1), 6500);
+}
+
+function restartHeroAutoplay(){
+ startHeroAutoplay();
 }
 
 function animateCounters(){
@@ -3269,6 +3285,12 @@ function playShortNews(id, button){
 }
 
 document.addEventListener("click", event=>{
+ const editionStoryButton = event.target.closest("[data-edition-story-id]");
+ if(editionStoryButton){
+  event.preventDefault();
+  openStoryDetail(editionStoryButton.dataset.editionStoryId);
+  return;
+ }
  const prefButton = event.target.closest("[data-pref-topic]");
  if(prefButton){
   event.preventDefault();
@@ -3383,6 +3405,7 @@ document.addEventListener("click", event=>{
  if(heroDot){
   heroIndex = Number(heroDot.dataset.heroIndex);
   renderHeroSlide();
+  restartHeroAutoplay();
  }
 });
 
@@ -3604,8 +3627,8 @@ document.addEventListener("keydown",event=>{
 });
 
 document.getElementById("readHero").addEventListener("click",()=>speakTelugu(`${document.getElementById("heroTitle").textContent}. ${document.getElementById("heroSummary").textContent}`));
-document.getElementById("heroPrev").addEventListener("click",()=>moveHeroSlide(-1));
-document.getElementById("heroNext").addEventListener("click",()=>moveHeroSlide(1));
+document.getElementById("heroPrev").addEventListener("click",()=>{moveHeroSlide(-1);restartHeroAutoplay();});
+document.getElementById("heroNext").addEventListener("click",()=>{moveHeroSlide(1);restartHeroAutoplay();});
 document.getElementById("openExplainers").addEventListener("click",()=>document.getElementById("epaper").scrollIntoView({behavior:"smooth", block:"start"}));
 document.getElementById("mobileSearchToggle")?.addEventListener("click",()=>{
  const topbar = document.querySelector(".topbar");
@@ -4641,7 +4664,7 @@ setupNav();
 setupDistricts();
 applyLanguage();
 refreshAllNews();
-window.newsnetaHeroTimer = setInterval(()=>moveHeroSlide(1), 6500);
+startHeroAutoplay();
 window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
 window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
@@ -4670,7 +4693,12 @@ function refreshMobileFreshness(force = false){
  if(force || staleMs > 60 * 1000) refreshAllNews().then(renderReporterPublished).catch(()=>renderReporterPublished());
 }
 document.addEventListener("visibilitychange",()=>{
- if(!document.hidden && (!lastRefreshAt || Date.now() - lastRefreshAt.getTime() > 90 * 1000)) refreshAllNews();
+ if(document.hidden){
+  window.clearInterval(window.newsnetaHeroTimer);
+  return;
+ }
+ startHeroAutoplay();
+ if(!lastRefreshAt || Date.now() - lastRefreshAt.getTime() > 90 * 1000) refreshAllNews();
 });
 window.addEventListener("pageshow", event=>refreshMobileFreshness(Boolean(event.persisted)));
 window.addEventListener("focus", ()=>refreshMobileFreshness(false));

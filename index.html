@@ -250,7 +250,7 @@ button{cursor:pointer}
  position:absolute;
  top:100%;
  left:0;
- z-index:80;
+ z-index:180;
  min-width:230px;
  max-height:360px;
  overflow:auto;
@@ -283,6 +283,7 @@ button{cursor:pointer}
  white-space:nowrap;
 }
 .district-submenu a:hover,.district-submenu a.active{background:#f1f5f9;color:#0f172a}
+.district-submenu a:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
 .main-socials{
  display:flex;
  align-items:center;
@@ -292,7 +293,7 @@ button{cursor:pointer}
  flex:0 0 auto;
 }
 .main-socials .share-icon{width:34px;height:34px;border:0;box-shadow:none;background:#fff;color:#111827}
-.main-socials .share-icon.facebook{color:#1877f2}
+.main-socials .share-icon.facebook{background:#fff;color:#1877f2}
 .main-socials .share-icon.whatsapp{color:#25d366}
 .main-socials .share-icon.twitter{color:#111827}
 .main-socials .share-icon.instagram{color:#e1306c}
@@ -961,7 +962,7 @@ button{cursor:pointer}
  cursor:pointer;
 }
 .share-icon.whatsapp{background:#fff;color:#25d366}
-.share-icon.facebook{background:#1877f2;color:#fff}
+.share-icon.facebook{background:#fff;color:#1877f2}
 .share-icon.twitter{background:#fff;color:#111827}
 .share-icon.instagram{background:#fff;color:#e1306c}
 .story-info-strip{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
@@ -1137,7 +1138,7 @@ button{cursor:pointer}
  .nav-menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:0 6px;background:#159bd8;border-top:0;border-bottom:0}
  .nav-scroll-shell{grid-template-columns:auto minmax(0,1fr) auto;min-width:0;width:100%;max-width:none;margin:0;background:#159bd8}
  .nav-scroll-btn{width:30px;height:30px;font-size:18px}
- .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
+ .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;max-height:none;border:0;border-radius:0;padding:0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
  .nav a{scroll-snap-align:start}
  .nav-districts{display:none!important}
  .nav-item{position:static}
@@ -1146,12 +1147,16 @@ button{cursor:pointer}
   position:fixed;
   left:8px;
   right:8px;
-  top:100px;
+  top:calc(env(safe-area-inset-top) + 104px);
   min-width:0;
   max-height:min(58vh,420px);
   border-radius:0 0 6px 6px;
-  z-index:140;
+  z-index:260;
+  overscroll-behavior:contain;
+  box-shadow:0 18px 44px rgba(15,23,42,.22);
  }
+ .nav-item.open>.district-submenu{display:grid}
+ .district-submenu strong{position:sticky;top:0;background:#fff;z-index:2}
  .district-submenu a{font-size:14px;padding:10px 16px}
  .main-socials{position:static;min-height:48px;gap:4px;padding-right:0;background:#159bd8;z-index:95}
  .main-socials .share-icon{width:30px;height:30px}
@@ -1754,8 +1759,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v61";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v61";
+const APP_BUILD_VERSION = "newsneta-web-v62";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v62";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 

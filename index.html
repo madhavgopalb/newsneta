@@ -710,6 +710,9 @@ button{cursor:pointer}
 .dashboard-table{display:grid;gap:8px}
 .dashboard-table p{display:none}
 .dash-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px;border-radius:var(--radius);background:rgba(127,139,160,.1)}
+.local-alert-row{border-left:3px solid transparent}
+.local-alert-row.live{border-left-color:var(--teal)}
+.local-alert-row.alert{border-left-color:var(--brand);background:rgba(215,25,32,.08)}
 .summarizer textarea{
  width:100%;
  min-height:128px;
@@ -926,6 +929,7 @@ button{cursor:pointer}
 .compliance-checks input{width:auto;min-height:0;margin-top:3px}
 .workflow-note{padding:10px;border-radius:8px;background:rgba(22,163,74,.12);color:var(--ink);font-weight:800}
 .story-modal{
+ position:relative;
  width:min(760px,100%);
  max-height:min(86vh,820px);
  overflow:auto;
@@ -939,6 +943,7 @@ button{cursor:pointer}
 .story-modal-body h2{font-size:clamp(24px,4vw,38px);line-height:1.16;margin:8px 0 12px}
 .story-modal-body p{color:var(--muted);font-size:16px}
 .story-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+#closeStory{touch-action:manipulation}
 .article-meta-line{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font:800 12px/1 Inter,sans-serif;margin:0 0 12px}
 .article-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .article-toolbar .pill-btn{height:38px;min-width:38px;padding:0 12px}
@@ -1211,6 +1216,7 @@ button{cursor:pointer}
  .cms-form-actions .pill-btn{width:100%}
  .cms-feature-grid{grid-template-columns:1fr}
  .workflow-lane{grid-template-columns:1fr}
+ #publishingDesk,.election-dashboard-card{display:none}
  .section{padding:12px;margin-top:10px;border-radius:6px;box-shadow:none}
  .home-panel{padding:12px;border-radius:6px;box-shadow:none}
  .panel-title h3,.section-title h2{font-size:17px}
@@ -1225,7 +1231,8 @@ button{cursor:pointer}
  .floating-ai{bottom:calc(78px + env(safe-area-inset-bottom));right:12px;max-width:calc(100vw - 86px);padding:10px 12px;font-size:13px}
  .top-arrow{left:auto;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));width:42px;height:42px;font-size:20px;z-index:150;background:var(--brand);color:#fff;border-color:var(--brand)}
  .ai-panel{bottom:calc(132px + env(safe-area-inset-bottom));right:12px}
- .story-modal{max-height:92vh}
+ .story-modal{width:100%;max-height:92vh}
+ #closeStory{position:sticky!important;top:10px!important;right:10px!important;float:right;z-index:20;background:rgba(255,255,255,.96)!important}
  .story-modal-body{padding:14px}
  .article-toolbar .share-icons{width:100%;justify-content:flex-start}
  .article-toolbar .share-icon{width:40px;height:40px}
@@ -1493,7 +1500,7 @@ button{cursor:pointer}
     <button class="poll-option" type="button"><span>మరింత చర్చ అవసరం</span><b>38%</b></button>
     <button class="poll-option" type="button"><span>ప్రజలకు స్పష్టత కావాలి</span><b>20%</b></button>
    </article>
-   <article class="mini-card">
+   <article class="mini-card election-dashboard-card">
     <div class="panel-title"><h3>Election Dashboard</h3><span class="tag">2026</span></div>
     <div class="dashboard-table">
      <div class="dash-row"><span>Telangana sentiment</span><b>+6.4</b></div>
@@ -1747,8 +1754,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v60";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v60";
+const APP_BUILD_VERSION = "newsneta-web-v61";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v61";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -2585,17 +2592,23 @@ function renderLocalAlerts(){
  const host = document.getElementById("localAlerts");
  if(!host) return;
  const now = new Date();
- const topTitles = stories.slice(0,3).map(story=>story.title).join(" ");
+ const topTitles = stories.slice(0,6).map(story=>`${story.category || ""} ${story.title || ""}`).join(" ");
  const weatherText = document.getElementById("weatherGrid")?.innerText || "";
- const activeCity = currentCmsUser?.location?.city || activeDistrictFilter?.district || "Hyderabad";
+ const activeCity = currentCmsUser?.location?.city || activeDistrictFilter?.district || readerPreferences.district || "Hyderabad";
+ const rainAlert = /rain|storm|weather|thunder|వర్ష|తుఫాను|Rain|Thunderstorm/i.test(`${topTitles} ${weatherText}`);
+ const trafficAlert = /traffic|metro|road|rail|bus|accident|ట్రాఫిక్|మెట్రో|రోడ్డు|రైలు/i.test(topTitles);
+ const civicAlert = /water|power|electric|scheme|municipal|civic|నీటి|విద్యుత్|మున్సిపల్|సేవ/i.test(topTitles);
+ const latestDistrictStory = stories.find(story=>String(story.district || story.category || "").toLowerCase().includes(String(activeCity).toLowerCase())) || stories[0];
  const alerts = [
-  ["Traffic and metro updates", /traffic|metro|road|rail|bus|ట్రాఫిక్|మెట్రో|రోడ్డు/i.test(topTitles) ? "Breaking" : "Live"],
-  ["Weather warnings", /rain|storm|weather|వర్ష|తుఫాను|Rain|Thunderstorm/i.test(`${topTitles} ${weatherText}`) ? "Alert" : "Today"],
-  ["Power and water notices", activeCity],
-  ["District services", activeDistrictFilter?.district ? "Selected" : "Auto"]
+  {label:`${activeCity} weather`, value:rainAlert ? "Alert" : "Normal", tone:rainAlert ? "alert" : "live", target:"#todayEdition"},
+  {label:"Traffic / transport", value:trafficAlert ? "Breaking" : "Monitoring", tone:trafficAlert ? "alert" : "live", target:"#latestGrid"},
+  {label:"Power, water & civic services", value:civicAlert ? "Notice" : "No major notice", tone:civicAlert ? "alert" : "live", target:"#latestGrid"},
+  {label:"District news watch", value:activeDistrictFilter?.district ? "Selected district" : "Auto location", tone:"live", target:"#latestGrid"}
  ];
- host.innerHTML = alerts.map(([label,value])=>`<div class="dash-row"><span>${label}</span><b>${value}</b></div>`).join("") +
-  `<div class="poll-total">Updated ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</div>`;
+ host.innerHTML = alerts.map(alert=>`<a class="dash-row local-alert-row ${alert.tone}" href="${alert.target}">
+  <span>${escapeHtml(alert.label)}</span><b>${escapeHtml(alert.value)}</b>
+ </a>`).join("") +
+  `<div class="poll-total">Updated ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}${latestDistrictStory ? ` • Tracking: ${escapeHtml(String(latestDistrictStory.title || "").slice(0,72))}` : ""}</div>`;
 }
 
 function renderLiveWidgets(){
@@ -3548,16 +3561,27 @@ function openStoryDetail(id){
  scrollStoryModalToTop();
 }
 
-document.getElementById("closeStory").addEventListener("click",()=>{
+function closeStoryModal(){
  if("speechSynthesis" in window) speechSynthesis.cancel();
  speechState = {speaking:false, paused:false, targetId:null, utterance:null};
- document.getElementById("storyBackdrop").classList.remove("open");
+ document.getElementById("storyBackdrop")?.classList.remove("open");
+ document.querySelector(".story-modal")?.removeAttribute("data-story-id");
  document.body.classList.remove("lock");
+}
+
+document.getElementById("closeStory").addEventListener("click",event=>{
+ event.preventDefault();
+ event.stopPropagation();
+ closeStoryModal();
 });
 document.getElementById("storyBackdrop").addEventListener("click",event=>{
  if(event.target.id === "storyBackdrop"){
-  document.getElementById("storyBackdrop").classList.remove("open");
-  document.body.classList.remove("lock");
+  closeStoryModal();
+ }
+});
+document.addEventListener("keydown",event=>{
+ if(event.key === "Escape" && document.getElementById("storyBackdrop")?.classList.contains("open")){
+  closeStoryModal();
  }
 });
 

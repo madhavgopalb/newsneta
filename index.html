@@ -248,10 +248,11 @@ button{cursor:pointer}
 .nav-trigger.active,.nav-item.open>.nav-trigger,.nav-item:hover>.nav-trigger{background:rgba(255,255,255,.16)}
 .district-submenu{
  position:fixed;
- top:154px;
- left:max(16px,calc((100vw - 1240px)/2 + 16px));
+ top:var(--district-submenu-top,154px);
+ left:var(--district-submenu-left,max(16px,calc((100vw - 1240px)/2 + 16px)));
  z-index:180;
  min-width:250px;
+ max-width:min(320px,calc(100vw - 24px));
  max-height:360px;
  overflow:auto;
  display:none;
@@ -262,7 +263,6 @@ button{cursor:pointer}
  scrollbar-width:thin;
 }
 .nav-item:hover>.district-submenu,.nav-item.open>.district-submenu{display:block}
-.nav-item[data-state-menu="ap"]>.district-submenu{left:max(190px,calc((100vw - 1240px)/2 + 230px))}
 .district-submenu strong{
  display:block;
  padding:8px 16px;
@@ -1766,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v67";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v67";
+const APP_BUILD_VERSION = "newsneta-web-v68";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v68";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -2115,6 +2115,20 @@ function districtSubmenuMarkup(state, label){
  </div>`;
 }
 
+function positionDistrictSubmenu(item){
+ if(!item) return;
+ const trigger = item.querySelector("[data-state-trigger]");
+ const menu = item.querySelector(".district-submenu");
+ if(!trigger || !menu) return;
+ const rect = trigger.getBoundingClientRect();
+ const menuWidth = Math.min(320, Math.max(250, menu.offsetWidth || 250));
+ const viewportPadding = 8;
+ const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - menuWidth - viewportPadding));
+ const top = rect.bottom + 1;
+ menu.style.setProperty("--district-submenu-left", `${Math.round(left)}px`);
+ menu.style.setProperty("--district-submenu-top", `${Math.round(top)}px`);
+}
+
 function setupNav(){
  const nav = document.getElementById("categoryNav");
  nav.innerHTML = `<a href="#home" data-home="true" class="active" aria-label="Home">${t("home")}</a>` + categories
@@ -2134,6 +2148,7 @@ function setupNav(){
     node.classList.remove("open");
     node.querySelector("[data-state-trigger]")?.setAttribute("aria-expanded","false");
    });
+   positionDistrictSubmenu(item);
    item.classList.toggle("open", open);
    trigger.setAttribute("aria-expanded", String(open));
    return;
@@ -2157,6 +2172,7 @@ function setupNav(){
    const apMenuSelect = document.getElementById("apMenuSelect");
    if(telanganaMenuSelect) telanganaMenuSelect.value = state === "telangana" ? district : "";
    if(apMenuSelect) apMenuSelect.value = state === "ap" ? district : "";
+   document.querySelector(".nav-districts")?.classList.remove("show");
    loadDistrictNews(state, district);
    document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
    return;
@@ -2187,6 +2203,20 @@ function setupNav(){
   }
   loadNews(link.dataset.cat);
  });
+ nav.addEventListener("pointerenter", event=>{
+  const item = event.target.closest?.(".nav-item[data-state-menu]");
+  if(item && nav.contains(item)) positionDistrictSubmenu(item);
+ }, true);
+ nav.addEventListener("focusin", event=>{
+  const item = event.target.closest?.(".nav-item[data-state-menu]");
+  if(item && nav.contains(item)) positionDistrictSubmenu(item);
+ });
+ nav.addEventListener("scroll", ()=>{
+  nav.querySelectorAll(".nav-item.open").forEach(positionDistrictSubmenu);
+ }, {passive:true});
+ window.addEventListener("resize", ()=>{
+  nav.querySelectorAll(".nav-item.open").forEach(positionDistrictSubmenu);
+ }, {passive:true});
  document.addEventListener("click", event=>{
   if(!nav.contains(event.target)){
    nav.querySelectorAll(".nav-item.open").forEach(node=>{

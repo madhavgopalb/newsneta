@@ -1133,7 +1133,8 @@ button{cursor:pointer}
  .pill-btn .label{display:none}
  .search-wrap{display:none;grid-column:1/-1;order:3}
  .topbar.search-open .search-wrap{display:block}
- .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:calc(100% - 24px);min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900}
+ .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:44px;min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900;font-size:0}
+ .mobile-search-toggle::before{content:"⌕";font-size:21px;line-height:1}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
  .nav-menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:0 6px;background:#159bd8;border-top:0;border-bottom:0}
@@ -1160,11 +1161,10 @@ button{cursor:pointer}
  .nav-item.open>.district-submenu{display:grid}
  .district-submenu strong{position:sticky;top:0;background:#fff;z-index:2}
  .district-submenu a{font-size:14px;padding:10px 16px}
- .main-socials{position:static;min-height:48px;gap:4px;padding-right:0;background:#159bd8;z-index:95}
- .main-socials .share-icon{width:30px;height:30px}
- .main-socials .share-icon.instagram{display:none}
- .main-socials .share-icon svg,.share-icon svg{width:17px;height:17px}
- .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:19px;height:19px}
+ .main-socials{position:static;min-height:48px;gap:3px;padding-right:0;background:#159bd8;z-index:95}
+ .main-socials .share-icon{width:28px;height:28px;display:inline-flex!important}
+ .main-socials .share-icon svg,.share-icon svg{width:16px;height:16px}
+ .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:18px;height:18px}
  .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0;min-height:48px;display:inline-flex;align-items:center}
  .chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
@@ -1260,6 +1260,11 @@ button{cursor:pointer}
  .brand-logo{width:100%;height:54px;max-width:230px;max-height:54px}
  .header-actions{gap:4px}
  .icon-btn,.pill-btn{min-width:38px;height:38px}
+ .mobile-search-toggle{width:40px;min-height:38px;margin-left:8px;margin-right:8px}
+ .main-socials{gap:2px}
+ .main-socials .share-icon{width:26px;height:26px}
+ .main-socials .share-icon svg{width:15px;height:15px}
+ .main-socials .share-icon.whatsapp svg{width:17px;height:17px}
  .nav a,.chip{font-size:12px;padding:8px 10px}
  .hero{min-height:420px}
  .hero h2{font-size:25px}
@@ -1761,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v65";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v65";
+const APP_BUILD_VERSION = "newsneta-web-v66";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v66";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 

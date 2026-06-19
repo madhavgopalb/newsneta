@@ -1766,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v66";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v66";
+const APP_BUILD_VERSION = "newsneta-web-v67";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v67";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -1974,7 +1974,7 @@ let newsSourceMode = "Static preview";
 let newsApiCacheMode = "starting";
 let newsApiServedAt = null;
 let activeDistrictFilter = null;
-const maxStoryAgeDays = 10;
+const maxStoryAgeDays = 3;
 const latestPageSize = 9;
 const reporterPageSize = 6;
 let latestPage = 1;
@@ -1984,6 +1984,8 @@ let reporterFeedItems = [];
 let sideNewsMode = "latest";
 let heroStories = [...globalTopStories, ...fallbackStories];
 let heroIndex = 0;
+let cricketWidgetLoading = false;
+let cricketWidgetLastAt = 0;
 let activeEditionTopic = "Top";
 let currentLanguage = localStorage.getItem("newsneta-language") || "te";
 let speechState = {speaking:false, paused:false, targetId:null, utterance:null};
@@ -2587,26 +2589,54 @@ function renderDistrictDashboard(sorted){
  if(chip) chip.textContent = district;
 }
 
-function renderCricketWidget(){
+async function renderCricketWidget(force = false){
  const host = document.getElementById("cricketWidget");
  if(!host) return;
- const now = new Date();
- const tick = Math.floor(now.getTime() / 30000);
- const firstRuns = 166 + (tick % 34);
- const firstWickets = Math.min(8, 3 + (tick % 5));
- const secondRuns = 118 + ((tick * 7) % 58);
- const secondWickets = Math.min(9, 2 + (tick % 6));
- const overBall = `${14 + (tick % 6)}.${(tick * 2) % 6}`;
- const chaseChance = Math.max(28, Math.min(74, 50 + ((firstRuns - secondRuns) % 25)));
- const teams = tick % 2 ? ["HYD","CHE"] : ["IND","AUS"];
- host.innerHTML = `<div class="score">
+ const status = document.getElementById("cricketStatus");
+ const nowMs = Date.now();
+ if(cricketWidgetLoading || (!force && cricketWidgetLastAt && nowMs - cricketWidgetLastAt < 60000)) return;
+ cricketWidgetLoading = true;
+ if(status) status.textContent = "Updating";
+ try{
+  const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
+  const response = await fetch(`/.netlify/functions/news?cat=cricket&refresh=${Date.now()}&widget=cricket&view=${view}`, {cache:"no-store"});
+  if(!response.ok) throw new Error("cricket feed failed");
+  const data = await response.json();
+  const cricketItems = normalizeItems(data.items || []).slice(0,4);
+  if(!cricketItems.length) throw new Error("empty cricket feed");
+  const servedAt = data.servedAt || data.updatedAt || new Date().toISOString();
+  host.innerHTML = `<div class="score live-feed-score">
+  <div><small>Latest cricket feed</small><strong>${escapeHtml(cricketItems[0].category || "Cricket")}</strong></div>
+  <b>Live</b>
+ </div>
+ <div class="dashboard-table cricket-feed-list">
+  ${cricketItems.map(item=>`<button type="button" class="dash-row cricket-feed-row" data-story-id="${escapeHtml(item.id)}" onclick="openStory(this.dataset.storyId)">
+   <span>${escapeHtml(item.title)}</span><b>${formatStoryDate(item.pubDate || servedAt)}</b>
+  </button>`).join("")}
+ </div>
+ <p class="summary">Updated ${new Date(servedAt).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})} - ${escapeHtml(data.cache || "fresh")} refresh</p>`;
+  if(status) status.textContent = "Live";
+ }catch(error){
+  const now = new Date();
+  const tick = Math.floor(now.getTime() / 30000);
+  const firstRuns = 166 + (tick % 34);
+  const firstWickets = Math.min(8, 3 + (tick % 5));
+  const secondRuns = 118 + ((tick * 7) % 58);
+  const secondWickets = Math.min(9, 2 + (tick % 6));
+  const overBall = `${14 + (tick % 6)}.${(tick * 2) % 6}`;
+  const chaseChance = Math.max(28, Math.min(74, 50 + ((firstRuns - secondRuns) % 25)));
+  const teams = tick % 2 ? ["HYD","CHE"] : ["IND","AUS"];
+  host.innerHTML = `<div class="score">
   <div><small>${teams[0]}</small><strong>${firstRuns}/${firstWickets}</strong></div>
   <b>vs</b>
   <div><small>${teams[1]}</small><strong>${secondRuns}/${secondWickets}</strong></div>
  </div>
- <p class="summary">${overBall} overs • Match tracker: ${teams[0]} ${chaseChance}% • Updated ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</p>`;
- const status = document.getElementById("cricketStatus");
- if(status) status.textContent = "Auto";
+ <p class="summary">${overBall} overs - Match tracker: ${teams[0]} ${chaseChance}% - Updated ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</p>`;
+  if(status) status.textContent = "Auto";
+ }finally{
+  cricketWidgetLastAt = Date.now();
+  cricketWidgetLoading = false;
+ }
 }
 
 function renderLocalAlerts(){
@@ -3008,6 +3038,8 @@ async function refreshAllNews(){
    button.disabled = false;
    button.textContent = button.dataset.originalText || "Refresh news";
   });
+  renderCricketWidget(true);
+  renderLocalAlerts();
  }
  updateRefreshStatus();
 }

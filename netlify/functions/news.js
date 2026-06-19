@@ -10,10 +10,10 @@ const CACHE = {};
 const IMAGE_CACHE = {};
 const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
-const FRESH_NEWS_DAYS = 10;
+const FRESH_NEWS_DAYS = 3;
 
 function googleNewsUrl(query) {
-  const freshQuery = `${query} when:7d`;
+  const freshQuery = `${query} when:2d`;
   return `https://news.google.com/rss/search?q=${encodeURIComponent(freshQuery)}&hl=te&gl=IN&ceid=IN:te`;
 }
 
@@ -176,7 +176,14 @@ function isFreshArticle(item = {}, maxAgeDays = FRESH_NEWS_DAYS) {
 function freshSorted(items = [], maxAgeDays = FRESH_NEWS_DAYS) {
   return items
     .filter(item => isFreshArticle(item, maxAgeDays))
+    .filter(item => isUsefulTitle(publicTitle(item.title || "")))
     .sort((a, b) => articleTime(b) - articleTime(a));
+}
+
+function isUsefulTitle(title = "") {
+  const clean = String(title).replace(/\s+/g, " ").trim();
+  if (clean.length < 14) return false;
+  return !/^(breaking|live|latest|top news|12\s*:\s*00\s*a\.?m\.?|news update)$/iu.test(clean);
 }
 
 async function fetchGNewsItems(cat, district) {
@@ -392,6 +399,7 @@ exports.handler = async function handler(event) {
         provider: "licensed-news-api",
         category: cat,
         district: district || null,
+        freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
         items: licensedItems
       };
@@ -407,6 +415,7 @@ exports.handler = async function handler(event) {
         provider: "rss-plus-licensed-photo-api",
         category: cat,
         district: district || null,
+        freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
         items: []
       };
@@ -437,6 +446,7 @@ exports.handler = async function handler(event) {
       provider: "rss-plus-licensed-photo-api",
       category: cat,
       district: district || null,
+      freshnessWindowDays: FRESH_NEWS_DAYS,
       updatedAt: new Date().toISOString(),
       items
     };
@@ -450,6 +460,7 @@ exports.handler = async function handler(event) {
       district: district || null,
       updatedAt: new Date().toISOString(),
       servedAt: new Date().toISOString(),
+      freshnessWindowDays: FRESH_NEWS_DAYS,
       cache: forceRefresh ? "bypass-fallback" : "fallback",
       items: [],
       error: String(error.message || error)

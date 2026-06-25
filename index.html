@@ -1766,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v68";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v68";
+const APP_BUILD_VERSION = "newsneta-web-v69";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v69";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -2255,7 +2255,7 @@ function makeSummary(title){
 
 function storySummary(story){
  const direct = cleanText(story?.description || story?.summary || story?.aiSummary || story?.contentSnippet || "");
- if(direct) return direct.length > 220 ? `${direct.slice(0, 217)}...` : direct;
+ if(direct) return direct.length > 320 ? `${direct.slice(0, 317)}...` : direct;
  return makeSummary(story?.title || "");
 }
 
@@ -2441,15 +2441,20 @@ function normalizeItems(items){
   image:chooseRelevantImage(item,index),
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
-  description:item.description || item.contentSnippet || item.content || ""
+  description:item.description || item.aiSummary || item.summary || item.contentSnippet || item.content || "",
+  body:item.body || item.fullArticle || ""
  })).filter(story=>{
   const time = new Date(story.pubDate || Date.now()).getTime();
   return Number.isNaN(time) || time >= freshCutoff;
  }).sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
 }
 
+function articleTextForReadTime(story){
+ return cleanText([story?.title, story?.description, story?.summary, story?.aiSummary, story?.body, story?.fullArticle].filter(Boolean).join(" "));
+}
+
 function readMinutes(story){
- return Math.max(1, Math.round(((story.title || "").length + 520) / 750));
+ return Math.max(2, Math.round((articleTextForReadTime(story).length + 1200) / 900));
 }
 
 function formatStoryDate(dateText){
@@ -3206,13 +3211,6 @@ function buildExpandedArticle(story){
  const updated = formatStoryDate(story.pubDate || lastRefreshAt || new Date());
  const isReporterStory = Boolean(story.reporterUpload);
  const title = story.title || "NewsNeta story";
- const cleanParagraphs = (fullArticle || summary || title).split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,7);
- const sourceNote = isReporterStory ? "Reporter published story" : `${category} update`;
- return `
-  <p class="article-lead"><b>NewsNeta Desk:</b> ${escapeHtml(title)}</p>
-  ${cleanParagraphs.map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}
-  <p class="summary">${escapeHtml(sourceNote)} • ${escapeHtml(updated)} • ${escapeHtml(location)}${trust ? ` • Trust ${trust}%` : ""}</p>
- `;
  const bodyParagraphs = fullArticle
   ? fullArticle.split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,8)
   : [

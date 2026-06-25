@@ -161,6 +161,20 @@ function publicTitle(title = "") {
     .trim();
 }
 
+function expandedNewsDescription(title, cat, district, seedText = "") {
+  const cleanTitle = publicTitle(title);
+  const desk = district || CATEGORY_LABELS[cat] || "Telugu News";
+  const sourceLine = String(seedText || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const intro = sourceLine && sourceLine.length > 40
+    ? sourceLine
+    : `${cleanTitle} is being tracked by the NewsNeta ${desk} desk with focus on the latest development, reader impact, and next verified update.`;
+  return [
+    intro,
+    `NewsNeta is expanding this ${desk} story with background, local relevance, public response, official update signals, and what readers should watch through the day.`,
+    `This article view is refreshed from the live news feed and newsroom workflow so mobile and desktop readers see the latest available context without waiting for a manual reload.`
+  ].join(" ");
+}
+
 function articleTime(item = {}) {
   const date = new Date(item.publishedAt || item.pubDate || item.isoDate || item.date || 0);
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
@@ -209,6 +223,7 @@ async function fetchGNewsItems(cat, district) {
 
   return Promise.all(freshArticles.slice(0, 10).map(async (article, index) => {
     const title = publicTitle(article.title);
+    const description = expandedNewsDescription(title, cat, district, article.description);
     const fallback = selectImage(title, cat, district, index);
     const image = trustedImageUrl(article.image)
       ? article.image
@@ -226,7 +241,9 @@ async function fetchGNewsItems(cat, district) {
       views: hashViews(title || `${cat}-${index}`),
       trust: Math.max(84, 98 - (index % 8)),
       sentiment: inferSentiment(index),
-      aiSummary: article.description || `${title} అంశంపై ప్రధాన విషయాలు, నేపథ్యం, ప్రజలపై ప్రభావం సంక్షిప్తంగా.`
+      description,
+      body: description,
+      aiSummary: description
     };
   }));
 }
@@ -425,21 +442,27 @@ exports.handler = async function handler(event) {
     const imageResults = await Promise.all(
       rawItems.map((item, index) => articleImage(item, cat, district, index))
     );
-    const items = rawItems.map((item, index) => ({
-      id: item.guid || item.link || `${cat}-${index}`,
-      title: publicTitle(item.title),
-      link: item.link,
-      pubDate: item.pubDate || item.isoDate,
-      desk: "NewsNeta",
-      category: district || CATEGORY_LABELS[cat] || "Telugu",
-      district: district || null,
-      state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
-      image: imageResults[index],
-      views: hashViews(item.title || `${cat}-${index}`),
-      trust: Math.max(76, 96 - (index % 9)),
-      sentiment: inferSentiment(index),
-      aiSummary: `${publicTitle(item.title)} అంశంపై ప్రధాన విషయాలు, నేపథ్యం, ప్రజలపై ప్రభావం సంక్షిప్తంగా.`
-    }));
+    const items = rawItems.map((item, index) => {
+      const title = publicTitle(item.title);
+      const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);
+      return {
+        id: item.guid || item.link || `${cat}-${index}`,
+        title,
+        link: item.link,
+        pubDate: item.pubDate || item.isoDate,
+        desk: "NewsNeta",
+        category: district || CATEGORY_LABELS[cat] || "Telugu",
+        district: district || null,
+        state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
+        image: imageResults[index],
+        views: hashViews(item.title || `${cat}-${index}`),
+        trust: Math.max(76, 96 - (index % 9)),
+        sentiment: inferSentiment(index),
+        description,
+        body: description,
+        aiSummary: description
+      };
+    });
 
     const data = {
       status: "ok",

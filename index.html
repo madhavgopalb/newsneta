@@ -1766,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v69";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v69";
+const APP_BUILD_VERSION = "newsneta-web-v70";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v70";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -3220,6 +3220,18 @@ function buildExpandedArticle(story){
    `For ${location}, the practical angle is important: public services, local response, travel or schedule changes, market impact, audience reaction, policy movement, or sports/cinema follow-up may all become relevant depending on the story category.`,
    `This article should be treated as a developing reader brief unless it is marked as a reporter-published story. Reporter-published stories preserve the submitted article body and display it with the same verification and related-story tools.`
   ];
+ const expandedParagraphs = bodyParagraphs.length >= 5 ? bodyParagraphs : [
+  ...bodyParagraphs,
+  `${title} is part of the latest ${category} coverage on NewsNeta. The story is being presented in a fuller reader format so the headline is supported with context, sequence of developments, and practical reader relevance.`,
+  `The current update was checked around ${updated}. Readers following ${location} should look at the main development, the people or institutions involved, and the possible next step connected with this issue.`,
+  `NewsNeta will keep this story aligned with fresh feed updates and published newsroom articles. If the situation changes, the article view, related stories, and latest news sections will refresh with the newest available information.`,
+  isReporterStory ? `This item was submitted through the reporter workflow and keeps the reporter's article body wherever available.` : `This item is expanded from live feed information into a more readable article for mobile and web readers.`
+ ];
+ return expandedParagraphs
+  .filter(Boolean)
+  .slice(0,8)
+  .map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`)
+  .join("");
  if(currentLanguage === "te"){
   return `
    <p class="article-lead"><b>NewsNeta Desk:</b> ${escapeHtml(title)} పై విస్తృత కథనం. ముఖ్యమైన విషయం, నేపథ్యం, ప్రజలపై ప్రభావం, తాజా అప్‌డేట్ మార్గం అన్నీ ఒకే చోట చదవడానికి సిద్ధం చేశాం.</p>

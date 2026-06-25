@@ -163,16 +163,10 @@ function publicTitle(title = "") {
 
 function expandedNewsDescription(title, cat, district, seedText = "") {
   const cleanTitle = publicTitle(title);
-  const desk = district || CATEGORY_LABELS[cat] || "Telugu News";
   const sourceLine = String(seedText || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  const intro = sourceLine && sourceLine.length > 40
+  return sourceLine && sourceLine.length > 40
     ? sourceLine
-    : `${cleanTitle} is being tracked by the NewsNeta ${desk} desk with focus on the latest development, reader impact, and next verified update.`;
-  return [
-    intro,
-    `NewsNeta is expanding this ${desk} story with background, local relevance, public response, official update signals, and what readers should watch through the day.`,
-    `This article view is refreshed from the live news feed and newsroom workflow so mobile and desktop readers see the latest available context without waiting for a manual reload.`
-  ].join(" ");
+    : cleanTitle;
 }
 
 function articleTime(item = {}) {

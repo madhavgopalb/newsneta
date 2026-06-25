@@ -1766,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v71";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v71";
+const APP_BUILD_VERSION = "newsneta-web-v72";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v72";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -3219,14 +3219,7 @@ function buildExpandedArticle(story){
    `Officials, stakeholders, and readers are watching for the next confirmed update. The story may continue to evolve as more details become available.`,
    `The immediate focus is on what changed, who is affected, and what readers should know before the next update is published.`
   ];
- const expandedParagraphs = bodyParagraphs.length >= 5 ? bodyParagraphs : [
-  ...bodyParagraphs,
-  `${title} is part of the latest ${category} coverage on NewsNeta. The story is being presented in a fuller reader format so the headline is supported with context, sequence of developments, and practical reader relevance.`,
-  `The current update was checked around ${updated}. Readers following ${location} should look at the main development, the people or institutions involved, and the possible next step connected with this issue.`,
-  `NewsNeta will keep this story aligned with fresh feed updates and published newsroom articles. If the situation changes, the article view, related stories, and latest news sections will refresh with the newest available information.`,
-  isReporterStory ? `This item was submitted through the reporter workflow and keeps the reporter's article body wherever available.` : `This item is expanded from live feed information into a more readable article for mobile and web readers.`
- ];
- return expandedParagraphs
+ return bodyParagraphs
   .filter(Boolean)
   .slice(0,8)
   .map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`)

@@ -1766,8 +1766,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v70";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v70";
+const APP_BUILD_VERSION = "newsneta-web-v71";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v71";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -3215,10 +3215,9 @@ function buildExpandedArticle(story){
   ? fullArticle.split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,8)
   : [
    `${title}. ${summary}`,
-   `NewsNeta is tracking this story under the ${category} desk with focus on what happened, why it matters, who may be affected, and what readers should watch next.`,
-   `The coverage is organized from live news signals, category context, reader interest, image relevance checks, and editorial quality signals. If additional verified information becomes available, this article view is designed to refresh with clearer context.`,
-   `For ${location}, the practical angle is important: public services, local response, travel or schedule changes, market impact, audience reaction, policy movement, or sports/cinema follow-up may all become relevant depending on the story category.`,
-   `This article should be treated as a developing reader brief unless it is marked as a reporter-published story. Reporter-published stories preserve the submitted article body and display it with the same verification and related-story tools.`
+   `The latest development has drawn attention because it may influence decisions, public discussion, and follow-up action connected with ${location}.`,
+   `Officials, stakeholders, and readers are watching for the next confirmed update. The story may continue to evolve as more details become available.`,
+   `The immediate focus is on what changed, who is affected, and what readers should know before the next update is published.`
   ];
  const expandedParagraphs = bodyParagraphs.length >= 5 ? bodyParagraphs : [
   ...bodyParagraphs,

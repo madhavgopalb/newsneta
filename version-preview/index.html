@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NewsNeta Version Preview - Telugu News Platform</title>
   <meta name="description" content="NewsNeta version preview: mobile-first Telugu news, district editions, editorial CMS workflow, AI-assisted summaries, polls, sports, weather and app-ready APIs.">
+  <meta name="newsneta:layout-preference" content="Sakshi-style blue navigation, lead carousel and latest-news rail">
   <meta name="robots" content="noindex,nofollow">
   <style>
     :root{
@@ -22,13 +23,13 @@
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
-    body{margin:0;font-family:Arial,"Noto Sans Telugu","Noto Sans",sans-serif;background:#eef3f8;color:var(--ink)}
+    body{margin:0;font-family:Arial,"Noto Sans Telugu","Noto Sans",sans-serif;background:#f2f4f7;color:var(--ink)}
     button,input,select,textarea{font:inherit}
     button{cursor:pointer}
     a{color:inherit;text-decoration:none}
     img{max-width:100%;display:block}
     .page{max-width:1400px;margin:0 auto;background:#fff;min-height:100vh}
-    .topbar{display:grid;grid-template-columns:260px minmax(260px,1fr) auto;gap:18px;align-items:center;padding:18px 26px;background:#fff}
+    .topbar{display:grid;grid-template-columns:260px minmax(260px,1fr) auto;gap:18px;align-items:center;padding:18px 0;background:#fff;width:calc(100% - 52px);margin:0 auto}
     .logo-wrap{display:flex;align-items:center;min-width:0}
     .logo{width:220px;height:74px;object-fit:contain}
     .search{display:flex;align-items:center;border:1px solid #d7dce4;background:#fff;height:44px;max-width:520px;width:100%;padding:0 12px;gap:10px}
@@ -38,7 +39,7 @@
     .social{display:flex;gap:8px;align-items:center}
     .social a{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#fff;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.18)}
     .fb{color:#1877f2}.wa{color:#25d366}.tw{color:#111}.ig{color:#e1306c}
-    .nav-strip{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;display:flex;align-items:center;padding:0 18px;min-height:56px;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+    .nav-strip{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;display:flex;align-items:center;padding:0 18px;min-height:56px;box-shadow:none;width:calc(100% - 52px);margin:0 auto}
     .hamburger{border:0;background:transparent;color:#fff;font-size:25px;width:42px;height:42px}
     .nav-scroll{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;align-items:center;flex:1}
     .nav-scroll::-webkit-scrollbar{display:none}
@@ -48,9 +49,12 @@
     .district-menu:hover .district-panel,.district-menu:focus-within .district-panel{display:block}
     .district-panel button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px 18px;font-weight:800}
     .district-panel button:hover{background:#f0f8fd;color:var(--brand-dark)}
+    .subnav{display:flex;gap:28px;align-items:center;overflow-x:auto;scrollbar-width:none;background:var(--brand);color:#fff;width:calc(100% - 52px);margin:0 auto;padding:0 68px 16px}
+    .subnav::-webkit-scrollbar{display:none}
+    .subnav button{border:0;background:transparent;color:#fff;font-weight:900;white-space:nowrap;font-size:16px}
     .status-line{display:flex;gap:8px;align-items:center;padding:8px 26px;background:#f5f7fa;color:#607086;font-size:13px;font-weight:800}
     .pulse{width:10px;height:10px;border-radius:50%;background:#e71f35;box-shadow:0 0 0 5px rgba(231,31,53,.13)}
-    .layout{display:grid;grid-template-columns:minmax(0,2fr) 430px;gap:36px;padding:26px}
+    .layout{display:grid;grid-template-columns:minmax(0,2.05fr) 464px;gap:40px;padding:26px}
     .hero{border:1px solid var(--line);background:#fff}
     .hero-media{position:relative;height:454px;overflow:hidden;background:#111}
     .hero-media img{width:100%;height:100%;object-fit:cover}
@@ -63,23 +67,23 @@
     .dots{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:7px}
     .dot{width:9px;height:9px;border-radius:50%;border:0;background:rgba(255,255,255,.45)}
     .dot.active{background:#fff;width:24px;border-radius:999px}
-    .hero-title{padding:20px 22px}
-    .hero-title h2{margin:0;font-size:27px;line-height:1.25}
-    .side-card{background:#f5f7fb;padding:14px}
+    .hero-title{padding:18px 16px 24px}
+    .hero-title h2{margin:0;font-size:28px;line-height:1.28;font-weight:950}
+    .side-card{background:#f4f6fb;padding:12px}
     .tabs{display:grid;grid-template-columns:1fr 1fr;background:#fff;margin-bottom:12px}
     .tab{border:0;background:#fff;padding:14px 10px;font-weight:950;color:#1b2a3d}
     .tab.active{background:var(--brand);color:#fff}
     .story-list{max-height:430px;overflow:auto;background:#fff}
-    .story-link{display:grid;grid-template-columns:1fr auto;gap:14px;border-bottom:1px solid #d8dde5;padding:15px;font-weight:950;line-height:1.45}
-    .story-link span:last-child{color:#d4122b;font-size:22px}
+    .story-link{display:grid;grid-template-columns:1fr auto;gap:14px;border:0;border-bottom:1px solid #d8dde5;background:#fff;width:100%;padding:16px 14px;text-align:left;font-weight:950;line-height:1.45;font-size:17px}
+    .story-link span:last-child{color:#d4122b;font-size:22px;align-self:center}
     .view-all{width:100%;height:46px;border:1px solid var(--brand);background:#fff;color:var(--brand);font-weight:900;margin-top:12px}
     .section{padding:0 26px 28px}
     .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 14px}
     .section-head h2{font-size:22px;margin:0}
     .pill{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:900;color:#637086}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
     .card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
-    .card img{width:100%;height:145px;object-fit:cover}
+    .card img{width:100%;height:168px;object-fit:cover}
     .card-body{padding:13px}
     .card h3{font-size:17px;line-height:1.35;margin:0 0 8px}
     .card p{font-size:14px;line-height:1.55;color:#586679;margin:0 0 10px}
@@ -131,14 +135,16 @@
     .mobile-actions{display:none}
     @media (max-width:980px){
       .page{max-width:none}
-      .topbar{grid-template-columns:1fr auto;padding:10px 12px;gap:8px}
+      .topbar{grid-template-columns:1fr auto;padding:10px 8px;gap:8px;width:100%}
       .logo{width:112px;height:44px}
       .search{grid-column:1/-1;max-width:none;height:42px;display:none}
       .search.open{display:flex}
       .utility{gap:7px;font-size:13px}
       .utility .label{display:none}
       .social a{width:27px;height:27px;font-size:13px}
-      .nav-strip{min-height:44px;padding:0 6px}
+      .nav-strip{min-height:44px;padding:0 6px;width:100%;margin:0}
+      .subnav{width:100%;margin:0;padding:0 12px 12px;gap:22px}
+      .subnav button{font-size:14px}
       .hamburger{font-size:22px;width:32px}
       .nav-scroll{gap:18px}
       .nav-item{padding:13px 0;font-size:14px}
@@ -225,6 +231,15 @@
         <button class="nav-item" data-filter="cms">CMS</button>
       </div>
     </nav>
+
+    <div class="subnav" aria-label="Secondary categories">
+      <button type="button" data-filter="health">Health</button>
+      <button type="button" data-filter="district">జిల్లాలు</button>
+      <button type="button" data-filter="weather">వాతావరణం</button>
+      <button type="button" data-filter="election">ఎన్నికలు</button>
+      <button type="button" data-filter="careers">కెరీర్స్</button>
+      <button type="button" data-filter="classifieds">క్లాసిఫైడ్స్</button>
+    </div>
 
     <div class="status-line">
       <span class="pulse"></span>
@@ -528,7 +543,8 @@
     document.querySelectorAll("[data-filter]").forEach(btn => btn.onclick = () => {
       const f = btn.dataset.filter;
       if(f === "cms"){ document.querySelector("#cms").scrollIntoView({behavior:"smooth"}); return; }
-      renderGrid(f === "all" ? stories : stories.filter(s => s.category === f || f === "breaking"));
+      const localFilters = ["district","weather","election","careers","classifieds","health"];
+      renderGrid(f === "all" || localFilters.includes(f) ? stories : stories.filter(s => s.category === f || f === "breaking"));
       document.querySelector("#latest").scrollIntoView({behavior:"smooth"});
     });
     document.querySelectorAll(".cms-side button").forEach(btn => btn.onclick = () => {

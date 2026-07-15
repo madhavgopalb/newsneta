@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="te">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NewsNeta Version Preview - Telugu News Platform</title>
+  <meta name="description" content="NewsNeta version preview: mobile-first Telugu news, district editions, editorial CMS workflow, AI-assisted summaries, polls, sports, weather and app-ready APIs.">
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root{
+      --brand:#139dde;
+      --brand-dark:#0b79b0;
+      --ink:#111827;
+      --muted:#5f6b7a;
+      --line:#e4e9f0;
+      --paper:#ffffff;
+      --soft:#f4f7fb;
+      --danger:#d8102a;
+      --ok:#078b48;
+      --shadow:0 18px 45px rgba(15,23,42,.12);
+      --radius:10px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Arial,"Noto Sans Telugu","Noto Sans",sans-serif;background:#eef3f8;color:var(--ink)}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    .page{max-width:1400px;margin:0 auto;background:#fff;min-height:100vh}
+    .topbar{display:grid;grid-template-columns:260px minmax(260px,1fr) auto;gap:18px;align-items:center;padding:18px 26px;background:#fff}
+    .logo-wrap{display:flex;align-items:center;min-width:0}
+    .logo{width:220px;height:74px;object-fit:contain}
+    .search{display:flex;align-items:center;border:1px solid #d7dce4;background:#fff;height:44px;max-width:520px;width:100%;padding:0 12px;gap:10px}
+    .search input{border:0;outline:0;width:100%;font-size:15px}
+    .utility{display:flex;align-items:center;gap:12px;font-weight:800;color:#0b73b7}
+    .badge-live{background:#138b28;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px}
+    .social{display:flex;gap:8px;align-items:center}
+    .social a{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#fff;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+    .fb{color:#1877f2}.wa{color:#25d366}.tw{color:#111}.ig{color:#e1306c}
+    .nav-strip{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;display:flex;align-items:center;padding:0 18px;min-height:56px;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+    .hamburger{border:0;background:transparent;color:#fff;font-size:25px;width:42px;height:42px}
+    .nav-scroll{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;align-items:center;flex:1}
+    .nav-scroll::-webkit-scrollbar{display:none}
+    .nav-item{border:0;background:transparent;color:#fff;font-weight:900;padding:18px 0}
+    .district-menu{position:relative}
+    .district-panel{display:none;position:absolute;top:54px;left:0;background:#fff;color:#111;min-width:190px;box-shadow:var(--shadow);padding:10px 0;z-index:30}
+    .district-menu:hover .district-panel,.district-menu:focus-within .district-panel{display:block}
+    .district-panel button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px 18px;font-weight:800}
+    .district-panel button:hover{background:#f0f8fd;color:var(--brand-dark)}
+    .status-line{display:flex;gap:8px;align-items:center;padding:8px 26px;background:#f5f7fa;color:#607086;font-size:13px;font-weight:800}
+    .pulse{width:10px;height:10px;border-radius:50%;background:#e71f35;box-shadow:0 0 0 5px rgba(231,31,53,.13)}
+    .layout{display:grid;grid-template-columns:minmax(0,2fr) 430px;gap:36px;padding:26px}
+    .hero{border:1px solid var(--line);background:#fff}
+    .hero-media{position:relative;height:454px;overflow:hidden;background:#111}
+    .hero-media img{width:100%;height:100%;object-fit:cover}
+    .hero-overlay{position:absolute;left:0;right:0;bottom:0;padding:80px 28px 24px;background:linear-gradient(transparent,rgba(0,0,0,.86));color:#fff}
+    .tag{display:inline-flex;align-items:center;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);padding:6px 12px;font-size:12px;font-weight:900;margin-bottom:10px}
+    .hero h1{font-size:34px;line-height:1.18;margin:0 0 10px;font-weight:950}
+    .hero p{font-size:16px;line-height:1.65;margin:0;max-width:820px}
+    .hero-controls{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px;pointer-events:none}
+    .arrow{pointer-events:auto;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.45);color:#fff;font-size:22px}
+    .dots{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:7px}
+    .dot{width:9px;height:9px;border-radius:50%;border:0;background:rgba(255,255,255,.45)}
+    .dot.active{background:#fff;width:24px;border-radius:999px}
+    .hero-title{padding:20px 22px}
+    .hero-title h2{margin:0;font-size:27px;line-height:1.25}
+    .side-card{background:#f5f7fb;padding:14px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;background:#fff;margin-bottom:12px}
+    .tab{border:0;background:#fff;padding:14px 10px;font-weight:950;color:#1b2a3d}
+    .tab.active{background:var(--brand);color:#fff}
+    .story-list{max-height:430px;overflow:auto;background:#fff}
+    .story-link{display:grid;grid-template-columns:1fr auto;gap:14px;border-bottom:1px solid #d8dde5;padding:15px;font-weight:950;line-height:1.45}
+    .story-link span:last-child{color:#d4122b;font-size:22px}
+    .view-all{width:100%;height:46px;border:1px solid var(--brand);background:#fff;color:var(--brand);font-weight:900;margin-top:12px}
+    .section{padding:0 26px 28px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 14px}
+    .section-head h2{font-size:22px;margin:0}
+    .pill{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:900;color:#637086}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    .card img{width:100%;height:145px;object-fit:cover}
+    .card-body{padding:13px}
+    .card h3{font-size:17px;line-height:1.35;margin:0 0 8px}
+    .card p{font-size:14px;line-height:1.55;color:#586679;margin:0 0 10px}
+    .meta{display:flex;align-items:center;justify-content:space-between;color:#6b7280;font-size:12px;font-weight:800}
+    .district-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+    .district-card{border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:linear-gradient(135deg,#fff,#f3fbff)}
+    .district-card h3{margin:0 0 8px}
+    .district-card button{border:1px solid var(--brand);background:#fff;color:var(--brand);border-radius:999px;padding:8px 13px;font-weight:900;margin:6px 6px 0 0}
+    .cms{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+    .cms-side{background:#17202b;color:#fff;padding:18px;display:grid;align-content:start;gap:10px}
+    .cms-side button{border:0;border-radius:8px;background:rgba(255,255,255,.1);color:#fff;padding:12px;text-align:left;font-weight:900}
+    .cms-side button.active{background:var(--brand)}
+    .cms-main{padding:18px;display:grid;gap:14px}
+    .workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .flow-step{border:1px solid var(--line);border-radius:10px;padding:14px;background:#f8fafc}
+    .flow-step b{display:block;margin-bottom:6px}
+    .flow-step small{color:#667085;line-height:1.5;font-weight:800}
+    .cms-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .cms-form label{display:grid;gap:6px;font-weight:900;color:#5d6877;font-size:12px;text-transform:uppercase}
+    .cms-form input,.cms-form select,.cms-form textarea{border:1px solid #d7dce4;border-radius:8px;padding:11px;background:#fff;color:#111}
+    .cms-form textarea{min-height:120px;resize:vertical}
+    .full{grid-column:1/-1}
+    .primary{border:0;background:var(--danger);color:#fff;border-radius:8px;padding:12px 18px;font-weight:950}
+    .secondary{border:1px solid var(--line);background:#fff;border-radius:8px;padding:12px 18px;font-weight:950}
+    .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .role{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff}
+    .role strong{display:block;font-size:18px;margin-bottom:6px}
+    .role ul{margin:8px 0 0;padding-left:18px;color:#586679;line-height:1.6}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .feature{background:#101827;color:#fff;border:1px solid #26364a;border-radius:10px;padding:16px}
+    .feature span{color:#ff2542;font-size:12px;font-weight:950}
+    .feature h3{margin:8px 0;font-size:18px;line-height:1.35}
+    .feature p{color:#bdc6d3;line-height:1.55;margin:0}
+    .modal{position:fixed;inset:0;background:rgba(6,12,20,.68);display:none;z-index:60;padding:24px;overflow:auto}
+    .modal.open{display:block}
+    .article{max-width:880px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+    .article-cover{height:330px;position:relative}
+    .article-cover img{width:100%;height:100%;object-fit:cover}
+    .article-close{position:absolute;right:14px;top:14px;width:40px;height:40px;border:0;border-radius:50%;background:#fff;font-size:24px}
+    .article-body{padding:24px}
+    .article-body h1{font-size:32px;line-height:1.2;margin:0 0 12px}
+    .article-body p{font-size:17px;line-height:1.85;color:#46556a}
+    .article-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+    .article-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:900}
+    .share-row{display:flex;gap:10px;margin-top:16px}
+    .refresh-float,.top-float{position:fixed;right:18px;z-index:40;width:46px;height:46px;border-radius:50%;border:0;background:#111827;color:#fff;font-weight:950;box-shadow:var(--shadow)}
+    .refresh-float{bottom:84px}
+    .top-float{bottom:24px}
+    .mobile-actions{display:none}
+    @media (max-width:980px){
+      .page{max-width:none}
+      .topbar{grid-template-columns:1fr auto;padding:10px 12px;gap:8px}
+      .logo{width:112px;height:44px}
+      .search{grid-column:1/-1;max-width:none;height:42px;display:none}
+      .search.open{display:flex}
+      .utility{gap:7px;font-size:13px}
+      .utility .label{display:none}
+      .social a{width:27px;height:27px;font-size:13px}
+      .nav-strip{min-height:44px;padding:0 6px}
+      .hamburger{font-size:22px;width:32px}
+      .nav-scroll{gap:18px}
+      .nav-item{padding:13px 0;font-size:14px}
+      .district-panel{position:fixed;left:10px;right:10px;top:104px;max-height:55vh;overflow:auto}
+      .status-line{padding:7px 12px;font-size:11px;overflow:hidden;white-space:nowrap}
+      .layout{grid-template-columns:1fr;gap:14px;padding:16px 8px}
+      .hero-media{height:294px}
+      .hero-overlay{padding:70px 16px 18px}
+      .hero h1{font-size:23px}
+      .hero p{font-size:14px}
+      .hero-title{padding:14px}
+      .hero-title h2{font-size:22px}
+      .side-card{padding:8px}
+      .section{padding:0 8px 22px}
+      .grid{grid-template-columns:1fr;gap:10px}
+      .card{display:grid;grid-template-columns:116px 1fr;border-radius:0}
+      .card img{height:110px}
+      .card h3{font-size:16px}
+      .card p{font-size:13px}
+      .district-grid,.feature-grid,.role-grid,.workflow,.cms-form{grid-template-columns:1fr}
+      .cms{grid-template-columns:1fr}
+      .cms-side{grid-auto-flow:column;overflow:auto}
+      .full{grid-column:auto}
+      .article{border-radius:0;min-height:100vh}
+      .article-cover{height:245px}
+      .article-body{padding:18px}
+      .article-body h1{font-size:24px}
+      .article-body p{font-size:16px}
+      .mobile-actions{display:flex;gap:8px}
+      .desktop-search-label{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="top">
+    <header class="topbar">
+      <a class="logo-wrap" href="#top" aria-label="NewsNeta home"><img class="logo" src="assets/newsneta-logo-transparent.png" alt="NewsNeta"></a>
+      <form class="search" id="searchBox" role="search">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="విషయాలు, జిల్లాలు, వార్తలు వెతకండి">
+      </form>
+      <div class="utility">
+        <a href="#edition">ePaper</a>
+        <button class="secondary mobile-actions" id="searchToggle" type="button" aria-label="Search">⌕</button>
+        <span class="badge-live">LIVE</span>
+        <span class="label">TV excluded</span>
+        <div class="social" aria-label="Social links">
+          <a class="fb" href="#" aria-label="Facebook">f</a>
+          <a class="wa" href="#" aria-label="WhatsApp">☘</a>
+          <a class="tw" href="#" aria-label="X">𝕏</a>
+          <a class="ig" href="#" aria-label="Instagram">◎</a>
+        </div>
+      </div>
+    </header>
+
+    <nav class="nav-strip" aria-label="Primary navigation">
+      <button class="hamburger" type="button" aria-label="Open menu">☰</button>
+      <div class="nav-scroll" id="navScroll">
+        <button class="nav-item" data-filter="all">హోం</button>
+        <button class="nav-item" data-filter="breaking">వార్తలు</button>
+        <div class="nav-item district-menu" tabindex="0">తెలంగాణ ▾
+          <span class="district-panel">
+            <button data-district="Hyderabad">హైదరాబాద్</button>
+            <button data-district="Warangal">వరంగల్</button>
+            <button data-district="Karimnagar">కరీంనగర్</button>
+            <button data-district="Nizamabad">నిజామాబాద్</button>
+            <button data-district="Khammam">ఖమ్మం</button>
+          </span>
+        </div>
+        <div class="nav-item district-menu" tabindex="0">ఆంధ్రప్రదేశ్ ▾
+          <span class="district-panel">
+            <button data-district="Vijayawada">విజయవాడ</button>
+            <button data-district="Visakhapatnam">విశాఖపట్నం</button>
+            <button data-district="Guntur">గుంటూరు</button>
+            <button data-district="Tirupati">తిరుపతి</button>
+            <button data-district="Kurnool">కర్నూలు</button>
+          </span>
+        </div>
+        <button class="nav-item" data-filter="cinema">సినిమా</button>
+        <button class="nav-item" data-filter="sports">క్రీడలు</button>
+        <button class="nav-item" data-filter="business">బిజినెస్</button>
+        <button class="nav-item" data-filter="technology">టెక్నాలజీ</button>
+        <button class="nav-item" data-filter="videos">వీడియోలు</button>
+        <button class="nav-item" data-filter="cms">CMS</button>
+      </div>
+    </nav>
+
+    <div class="status-line">
+      <span class="pulse"></span>
+      <span>Auto refresh every 5 min</span>
+      <span>•</span>
+      <span id="checkedAt">Last checked --</span>
+      <span>•</span>
+      <span id="refreshCount">Reloads 0</span>
+      <span>•</span>
+      <span id="countdown">Next in 5m 00s</span>
+    </div>
+
+    <main>
+      <section class="layout" aria-label="Top stories and latest news">
+        <article class="hero">
+          <div class="hero-media">
+            <img id="heroImage" alt="">
+            <div class="hero-overlay">
+              <span class="tag" id="heroTag">Top Story</span>
+              <h1 id="heroHeadline"></h1>
+              <p id="heroSummary"></p>
+            </div>
+            <div class="hero-controls">
+              <button class="arrow" id="prevHero" type="button" aria-label="Previous story">‹</button>
+              <button class="arrow" id="nextHero" type="button" aria-label="Next story">›</button>
+            </div>
+            <div class="dots" id="heroDots"></div>
+          </div>
+          <div class="hero-title">
+            <h2 id="heroTitle"></h2>
+          </div>
+        </article>
+
+        <aside class="side-card">
+          <div class="tabs">
+            <button class="tab active" data-list="latest" type="button">Latest News</button>
+            <button class="tab" data-list="popular" type="button">Most Popular</button>
+          </div>
+          <div class="story-list" id="sideList"></div>
+          <button class="view-all" type="button" data-scroll="#latest">View All ›</button>
+        </aside>
+      </section>
+
+      <section class="section" id="latest">
+        <div class="section-head">
+          <h2>తాజా వార్తలు</h2>
+          <button class="pill" id="manualRefresh" type="button">Refresh now</button>
+        </div>
+        <div class="grid" id="newsGrid"></div>
+      </section>
+
+      <section class="section" id="districts">
+        <div class="section-head">
+          <h2>జిల్లా ఎడిషన్లు</h2>
+          <span class="pill" id="districtChoice">All districts</span>
+        </div>
+        <div class="district-grid">
+          <div class="district-card">
+            <h3>తెలంగాణ జిల్లా డెస్క్</h3>
+            <p>హైదరాబాద్, వరంగల్, కరీంనగర్, ఖమ్మం మరియు స్థానిక వార్తల కోసం ప్రత్యేక ఫీడ్.</p>
+            <button data-district="Hyderabad">Hyderabad</button><button data-district="Warangal">Warangal</button><button data-district="Khammam">Khammam</button>
+          </div>
+          <div class="district-card">
+            <h3>ఆంధ్రప్రదేశ్ జిల్లా డెస్క్</h3>
+            <p>విజయవాడ, విశాఖ, గుంటూరు, తిరుపతి మరియు రాయలసీమ వార్తల కోసం స్థానిక ఎడిషన్.</p>
+            <button data-district="Vijayawada">Vijayawada</button><button data-district="Visakhapatnam">Visakhapatnam</button><button data-district="Tirupati">Tirupati</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="edition">
+        <div class="section-head">
+          <h2>Today's NewsNeta Edition</h2>
+          <span class="pill">Reader edition</span>
+        </div>
+        <div class="grid" id="editionGrid"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Interactive Newsroom</h2>
+          <span class="pill">Polls, alerts, cricket, weather</span>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <div class="card-body">
+              <h3>ప్రజాభిప్రాయం</h3>
+              <p>ఈరోజు రాష్ట్ర రాజకీయాల్లో మీకు ముఖ్యమైన అంశం ఏది?</p>
+              <button class="primary" type="button" id="pollVote">Vote now</button>
+              <p id="pollResult"></p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-body">
+              <h3>Weather & Civic Alerts</h3>
+              <p id="weatherText">Hyderabad 31°C, scattered clouds. Local civic alert refreshes with the edition timer.</p>
+              <span class="meta"><b>Auto-refresh</b><b id="weatherStamp">--</b></span>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-body">
+              <h3>Cricket Centre</h3>
+              <p id="cricketText">India match centre: scores, fixtures and Telugu explainers are prepared for live API wiring.</p>
+              <span class="meta"><b>Sports desk</b><b id="cricketStamp">--</b></span>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-body">
+              <h3>Smart Notifications</h3>
+              <p>Readers can subscribe by district, topic, election, cricket and breaking alerts through future FCM/Web Push.</p>
+              <button class="secondary" type="button">Subscribe</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="cms">
+        <div class="section-head">
+          <h2>NewsNeta CMS Workflow</h2>
+          <span class="pill">Draft → Review → Approve → Publish</span>
+        </div>
+        <div class="cms">
+          <aside class="cms-side">
+            <strong>Login</strong>
+            <button class="active" data-role="reporter" type="button">Reporter</button>
+            <button data-role="reviewer" type="button">Reviewer</button>
+            <button data-role="editor" type="button">Editor</button>
+            <button data-role="admin" type="button">Admin</button>
+          </aside>
+          <div class="cms-main">
+            <div class="workflow">
+              <div class="flow-step"><b>Draft</b><small>Reporter uploads article, multiple images or video, district, tags and SEO.</small></div>
+              <div class="flow-step"><b>Review</b><small>Reviewer checks facts, grammar, risk, duplicates and media relevance.</small></div>
+              <div class="flow-step"><b>Approve</b><small>Editor schedules story, adds related links and confirms category placement.</small></div>
+              <div class="flow-step"><b>Publish</b><small>Admin can publish, unpublish, delete and audit every action.</small></div>
+            </div>
+            <form class="cms-form" id="cmsForm">
+              <label>Telugu headline <input required id="cmsHeadline" value="హైదరాబాద్‌లో వర్ష సూచనలపై అధికారుల సమీక్ష"></label>
+              <label>Category <select id="cmsCategory"><option>Telangana</option><option>Andhra Pradesh</option><option>Sports</option><option>Business</option><option>Technology</option></select></label>
+              <label>District <select id="cmsDistrict"><option>Hyderabad</option><option>Warangal</option><option>Vijayawada</option><option>Visakhapatnam</option><option>Guntur</option></select></label>
+              <label>Media upload <input id="cmsFiles" type="file" accept="image/*,video/*" multiple></label>
+              <label class="full">Full article <textarea id="cmsArticle">స్థానిక పరిస్థితులు, రవాణా మార్పులు, ప్రజలకు సూచనలు మరియు అధికారుల చర్యలపై పూర్తి వివరాలతో ఈ కథనం ప్రచురణకు సిద్ధంగా ఉంది.</textarea></label>
+              <div class="full">
+                <button class="primary" type="submit">Submit for review</button>
+                <button class="secondary" type="button" id="approveSample">Approve sample</button>
+                <button class="secondary" type="button" id="publishSample">Publish sample</button>
+              </div>
+            </form>
+            <div class="role-grid" id="roleGrid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Future Ready Platform</h2>
+          <span class="pill">Web + PWA + Mobile API</span>
+        </div>
+        <div class="feature-grid">
+          <div class="feature"><span>API</span><h3>REST first, GraphQL-ready</h3><p>CMS publishes through versioned APIs consumed by desktop web, mobile browser and future Android/iOS wrappers.</p></div>
+          <div class="feature"><span>AI</span><h3>Summaries, voice and translation</h3><p>Provider abstraction supports Telugu summary, headline suggestions, audio readout and Telugu-English language switching.</p></div>
+          <div class="feature"><span>SEO</span><h3>Discover-friendly articles</h3><p>Large relevant images, schema metadata, sitemaps, canonical URLs and readable long-form article pages.</p></div>
+          <div class="feature"><span>MEDIA</span><h3>Image and video workflows</h3><p>Reporter uploads can move to S3/R2/Cloudinary with CDN optimized variants and thumbnails.</p></div>
+          <div class="feature"><span>REVENUE</span><h3>Ads and premium modules</h3><p>Ad slots, sponsored sections, classifieds and subscription hooks remain CMS controlled.</p></div>
+          <div class="feature"><span>APP</span><h3>Play Store path</h3><p>PWA manifest, offline shell, push notifications and hybrid app packaging prepare NewsNeta for Android release.</p></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="articleModal" aria-hidden="true">
+    <article class="article">
+      <div class="article-cover">
+        <img id="modalImage" alt="">
+        <button class="article-close" id="closeArticle" type="button" aria-label="Close article">×</button>
+      </div>
+      <div class="article-body">
+        <span class="tag" id="modalTag">News</span>
+        <h1 id="modalTitle"></h1>
+        <div class="article-actions">
+          <button id="voiceToggle" type="button">▶ Play article</button>
+          <button id="translateToggle" type="button">తెలుగు / English</button>
+          <button type="button">Save</button>
+          <button type="button">A+</button>
+        </div>
+        <p id="modalSummary"></p>
+        <p id="modalBody"></p>
+        <div class="share-row social">
+          <a class="fb" href="#" aria-label="Share on Facebook">f</a>
+          <a class="wa" href="#" aria-label="Share on WhatsApp">☘</a>
+          <a class="tw" href="#" aria-label="Share on X">𝕏</a>
+          <a class="ig" href="#" aria-label="Share on Instagram">◎</a>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <button class="refresh-float" id="floatingRefresh" type="button" aria-label="Refresh news">↻</button>
+  <button class="top-float" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+  <script>
+    const images = [
+      "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80"
+    ];
+    let stories = [
+      {category:"breaking", district:"Hyderabad", title:"తెలంగాణలో వర్షాలపై అత్యవసర సమీక్ష", tag:"Top Story", reads:"103K", img:images[1], summary:"హైదరాబాద్‌తో పాటు పలు జిల్లాల్లో వర్షాల అంచనాలపై అధికారులు సమీక్షించారు. రవాణా, విద్యుత్, ప్రజా సేవలపై ప్రత్యేక బృందాలు సిద్ధం చేశాయి.", body:"వాతావరణ మార్పుల నేపథ్యంలో జిల్లా యంత్రాంగాలు ముందస్తు చర్యలు చేపట్టాయి. లోతట్టు ప్రాంతాల్లో నీటి నిల్వలు, ట్రాఫిక్ మళ్లింపులు, పాఠశాలల సమాచారం, అత్యవసర సేవల సమన్వయం వంటి అంశాలపై అధికారులకు స్పష్టమైన ఆదేశాలు జారీ అయ్యాయి. ప్రజలు అప్రమత్తంగా ఉండాలని, అధికారిక సమాచారం ఆధారంగా ప్రయాణాలు ప్లాన్ చేసుకోవాలని సూచించారు."},
+      {category:"politics", district:"Vijayawada", title:"ఆంధ్రప్రదేశ్ పాలనలో కొత్త సేవల అమలు", tag:"AP", reads:"96K", img:images[0], summary:"సర్కారు సేవలను జిల్లాల స్థాయికి వేగంగా తీసుకెళ్లేందుకు కొత్త కార్యాచరణ ప్రకటించారు.", body:"జిల్లా స్థాయి సేవలలో పారదర్శకత, వేగం, పౌర సౌలభ్యం ప్రధాన లక్ష్యాలుగా అధికారులు కొత్త విధానాన్ని అమలు చేస్తున్నారు. గ్రామ, వార్డు స్థాయి సేవల డిజిటల్ ట్రాకింగ్, ఫిర్యాదుల పరిష్కార సమయం, పథకాల అమలుపై రోజువారీ సమీక్షలు జరగనున్నాయి."},
+      {category:"technology", district:"Hyderabad", title:"తెలుగు డిజిటల్ న్యూస్‌కు AI ఆధారిత పాఠక అనుభవం", tag:"Technology", reads:"88K", img:images[2], summary:"సారాంశం, వాయిస్ రీడ్, వ్యక్తిగత సూచనలు మరియు అనువాదం వంటి ఫీచర్లు పాఠక అనుభవాన్ని మార్చుతున్నాయి.", body:"తెలుగు కంటెంట్‌లో వేగం, స్పష్టత, వ్యక్తిగతీకరణ కోసం AI సాధనాలు కీలకంగా మారుతున్నాయి. ప్రతి కథనానికి చిన్న సారాంశం, పూర్తి వివరణ, సంబంధిత కథనాలు, ఆడియో వినిపింపు, పాఠక ఆసక్తి ఆధారిత సూచనలు కలిపి న్యూస్‌రూమ్‌లు కొత్త స్థాయికి వెళ్తున్నాయి."},
+      {category:"sports", district:"National", title:"క్రికెట్ సెంటర్‌లో మ్యాచ్ అప్‌డేట్స్‌కు ప్రత్యేక పేజీ", tag:"Sports", reads:"80K", img:images[3], summary:"స్కోర్లు, ఫిక్చర్లు, ఆటగాళ్ల విశ్లేషణలు మరియు తెలుగు ఎక్స్‌ప్లైనర్లు ఒకే చోట అందుబాటులో ఉంటాయి.", body:"క్రికెట్ అభిమానుల కోసం త్వరిత స్కోర్ కార్డులు, కీలక మలుపుల విశ్లేషణ, ఆటగాళ్ల గణాంకాలు, మ్యాచ్ తర్వాత చిన్న వీడియోలు, తెలుగు బ్రీఫ్‌లు అందించడానికి స్పోర్ట్స్ డెస్క్ ప్రత్యేకంగా పని చేస్తుంది."},
+      {category:"business", district:"Guntur", title:"మార్కెట్ మార్పులపై తెలుగు బిజినెస్ బ్రీఫ్", tag:"Business", reads:"74K", img:images[5], summary:"స్థానిక వ్యాపారాలు, వ్యవసాయ ధరలు, స్టార్టప్ వార్తలు మరియు మార్కెట్ ప్రభావాలపై విస్తృత కవరేజ్.", body:"బిజినెస్ విభాగం మార్కెట్ సూచీలు మాత్రమే కాకుండా స్థానిక వ్యాపారాలపై ప్రభావం, రైతు మార్కెట్లు, చిన్న వ్యాపార రుణాలు, పట్టణ వినియోగ ధోరణులు మరియు ఉపాధి అవకాశాలపై కూడా దృష్టి పెడుతుంది."},
+      {category:"cinema", district:"Visakhapatnam", title:"సినిమా రంగంలో కొత్త విడుదలలపై ప్రేక్షకుల ఆసక్తి", tag:"Cinema", reads:"69K", img:images[4], summary:"ట్రైలర్లు, బాక్స్ ఆఫీస్ అంచనాలు, సమీక్షలు మరియు నటీనటుల ఇంటర్వ్యూలకు ప్రత్యేక విభాగం.", body:"సినిమా పాఠకుల కోసం వార్తలు మాత్రమే కాకుండా విశ్లేషణలు, విడుదలల క్యాలెండర్, మొదటి రోజు స్పందన, సంగీతం, ఓటీటీ విడుదలలు, ప్రేక్షకుల పోల్స్ వంటి విభిన్న ఫార్మాట్లను ఒకే విభాగంలో అందించవచ్చు."}
+    ];
+    let heroIndex = 0;
+    let reloads = 0;
+    let remaining = 300;
+    let activeList = "latest";
+    let speaking = false;
+    const $ = (id) => document.getElementById(id);
+
+    function nowTime(){return new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});}
+    function renderHero(){
+      const s = stories[heroIndex % stories.length];
+      $("heroImage").src = s.img; $("heroImage").alt = s.title;
+      $("heroTag").textContent = s.tag; $("heroHeadline").textContent = s.title;
+      $("heroSummary").textContent = s.summary; $("heroTitle").textContent = s.title;
+      $("heroDots").innerHTML = stories.slice(0,6).map((_,i)=>`<button class="dot ${i===heroIndex?"active":""}" data-hero="${i}" aria-label="Story ${i+1}"></button>`).join("");
+    }
+    function storyCard(s){
+      return `<article class="card" data-open="${stories.indexOf(s)}"><img src="${s.img}" alt="${s.title}"><div class="card-body"><h3>${s.title}</h3><p>${s.summary}</p><div class="meta"><span>${s.category}</span><b>${s.reads}</b></div></div></article>`;
+    }
+    function renderGrid(list = stories){
+      $("newsGrid").innerHTML = list.map(storyCard).join("");
+      $("editionGrid").innerHTML = stories.slice(0,4).map(storyCard).join("");
+      attachOpenHandlers();
+    }
+    function renderSide(){
+      const list = activeList === "popular" ? [...stories].sort((a,b)=>parseInt(b.reads)-parseInt(a.reads)) : stories;
+      $("sideList").innerHTML = list.map((s,i)=>`<button class="story-link" type="button" data-open="${stories.indexOf(s)}"><span>${i+1}. ${s.title}</span><span>${s.reads}</span></button>`).join("");
+      attachOpenHandlers();
+    }
+    function attachOpenHandlers(){
+      document.querySelectorAll("[data-open]").forEach(el => {
+        el.onclick = () => openArticle(Number(el.dataset.open));
+      });
+    }
+    function openArticle(index){
+      const s = stories[index] || stories[0];
+      $("modalImage").src = s.img; $("modalImage").alt = s.title;
+      $("modalTag").textContent = s.tag; $("modalTitle").textContent = s.title;
+      $("modalSummary").textContent = s.summary;
+      $("modalBody").textContent = s.body;
+      $("articleModal").classList.add("open");
+      $("articleModal").setAttribute("aria-hidden","false");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+    function closeArticle(){
+      $("articleModal").classList.remove("open");
+      $("articleModal").setAttribute("aria-hidden","true");
+      if (speechSynthesis.speaking) speechSynthesis.cancel();
+      speaking = false; $("voiceToggle").textContent = "▶ Play article";
+    }
+    function refreshNews(){
+      reloads += 1; remaining = 300;
+      const lead = stories.shift();
+      stories.push(lead);
+      heroIndex = 0;
+      $("checkedAt").textContent = `Last checked ${nowTime()}`;
+      $("refreshCount").textContent = `Reloads ${reloads}`;
+      $("weatherStamp").textContent = nowTime();
+      $("cricketStamp").textContent = nowTime();
+      renderHero(); renderGrid(); renderSide();
+    }
+    function renderRoles(active = "reporter"){
+      const copy = {
+        reporter:["Create district stories","Upload multiple images/videos","Submit for review"],
+        reviewer:["Fact check stories","Request corrections","Mark trust and risk"],
+        editor:["Approve stories","Schedule categories","Add SEO and related links"],
+        admin:["Publish or unpublish","Delete articles","Audit users and revenue"]
+      };
+      $("roleGrid").innerHTML = Object.entries(copy).map(([role,items])=>`<div class="role"><strong>${role}${role===active?" ✓":""}</strong><ul>${items.map(i=>`<li>${i}</li>`).join("")}</ul></div>`).join("");
+    }
+
+    $("prevHero").onclick = () => { heroIndex = (heroIndex - 1 + stories.length) % stories.length; renderHero(); };
+    $("nextHero").onclick = () => { heroIndex = (heroIndex + 1) % stories.length; renderHero(); };
+    $("heroDots").onclick = (e) => { if(e.target.dataset.hero){ heroIndex = Number(e.target.dataset.hero); renderHero(); } };
+    document.querySelectorAll(".tab").forEach(btn => btn.onclick = () => {
+      document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active"); activeList = btn.dataset.list; renderSide();
+    });
+    document.querySelectorAll("[data-district]").forEach(btn => btn.onclick = () => {
+      const d = btn.dataset.district;
+      $("districtChoice").textContent = d;
+      renderGrid(stories.filter(s => s.district === d || s.district === "National"));
+      document.querySelector("#latest").scrollIntoView({behavior:"smooth"});
+    });
+    document.querySelectorAll("[data-filter]").forEach(btn => btn.onclick = () => {
+      const f = btn.dataset.filter;
+      if(f === "cms"){ document.querySelector("#cms").scrollIntoView({behavior:"smooth"}); return; }
+      renderGrid(f === "all" ? stories : stories.filter(s => s.category === f || f === "breaking"));
+      document.querySelector("#latest").scrollIntoView({behavior:"smooth"});
+    });
+    document.querySelectorAll(".cms-side button").forEach(btn => btn.onclick = () => {
+      document.querySelectorAll(".cms-side button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active"); renderRoles(btn.dataset.role);
+    });
+    $("cmsForm").onsubmit = (e) => {
+      e.preventDefault();
+      const files = $("cmsFiles").files;
+      const img = files && files[0] ? URL.createObjectURL(files[0]) : images[2];
+      stories.unshift({category:$("cmsCategory").value.toLowerCase(), district:$("cmsDistrict").value, title:$("cmsHeadline").value, tag:"Reporter story", reads:"New", img, summary:$("cmsArticle").value.slice(0,150), body:$("cmsArticle").value});
+      refreshNews();
+      alert("Story submitted for review and added to the preview workflow.");
+    };
+    $("approveSample").onclick = () => alert("Reviewer approved sample story. Status: ready for editor.");
+    $("publishSample").onclick = () => { refreshNews(); alert("Admin published the sample story to homepage and selected category."); };
+    $("manualRefresh").onclick = refreshNews; $("floatingRefresh").onclick = refreshNews;
+    $("closeArticle").onclick = closeArticle;
+    $("articleModal").onclick = (e) => { if(e.target.id === "articleModal") closeArticle(); };
+    $("voiceToggle").onclick = () => {
+      if(speaking){ speechSynthesis.cancel(); speaking = false; $("voiceToggle").textContent = "▶ Play article"; return; }
+      const text = `${$("modalTitle").textContent}. ${$("modalSummary").textContent}. ${$("modalBody").textContent}`;
+      const u = new SpeechSynthesisUtterance(text); u.lang = "te-IN"; speechSynthesis.speak(u);
+      speaking = true; $("voiceToggle").textContent = "⏸ Pause article";
+      u.onend = () => { speaking = false; $("voiceToggle").textContent = "▶ Play article"; };
+    };
+    $("translateToggle").onclick = () => alert("Language architecture is ready: Telugu and English article fields are stored separately in CMS for full-page switching.");
+    $("pollVote").onclick = () => $("pollResult").textContent = "Vote recorded. Current reader pulse: public services 42%, weather 31%, politics 27%.";
+    $("searchToggle").onclick = () => $("searchBox").classList.toggle("open");
+    $("searchInput").oninput = (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      renderGrid(q ? stories.filter(s => `${s.title} ${s.summary} ${s.category} ${s.district}`.toLowerCase().includes(q)) : stories);
+    };
+    document.querySelectorAll("[data-scroll]").forEach(btn => btn.onclick = () => document.querySelector(btn.dataset.scroll).scrollIntoView({behavior:"smooth"}));
+    setInterval(() => { heroIndex = (heroIndex + 1) % stories.length; renderHero(); }, 6500);
+    setInterval(() => {
+      remaining -= 1;
+      if(remaining <= 0) refreshNews();
+      const m = Math.floor(remaining/60), s = String(remaining%60).padStart(2,"0");
+      $("countdown").textContent = `Next in ${m}m ${s}s`;
+    }, 1000);
+    $("checkedAt").textContent = `Last checked ${nowTime()}`;
+    $("weatherStamp").textContent = nowTime();
+    $("cricketStamp").textContent = nowTime();
+    renderHero(); renderGrid(); renderSide(); renderRoles();
+  </script>
+</body>
+</html>

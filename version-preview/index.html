@@ -35,6 +35,7 @@
     .search{display:flex;align-items:center;border:1px solid #d7dce4;background:#fff;height:44px;max-width:520px;width:100%;padding:0 12px;gap:10px}
     .search input{border:0;outline:0;width:100%;font-size:15px}
     .utility{display:flex;align-items:center;gap:12px;font-weight:800;color:#0b73b7}
+    .utility button{border:0;background:transparent;color:#0b73b7;font-weight:900;padding:6px 4px}
     .badge-live{background:#138b28;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px}
     .social{display:flex;gap:8px;align-items:center}
     .social a{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#fff;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.18)}
@@ -52,6 +53,17 @@
     .subnav{display:flex;gap:28px;align-items:center;overflow-x:auto;scrollbar-width:none;background:var(--brand);color:#fff;width:calc(100% - 52px);margin:0 auto;padding:0 68px 16px}
     .subnav::-webkit-scrollbar{display:none}
     .subnav button{border:0;background:transparent;color:#fff;font-weight:900;white-space:nowrap;font-size:16px}
+    .drawer,.notify-panel,.login-pop{display:none;width:calc(100% - 52px);margin:0 auto;background:#fff;border:1px solid var(--line);box-shadow:0 12px 32px rgba(15,23,42,.12);position:relative;z-index:25}
+    .drawer.open,.notify-panel.open,.login-pop.open{display:block}
+    .drawer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:18px}
+    .drawer h3,.notify-panel h3,.login-pop h3{margin:0 0 10px;font-size:18px}
+    .drawer button,.notify-panel button{display:block;width:100%;border:0;border-bottom:1px solid #edf1f5;background:#fff;text-align:left;padding:10px 0;font-weight:900}
+    .notify-panel{max-width:520px;margin-left:auto;margin-right:26px;padding:18px}
+    .notify-item{display:grid;gap:4px;border-bottom:1px solid #edf1f5;padding:10px 0}
+    .notify-item b{font-size:15px}.notify-item small{color:var(--muted);font-weight:800}
+    .login-pop{max-width:420px;margin-right:26px;margin-left:auto;padding:18px}
+    .login-pop label{display:grid;gap:6px;margin-bottom:10px;color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase}
+    .login-pop input,.login-pop select{border:1px solid #d7dce4;border-radius:8px;padding:11px;width:100%}
     .status-line{display:flex;gap:8px;align-items:center;padding:8px 26px;background:#f5f7fa;color:#607086;font-size:13px;font-weight:800}
     .pulse{width:10px;height:10px;border-radius:50%;background:#e71f35;box-shadow:0 0 0 5px rgba(231,31,53,.13)}
     .layout{display:grid;grid-template-columns:minmax(0,2.05fr) 464px;gap:40px;padding:26px}
@@ -145,6 +157,9 @@
       .nav-strip{min-height:44px;padding:0 6px;width:100%;margin:0}
       .subnav{width:100%;margin:0;padding:0 12px 12px;gap:22px}
       .subnav button{font-size:14px}
+      .drawer,.notify-panel,.login-pop{width:100%;margin:0;border-left:0;border-right:0}
+      .drawer-grid{grid-template-columns:1fr 1fr;padding:14px;gap:10px}
+      .notify-panel,.login-pop{max-width:none;padding:14px}
       .hamburger{font-size:22px;width:32px}
       .nav-scroll{gap:18px}
       .nav-item{padding:13px 0;font-size:14px}
@@ -190,7 +205,9 @@
         <a href="#edition">ePaper</a>
         <button class="secondary mobile-actions" id="searchToggle" type="button" aria-label="Search">⌕</button>
         <span class="badge-live">LIVE</span>
-        <span class="label">TV excluded</span>
+        <button id="videoHub" type="button">TV</button>
+        <button id="notifyToggle" type="button" aria-label="Notifications">●</button>
+        <button id="loginToggle" type="button">Login</button>
         <div class="social" aria-label="Social links">
           <a class="fb" href="#" aria-label="Facebook">f</a>
           <a class="wa" href="#" aria-label="WhatsApp">☘</a>
@@ -201,7 +218,7 @@
     </header>
 
     <nav class="nav-strip" aria-label="Primary navigation">
-      <button class="hamburger" type="button" aria-label="Open menu">☰</button>
+      <button class="hamburger" id="menuToggle" type="button" aria-label="Open menu">☰</button>
       <div class="nav-scroll" id="navScroll">
         <button class="nav-item" data-filter="all">హోం</button>
         <button class="nav-item" data-filter="breaking">వార్తలు</button>
@@ -212,6 +229,12 @@
             <button data-district="Karimnagar">కరీంనగర్</button>
             <button data-district="Nizamabad">నిజామాబాద్</button>
             <button data-district="Khammam">ఖమ్మం</button>
+            <button data-district="Adilabad">ఆదిలాబాద్</button>
+            <button data-district="Nalgonda">నల్గొండ</button>
+            <button data-district="Rangareddy">రంగారెడ్డి</button>
+            <button data-district="Sangareddy">సంగారెడ్డి</button>
+            <button data-district="Suryapet">సూర్యాపేట</button>
+            <button data-district="Mahabubnagar">మహబూబ్‌నగర్</button>
           </span>
         </div>
         <div class="nav-item district-menu" tabindex="0">ఆంధ్రప్రదేశ్ ▾
@@ -221,6 +244,12 @@
             <button data-district="Guntur">గుంటూరు</button>
             <button data-district="Tirupati">తిరుపతి</button>
             <button data-district="Kurnool">కర్నూలు</button>
+            <button data-district="Nellore">నెల్లూరు</button>
+            <button data-district="Kakinada">కాకినాడ</button>
+            <button data-district="Anantapur">అనంతపురం</button>
+            <button data-district="Srikakulam">శ్రీకాకుళం</button>
+            <button data-district="Eluru">ఏలూరు</button>
+            <button data-district="Kadapa">వైఎస్సార్</button>
           </span>
         </div>
         <button class="nav-item" data-filter="cinema">సినిమా</button>
@@ -240,6 +269,53 @@
       <button type="button" data-filter="careers">కెరీర్స్</button>
       <button type="button" data-filter="classifieds">క్లాసిఫైడ్స్</button>
     </div>
+
+    <section class="drawer" id="menuDrawer" aria-label="All NewsNeta sections">
+      <div class="drawer-grid">
+        <div>
+          <h3>వార్తలు</h3>
+          <button data-filter="breaking">బ్రేకింగ్</button>
+          <button data-filter="politics">పాలిటిక్స్</button>
+          <button data-filter="national">జాతీయం</button>
+          <button data-filter="international">ప్రపంచం</button>
+        </div>
+        <div>
+          <h3>ఆంధ్రప్రదేశ్</h3>
+          <button data-district="Vijayawada">విజయవాడ</button>
+          <button data-district="Visakhapatnam">విశాఖపట్నం</button>
+          <button data-district="Guntur">గుంటూరు</button>
+          <button data-district="Tirupati">తిరుపతి</button>
+        </div>
+        <div>
+          <h3>తెలంగాణ</h3>
+          <button data-district="Hyderabad">హైదరాబాద్</button>
+          <button data-district="Warangal">వరంగల్</button>
+          <button data-district="Karimnagar">కరీంనగర్</button>
+          <button data-district="Khammam">ఖమ్మం</button>
+        </div>
+        <div>
+          <h3>ఇంకా</h3>
+          <button data-filter="cinema">సినిమా</button>
+          <button data-filter="sports">క్రీడలు</button>
+          <button data-filter="business">బిజినెస్</button>
+          <button data-filter="cms">CMS Login</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="notify-panel" id="notifyPanel" aria-label="Notifications">
+      <h3>Notification</h3>
+      <div class="notify-item"><b>తాజా వర్ష హెచ్చరికలు జిల్లాల వారీగా అందుబాటులోకి వచ్చాయి</b><small>12 minutes ago</small></div>
+      <div class="notify-item"><b>క్రికెట్ సెంటర్‌లో మ్యాచ్ అప్‌డేట్స్ రిఫ్రెష్ అయ్యాయి</b><small>24 minutes ago</small></div>
+      <div class="notify-item"><b>రిపోర్టర్ స్టోరీ రివ్యూ పూర్తయి ప్రచురణకు సిద్ధంగా ఉంది</b><small>38 minutes ago</small></div>
+    </section>
+
+    <section class="login-pop" id="loginPanel" aria-label="Login">
+      <h3>NewsNeta Login</h3>
+      <label>Email <input type="email" value="editor@newsneta.in"></label>
+      <label>Role <select><option>Admin</option><option>Reporter</option><option>Reviewer</option><option>Editor</option></select></label>
+      <button class="primary" type="button" data-scroll="#cms">Sign in</button>
+    </section>
 
     <div class="status-line">
       <span class="pulse"></span>
@@ -526,6 +602,11 @@
       };
       $("roleGrid").innerHTML = Object.entries(copy).map(([role,items])=>`<div class="role"><strong>${role}${role===active?" ✓":""}</strong><ul>${items.map(i=>`<li>${i}</li>`).join("")}</ul></div>`).join("");
     }
+    function closeHeaderPanels(except){
+      ["menuDrawer","notifyPanel","loginPanel"].forEach(id => {
+        if(id !== except) $(id).classList.remove("open");
+      });
+    }
 
     $("prevHero").onclick = () => { heroIndex = (heroIndex - 1 + stories.length) % stories.length; renderHero(); };
     $("nextHero").onclick = () => { heroIndex = (heroIndex + 1) % stories.length; renderHero(); };
@@ -535,12 +616,15 @@
       btn.classList.add("active"); activeList = btn.dataset.list; renderSide();
     });
     document.querySelectorAll("[data-district]").forEach(btn => btn.onclick = () => {
+      closeHeaderPanels();
       const d = btn.dataset.district;
       $("districtChoice").textContent = d;
-      renderGrid(stories.filter(s => s.district === d || s.district === "National"));
+      const districtStories = stories.filter(s => s.district === d || s.district === "National");
+      renderGrid(districtStories.length > 1 ? districtStories : stories);
       document.querySelector("#latest").scrollIntoView({behavior:"smooth"});
     });
     document.querySelectorAll("[data-filter]").forEach(btn => btn.onclick = () => {
+      closeHeaderPanels();
       const f = btn.dataset.filter;
       if(f === "cms"){ document.querySelector("#cms").scrollIntoView({behavior:"smooth"}); return; }
       const localFilters = ["district","weather","election","careers","classifieds","health"];
@@ -574,6 +658,10 @@
     $("translateToggle").onclick = () => alert("Language architecture is ready: Telugu and English article fields are stored separately in CMS for full-page switching.");
     $("pollVote").onclick = () => $("pollResult").textContent = "Vote recorded. Current reader pulse: public services 42%, weather 31%, politics 27%.";
     $("searchToggle").onclick = () => $("searchBox").classList.toggle("open");
+    $("menuToggle").onclick = () => { closeHeaderPanels("menuDrawer"); $("menuDrawer").classList.toggle("open"); };
+    $("notifyToggle").onclick = () => { closeHeaderPanels("notifyPanel"); $("notifyPanel").classList.toggle("open"); };
+    $("loginToggle").onclick = () => { closeHeaderPanels("loginPanel"); $("loginPanel").classList.toggle("open"); };
+    $("videoHub").onclick = () => { closeHeaderPanels(); renderGrid(stories.filter(s => ["sports","cinema","technology"].includes(s.category))); document.querySelector("#latest").scrollIntoView({behavior:"smooth"}); };
     $("searchInput").oninput = (e) => {
       const q = e.target.value.toLowerCase().trim();
       renderGrid(q ? stories.filter(s => `${s.title} ${s.summary} ${s.category} ${s.district}`.toLowerCase().includes(q)) : stories);

@@ -11,6 +11,8 @@ const IMAGE_CACHE = {};
 const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
 const FRESH_NEWS_DAYS = 3;
+const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
+const AUTO_IMAGE_THRESHOLD = 70;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -161,6 +163,82 @@ function publicTitle(title = "") {
     .trim();
 }
 
+function cleanText(value = "") {
+  return String(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function extractImageIntent(title, cat, district, description = "") {
+  const combined = cleanText(`${title} ${description}`);
+  const englishEntities = combined.match(/\b[A-Z][A-Za-z.-]+(?:\s+[A-Z][A-Za-z.-]+){0,3}\b/g) || [];
+  const stop = /^(Breaking News|Latest News|Telugu News|Andhra Pradesh|News Update)$/i;
+  const entities = [...new Set(englishEntities.filter(entity => !stop.test(entity)))].slice(0, 5);
+  const location = district || (/hyderabad|హైదరాబాద్/i.test(combined) ? "Hyderabad" : /vijayawada|విజయవాడ/i.test(combined) ? "Vijayawada" : "");
+  const eventTerms = combined.match(/rain|flood|cyclone|election|meeting|protest|match|final|launch|court|arrest|వర్ష|వరద|తుఫాను|ఎన్నిక|సమావేశం|మ్యాచ్|కోర్టు/gi) || [];
+  return {
+    entities,
+    location,
+    event: [...new Set(eventTerms)].slice(0, 3),
+    category: cat,
+    query: [entities.slice(0, 2).join(" "), location, eventTerms.slice(0, 2).join(" "), new Date().getFullYear()].filter(Boolean).join(" ")
+  };
+}
+
+function visualStatus(score, imageType) {
+  if (imageType === "branded_fallback") return "orange";
+  if (score >= 90) return "green";
+  if (score >= 70) return "blue";
+  if (imageType === "archive" || imageType === "representative") return "yellow";
+  return "red";
+}
+
+function mediaDecision({
+  url = BRANDED_FALLBACK,
+  source = "NewsNeta",
+  originalUrl = "",
+  photographer = "",
+  copyrightOwner = "NewsNeta",
+  license = "NewsNeta branded asset",
+  attributionRequired = false,
+  imageType = "branded_fallback",
+  label = "",
+  score = 10,
+  intent = {},
+  reasons = []
+} = {}) {
+  const safeScore = Math.max(0, Math.min(100, Number(score) || 0));
+  return {
+    url,
+    thumbnailUrl: url,
+    source,
+    originalUrl,
+    photographer,
+    copyrightOwner,
+    license,
+    attributionRequired,
+    imageType,
+    label,
+    relevanceScore: safeScore,
+    visualStatus: visualStatus(safeScore, imageType),
+    requiresReview: safeScore < 80 || !license || /unknown|verify/i.test(license),
+    selectedAt: new Date().toISOString(),
+    intent,
+    scoreBreakdown: {
+      semantic: Math.min(30, Math.round(safeScore * 0.30)),
+      entity: Math.min(20, Math.round(safeScore * 0.20)),
+      event: Math.min(20, Math.round(safeScore * 0.20)),
+      location: Math.min(10, Math.round(safeScore * 0.10)),
+      recency: Math.min(10, Math.round(safeScore * 0.10)),
+      quality: Math.min(5, Math.round(safeScore * 0.05)),
+      rights: Math.min(5, Math.round(safeScore * 0.05))
+    },
+    reasons
+  };
+}
+
+function brandedFallbackDecision(intent, reason = "No sufficiently relevant, rights-aware image was found") {
+  return mediaDecision({intent, reasons: [reason]});
+}
+
 function expandedNewsDescription(title, cat, district, seedText = "") {
   const cleanTitle = publicTitle(title);
   const sourceLine = String(seedText || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -218,10 +296,20 @@ async function fetchGNewsItems(cat, district) {
   return Promise.all(freshArticles.slice(0, 10).map(async (article, index) => {
     const title = publicTitle(article.title);
     const description = expandedNewsDescription(title, cat, district, article.description);
-    const fallback = selectImage(title, cat, district, index);
-    const image = trustedImageUrl(article.image)
-      ? article.image
-      : await commonsImage(imageSearchQuery(title, cat, district), fallback);
+    const intent = extractImageIntent(title, cat, district, description);
+    const media = trustedImageUrl(article.image)
+      ? mediaDecision({
+          url: article.image,
+          originalUrl: article.image,
+          source: article.source?.name || "Licensed news provider",
+          copyrightOwner: article.source?.name || "Publisher",
+          license: "Provider-associated editorial image; verify syndication terms",
+          imageType: "event_candidate",
+          score: 88,
+          intent,
+          reasons: ["Image was supplied with the same provider article", "Headline and image share the provider record"]
+        })
+      : await commonsImage(intent.query || imageSearchQuery(title, cat, district), intent);
     return {
       id: article.url || `${cat}-gnews-${index}`,
       title,
@@ -231,7 +319,11 @@ async function fetchGNewsItems(cat, district) {
       category: district || CATEGORY_LABELS[cat] || "Telugu",
       district: district || null,
       state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
-      image,
+      image: media.url,
+      media,
+      imageLabel: media.label,
+      imageRelevanceScore: media.relevanceScore,
+      imageStatus: media.visualStatus,
       views: hashViews(title || `${cat}-${index}`),
       trust: Math.max(84, 98 - (index % 8)),
       sentiment: inferSentiment(index),
@@ -303,10 +395,34 @@ function commonsPhotoOk(page = {}, query = "") {
     && commonsLicenseOk(info);
 }
 
-async function commonsImage(query, fallback) {
+function commonsMetadata(info = {}) {
+  const metadata = info.extmetadata || {};
+  const value = key => cleanText(metadata[key]?.value || "");
+  return {
+    photographer: value("Artist"),
+    copyrightOwner: value("Credit") || value("Artist"),
+    license: value("LicenseShortName") || value("UsageTerms"),
+    attributionRequired: !/public domain|cc0|pd/i.test(`${value("LicenseShortName")} ${value("UsageTerms")}`),
+    originalUrl: info.descriptionurl || info.url || ""
+  };
+}
+
+function candidateRelevance(page = {}, intent = {}) {
+  const haystack = `${page.title || ""} ${page.imageinfo?.[0]?.extmetadata?.ImageDescription?.value || ""}`.toLowerCase();
+  const tokens = [...(intent.entities || []), ...(intent.event || []), intent.location, intent.category]
+    .filter(Boolean)
+    .map(value => String(value).toLowerCase());
+  const matches = tokens.filter(token => haystack.includes(token)).length;
+  const entityMatch = (intent.entities || []).some(entity => haystack.includes(String(entity).toLowerCase()));
+  const eventMatch = (intent.event || []).some(event => haystack.includes(String(event).toLowerCase()));
+  const locationMatch = intent.location && haystack.includes(String(intent.location).toLowerCase());
+  return Math.min(86, 48 + matches * 8 + (entityMatch ? 10 : 0) + (eventMatch ? 8 : 0) + (locationMatch ? 8 : 0));
+}
+
+async function commonsImage(query, intent = {}) {
   const key = query.toLowerCase();
   if (IMAGE_CACHE[key] && Date.now() - IMAGE_CACHE[key].time < IMAGE_TTL) {
-    return IMAGE_CACHE[key].url;
+    return IMAGE_CACHE[key].decision;
   }
 
   const params = new URLSearchParams({
@@ -326,18 +442,33 @@ async function commonsImage(query, fallback) {
     const response = await fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`, {
       headers: { "User-Agent": "NewsNeta/1.0 (+https://newsneta.com)" }
     });
-    if (!response.ok) return fallback;
+    if (!response.ok) return brandedFallbackDecision(intent, `Approved image search failed with ${response.status}`);
 
     const payload = await response.json();
     const pages = Object.values(payload.query?.pages || {});
-    const match = pages
-      .find(page => commonsPhotoOk(page, query))
-      ?.imageinfo?.[0];
-    const url = match?.thumburl || match?.url || fallback;
-    IMAGE_CACHE[key] = { time: Date.now(), url };
-    return url;
+    const ranked = pages
+      .filter(page => commonsPhotoOk(page, query))
+      .map(page => ({page, score: candidateRelevance(page, intent)}))
+      .sort((a, b) => b.score - a.score);
+    const best = ranked[0];
+    if (!best || best.score < AUTO_IMAGE_THRESHOLD) {
+      return brandedFallbackDecision(intent, "Approved-source candidates were below the automatic relevance threshold");
+    }
+    const info = best.page.imageinfo?.[0] || {};
+    const decision = mediaDecision({
+      url: info.thumburl || info.url || BRANDED_FALLBACK,
+      source: "Wikimedia Commons",
+      imageType: "archive",
+      label: "FILE PHOTO",
+      score: best.score,
+      intent,
+      reasons: ["Matched an approved reusable-media source", "Archive image is labelled to avoid implying a current-event photograph"],
+      ...commonsMetadata(info)
+    });
+    IMAGE_CACHE[key] = { time: Date.now(), decision };
+    return decision;
   } catch (error) {
-    return fallback;
+    return brandedFallbackDecision(intent, "Approved image search was unavailable");
   }
 }
 
@@ -363,8 +494,9 @@ function extractMetaImage(html = "") {
 }
 
 async function articleImage(item, cat, district, index) {
-  const fallback = selectImage(publicTitle(item.title), cat, district, index);
-  const licensedFallback = () => commonsImage(imageSearchQuery(publicTitle(item.title), cat, district), fallback);
+  const title = publicTitle(item.title);
+  const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
+  const licensedFallback = () => commonsImage(intent.query || imageSearchQuery(title, cat, district), intent);
   if (!item.link) return await licensedFallback();
 
   const controller = new AbortController();
@@ -379,7 +511,17 @@ async function articleImage(item, cat, district, index) {
     });
     const html = await response.text();
     const image = extractMetaImage(html);
-    return trustedImageUrl(image) ? image : await licensedFallback();
+    return trustedImageUrl(image) ? mediaDecision({
+      url: image,
+      originalUrl: image,
+      source: new URL(item.link).hostname,
+      copyrightOwner: new URL(item.link).hostname,
+      license: "Publisher-associated editorial image; verify syndication terms",
+      imageType: "event_candidate",
+      score: 86,
+      intent,
+      reasons: ["Image is declared by the same article as its social image", "Candidate is tied to the article URL"]
+    }) : await licensedFallback();
   } catch (error) {
     return await licensedFallback();
   } finally {
@@ -448,7 +590,11 @@ exports.handler = async function handler(event) {
         category: district || CATEGORY_LABELS[cat] || "Telugu",
         district: district || null,
         state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
-        image: imageResults[index],
+        image: imageResults[index].url,
+        media: imageResults[index],
+        imageLabel: imageResults[index].label,
+        imageRelevanceScore: imageResults[index].relevanceScore,
+        imageStatus: imageResults[index].visualStatus,
         views: hashViews(item.title || `${cat}-${index}`),
         trust: Math.max(76, 96 - (index % 9)),
         sentiment: inferSentiment(index),

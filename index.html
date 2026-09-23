@@ -1889,6 +1889,12 @@ function cmsArticleDefaults(article = {}){
   thumbnail: article.thumbnail || imageUrl,
   mediaCaption: article.mediaCaption || article.caption || headline,
   altText: article.altText || headline,
+  mediaSource: article.mediaSource || "Reporter upload",
+  photographer: article.photographer || article.reporter || "",
+  copyrightOwner: article.copyrightOwner || "NewsNeta",
+  mediaLicense: article.mediaLicense || "NewsNeta editorial use",
+  imageType: article.imageType || "event_photo",
+  imageRelevanceScore: Number(article.imageRelevanceScore || 90),
   videoTranscript: article.videoTranscript || "",
   media: Array.isArray(article.media) && article.media.length ? article.media : [{
    id:`media-${article.id || Date.now()}`,
@@ -2410,7 +2416,7 @@ function extractSourceImage(item){
   item.media?.content?.url,
   item.media?.thumbnail?.url
  ].filter(Boolean);
- return candidates.find(url=>/^https?:\/\//i.test(url) && !/logo|avatar|icon|sprite|1x1|pixel/i.test(url));
+ return candidates.find(url=>/^(https?:\/\/|\/|assets\/)/i.test(url) && !/avatar|icon|sprite|1x1|pixel/i.test(url));
 }
 
 function chooseRelevantImage(story,index=0){
@@ -2438,7 +2444,11 @@ function normalizeItems(items){
   views:item.views || Math.floor(42000 + Math.random()*68000),
   sentiment:item.sentiment || ["Positive","Neutral","Mixed"][index % 3],
   trust:item.trust || Math.floor(82 + Math.random()*14),
-  image:chooseRelevantImage(item,index),
+  image:(!Array.isArray(item.media) && item.media?.url) || chooseRelevantImage(item,index),
+  mediaDecision:(!Array.isArray(item.media) && item.media) || item.mediaDecision || null,
+  imageLabel:item.imageLabel || (!Array.isArray(item.media) && item.media?.label) || "",
+  imageRelevanceScore:Number(item.imageRelevanceScore ?? (!Array.isArray(item.media) ? item.media?.relevanceScore : 0) ?? 0),
+  imageStatus:item.imageStatus || (!Array.isArray(item.media) && item.media?.visualStatus) || "",
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
   description:item.description || item.aiSummary || item.summary || item.contentSnippet || item.content || "",
@@ -2470,7 +2480,7 @@ function storyCard(story){
   <a href="#" data-story-id="${escapeAttr(storyId)}">
    <div class="thumb">
     <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}" onerror="imageFallback(event)">
-    <div class="badge-row"><span class="badge">${story.category}</span>${reporterBadge}</div>
+    <div class="badge-row"><span class="badge">${story.category}</span>${story.imageLabel ? `<span class="badge">${escapeHtml(story.imageLabel)}</span>` : reporterBadge}</div>
    </div>
   </a>
   <div class="card-body">
@@ -3964,6 +3974,12 @@ function validatePublishReady(article){
  if(!article.reporter) missing.push("reporter");
  if(!["reviewer_approved","admin_review","approved","scheduled","published"].includes(article.status)) missing.push("reviewer approval");
  if(!article.media?.length && !article.image && !article.videoUrl && !article.youtubeUrl) missing.push("media");
+ if((article.media?.length || article.image) && !article.mediaCaption) missing.push("image caption");
+ if((article.media?.length || article.image) && !article.altText) missing.push("image alt text");
+ if((article.media?.length || article.image) && !article.mediaSource) missing.push("media source");
+ if((article.media?.length || article.image) && !article.copyrightOwner) missing.push("copyright owner");
+ if((article.media?.length || article.image) && !article.mediaLicense) missing.push("media license");
+ if((article.media?.length || article.image) && Number(article.imageRelevanceScore || 0) < 70) missing.push("image relevance review");
  return missing;
 }
 
@@ -3997,6 +4013,17 @@ function publishedCmsStories(cat){
    fullArticle: article.body,
    summary: article.summary,
    media: article.media || [],
+   mediaDecision:{
+    source:article.mediaSource,
+    photographer:article.photographer,
+    copyrightOwner:article.copyrightOwner,
+    license:article.mediaLicense,
+    imageType:article.imageType,
+    relevanceScore:article.imageRelevanceScore,
+    label:/archive|representative/i.test(article.imageType) ? "FILE PHOTO" : "",
+    visualStatus:Number(article.imageRelevanceScore) >= 90 ? "green" : Number(article.imageRelevanceScore) >= 70 ? "blue" : "orange"
+   },
+   imageRelevanceScore:article.imageRelevanceScore,
    views: 12000 + Math.round(Math.random()*4000),
    sentiment:"Neutral",
    trust: article.trust || 91,
@@ -4164,6 +4191,18 @@ function cmsWorkflowForm(role){
    <div class="cms-form-grid">
     <label>Media Caption<input id="cmsMediaCaption" value="${escapeAttr(article.mediaCaption)}" placeholder="Caption for images/videos"></label>
     <label>Alt Text<input id="cmsAltText" value="${escapeAttr(article.altText)}" placeholder="Accessible image description"></label>
+   </div>
+   <div class="cms-form-grid">
+    <label>Media Source *<input id="cmsMediaSource" value="${escapeAttr(article.mediaSource)}" placeholder="Reporter, agency or approved provider"></label>
+    <label>Photographer<input id="cmsPhotographer" value="${escapeAttr(article.photographer)}" placeholder="Photographer / agency credit"></label>
+   </div>
+   <div class="cms-form-grid">
+    <label>Copyright Owner *<input id="cmsCopyrightOwner" value="${escapeAttr(article.copyrightOwner)}" placeholder="Rights owner"></label>
+    <label>License / Usage Rights *<input id="cmsMediaLicense" value="${escapeAttr(article.mediaLicense)}" placeholder="Agreement, license or internal rights"></label>
+   </div>
+   <div class="cms-form-grid">
+    <label>Image Type<select id="cmsImageType"><option value="event_photo" ${article.imageType === "event_photo" ? "selected" : ""}>Verified event photo</option><option value="archive" ${article.imageType === "archive" ? "selected" : ""}>File / archive photo</option><option value="representative" ${article.imageType === "representative" ? "selected" : ""}>Representative image</option><option value="illustration" ${article.imageType === "illustration" ? "selected" : ""}>Editorial illustration</option><option value="ai_generated" ${article.imageType === "ai_generated" ? "selected" : ""}>AI-generated illustration</option></select></label>
+    <label>Image Relevance Score<input id="cmsImageRelevanceScore" type="number" min="0" max="100" value="${escapeAttr(article.imageRelevanceScore)}"></label>
    </div>
    <label>Video Transcript<textarea id="cmsVideoTranscript" placeholder="Transcript for video news">${escapeHtml(article.videoTranscript)}</textarea></label>
    <div class="compliance-checks">
@@ -4345,6 +4384,12 @@ function updateArticleFromReporterForm(article){
  article.youtubeUrl = document.getElementById("cmsYoutubeUrl")?.value.trim() || article.youtubeUrl;
  article.mediaCaption = document.getElementById("cmsMediaCaption")?.value.trim() || article.mediaCaption;
  article.altText = document.getElementById("cmsAltText")?.value.trim() || article.altText;
+ article.mediaSource = document.getElementById("cmsMediaSource")?.value.trim() || article.mediaSource;
+ article.photographer = document.getElementById("cmsPhotographer")?.value.trim() || article.photographer;
+ article.copyrightOwner = document.getElementById("cmsCopyrightOwner")?.value.trim() || article.copyrightOwner;
+ article.mediaLicense = document.getElementById("cmsMediaLicense")?.value.trim() || article.mediaLicense;
+ article.imageType = document.getElementById("cmsImageType")?.value || article.imageType;
+ article.imageRelevanceScore = Number(document.getElementById("cmsImageRelevanceScore")?.value || article.imageRelevanceScore || 0);
  article.videoTranscript = document.getElementById("cmsVideoTranscript")?.value.trim() || article.videoTranscript;
  article.breaking = Boolean(document.getElementById("cmsBreaking")?.checked);
  article.featuredRequest = Boolean(document.getElementById("cmsFeaturedRequest")?.checked);
@@ -4357,6 +4402,12 @@ function updateArticleFromReporterForm(article){
   ...item,
   caption:document.getElementById("cmsMediaCaption")?.value || item.caption,
   alt_text:document.getElementById("cmsAltText")?.value || item.alt_text,
+  source:article.mediaSource,
+  photographer:article.photographer,
+  copyright_owner:article.copyrightOwner,
+  license:article.mediaLicense,
+  image_type:article.imageType,
+  relevance_score:article.imageRelevanceScore,
   thumbnail_url:document.getElementById("cmsThumbnail")?.value || item.thumbnail_url
  })) : cmsArticleDefaults({...article, media:[]}).media;
  return article;

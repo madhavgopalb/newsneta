@@ -1395,13 +1395,13 @@ body{background:var(--bg)}
     <button class="pill-btn menu-refresh" id="menuRefreshNow" type="button">Refresh news</button>
    </div>
   </div>
-  <div class="refresh-inline"><span class="live-dot"></span><span id="menuRefreshStatus">News refresh starts after page load</span></div>
+  <div class="refresh-inline"><span class="live-dot"></span><span id="menuRefreshStatus">Connecting to the live newsroom...</span></div>
  </div>
 
  <div class="ticker" aria-label="Breaking news ticker">
   <div class="ticker-inner">
    <div class="ticker-label"><span class="live-dot"></span>BREAKING</div>
-   <div class="ticker-track" id="tickerTrack"><span class="ticker-copy">తాజా వార్తలు లోడ్ అవుతున్నాయి...</span></div>
+   <div class="ticker-track" id="tickerTrack"><span class="ticker-copy">బ్రేకింగ్ అప్‌డేట్లను తనిఖీ చేస్తున్నాం...</span></div>
  </div>
 </div>
 
@@ -1868,10 +1868,11 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v74";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v74";
+const APP_BUILD_VERSION = "newsneta-web-v75";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v75";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
+const newsRequestTimeoutMs = 12000;
 
 const districts = {
  telangana: [
@@ -2524,6 +2525,30 @@ function absoluteMediaUrl(value){
  }
 }
 
+async function fetchNewsPayload(url, context = {}){
+ const controller = new AbortController();
+ const timeout = setTimeout(()=>controller.abort(), newsRequestTimeoutMs);
+ try{
+  const response = await fetch(url, {cache:"no-store", signal:controller.signal});
+  if(!response.ok) throw new Error(`news endpoint returned ${response.status}`);
+  const payload = await response.json();
+  if(!payload || !Array.isArray(payload.items)) throw new Error("news endpoint returned malformed data");
+  return payload;
+ }catch(error){
+  console.error(JSON.stringify({
+   code:"NEWS_FETCH_FAILED",
+   endpoint:url.split("&refresh=")[0],
+   status:error.name === "AbortError" ? "timeout" : "failed",
+   message:String(error.message || error),
+   timestamp:new Date().toISOString(),
+   ...context
+  }));
+  throw error;
+ }finally{
+  clearTimeout(timeout);
+ }
+}
+
 function extractSourceImage(item){
  const mediaItems = Array.isArray(item.media) ? item.media : [];
  const primaryMedia = mediaItems.find(media=>media?.media_type === "image" && (media.public_url || media.url));
@@ -2781,9 +2806,7 @@ async function renderCricketWidget(force = false){
  if(status) status.textContent = "Updating";
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
-  const response = await fetch(`/.netlify/functions/news?cat=cricket&refresh=${Date.now()}&widget=cricket&view=${view}`, {cache:"no-store"});
-  if(!response.ok) throw new Error("cricket feed failed");
-  const data = await response.json();
+  const data = await fetchNewsPayload(`/.netlify/functions/news?cat=cricket&refresh=${Date.now()}&widget=cricket&view=${view}`, {category:"cricket",widget:"cricket",view});
   const cricketItems = normalizeItems(data.items || []).slice(0,4);
   if(!cricketItems.length) throw new Error("empty cricket feed");
   const servedAt = data.servedAt || data.updatedAt || new Date().toISOString();
@@ -3014,9 +3037,7 @@ async function loadHomepageFeeds(force=false){
    const category = queue.shift();
   try{
    const refreshQuery = force ? `&refresh=${Date.now()}` : "";
-   const response = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(category)}${refreshQuery}`, {cache:"no-store"});
-   if(!response.ok) throw new Error("feed unavailable");
-   const data = await response.json();
+   const data = await fetchNewsPayload(`/.netlify/functions/news?cat=${encodeURIComponent(category)}${refreshQuery}`, {category});
    const incoming = normalizeItems(data.items || []).slice(0,6);
    if(incoming.length) homepageFeeds[category] = incoming;
   }catch(error){
@@ -3032,7 +3053,7 @@ async function loadHomepageFeeds(force=false){
 
 function render(){
  const sorted = [...stories].sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
- heroStories = normalizeItems(sorted).slice(0,8);
+ heroStories = sorted.slice(0,8);
  if(heroIndex >= heroStories.length) heroIndex = 0;
  renderHeroSlide();
  renderHomeDesk(sorted);
@@ -3044,7 +3065,7 @@ function render(){
  renderWeather();
  const tickerText = sorted.slice(0,8).map(s=>s.title).join("   ●   ");
  const tickerTrack = document.getElementById("tickerTrack");
- tickerTrack.innerHTML = `<span class="ticker-copy">${escapeHtml(tickerText)}</span>`;
+ tickerTrack.innerHTML = `<span class="ticker-copy">${escapeHtml(tickerText || "ప్రస్తుతం బ్రేకింగ్ అప్‌డేట్లు లేవు")}</span>`;
  renderSideNewsPanel(sorted);
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
@@ -3171,9 +3192,7 @@ async function loadNews(cat="telangana", force=false){
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
   const refreshQuery = force ? `&refresh=${Date.now()}` : "";
-  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}${refreshQuery}&view=${view}`, {cache:"no-store"});
-  if(!res.ok) throw new Error("news api failed");
-  const data = await res.json();
+  const data = await fetchNewsPayload(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}${refreshQuery}&view=${view}`, {category:cat,view});
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
   newsApiCacheMode = data.cache || "fresh";
   newsApiServedAt = data.servedAt || data.updatedAt || new Date().toISOString();
@@ -3239,8 +3258,7 @@ function setupDistricts(){
   const host = document.getElementById("homeDistrictStories");
   host.innerHTML = `<div class="editorial-empty">Loading ${escapeHtml(district)} news...</div>`;
   try{
-   const response = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(homeStateSelect.value)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}`, {cache:"no-store"});
-   const data = response.ok ? await response.json() : {items:[]};
+   const data = await fetchNewsPayload(`/.netlify/functions/news?cat=${encodeURIComponent(homeStateSelect.value)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}`, {category:homeStateSelect.value,district});
    const items = normalizeItems(data.items || []);
    host.innerHTML = items.length ? items.slice(0,6).map(story=>`<article class="editorial-compact" data-story-id="${escapeAttr(story.id || story.link || story.title)}"><img loading="lazy" src="${escapeAttr(story.image)}" alt=""><div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`).join("") : `<div class="editorial-empty">No recent ${escapeHtml(district)} stories are available.</div>`;
   }catch(error){
@@ -3259,9 +3277,7 @@ async function loadDistrictNews(state, district, force=false){
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
   const refreshQuery = force ? `&refresh=${Date.now()}` : "";
-  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}${refreshQuery}&view=${view}`, {cache:"no-store"});
-  if(!res.ok) throw new Error("district news api failed");
-  const data = await res.json();
+  const data = await fetchNewsPayload(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}${refreshQuery}&view=${view}`, {category:state,district,view});
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : newsSourceMode;
   newsApiCacheMode = data.cache || "fresh";
   newsApiServedAt = data.servedAt || data.updatedAt || new Date().toISOString();
@@ -5021,6 +5037,9 @@ setupNav();
 setupDistricts();
 applyLanguage();
 refreshAllNews();
+window.setTimeout(()=>{
+ if(!stories.length && !isRefreshingNews) refreshAllNews(true);
+}, newsRequestTimeoutMs + 1500);
 startHeroAutoplay();
 window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);

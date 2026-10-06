@@ -1868,8 +1868,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v75";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v75";
+const APP_BUILD_VERSION = "newsneta-web-v76";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v76";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 const newsRequestTimeoutMs = 12000;
@@ -3054,7 +3054,7 @@ async function loadHomepageFeeds(force=false){
 function render(){
  const sorted = [...stories].sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
  heroStories = sorted.slice(0,8);
- if(heroIndex >= heroStories.length) heroIndex = 0;
+ if(!Number.isInteger(heroIndex) || heroIndex < 0 || heroIndex >= heroStories.length) heroIndex = 0;
  renderHeroSlide();
  renderHomeDesk(sorted);
  renderTodayEdition();
@@ -3161,6 +3161,7 @@ function applyLanguage(){
 }
 
 function moveHeroSlide(step){
+ if(!heroStories.length) return;
  heroIndex = (heroIndex + step + heroStories.length) % heroStories.length;
  renderHeroSlide();
 }

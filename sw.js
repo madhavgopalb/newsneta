@@ -1,5 +1,7 @@
-const CACHE_NAME = "newsneta-pwa-v75";
-const API_CACHE_NAME = "newsneta-api-v1";
+const CACHE_VERSION = "v76";
+const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
+const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
+const NEWSNETA_CACHE_PREFIXES = ["newsneta-pwa-", "newsneta-api-"];
 const APP_SHELL = [
   "/manifest.json",
   "/assets/newsneta-logo.jpg",
@@ -17,11 +19,64 @@ self.addEventListener("install", event => {
   );
 });
 
+function isObsoleteNewsNetaCache(key) {
+  return NEWSNETA_CACHE_PREFIXES.some(prefix => key.startsWith(prefix))
+    && key !== CACHE_NAME
+    && key !== API_CACHE_NAME;
+}
+
+async function cleanupOldNewsNetaCaches() {
+  const keys = await caches.keys();
+  await Promise.all(keys.filter(isObsoleteNewsNetaCache).map(key => caches.delete(key)));
+}
+
+function stableNewsRequest(request) {
+  const stableUrl = new URL(request.url);
+  stableUrl.searchParams.delete("refresh");
+  stableUrl.searchParams.delete("force");
+  stableUrl.searchParams.delete("view");
+  return new Request(stableUrl.href, { method: "GET" });
+}
+
+async function handleNewsRequest(request) {
+  const cache = await caches.open(API_CACHE_NAME);
+  const stableRequest = stableNewsRequest(request);
+
+  try {
+    const networkResponse = await fetch(request, { cache: "no-store" });
+    if (!networkResponse.ok) {
+      throw new Error(`News API HTTP ${networkResponse.status}`);
+    }
+
+    // Clone synchronously, before the browser can consume the original body.
+    const responseForBrowser = networkResponse.clone();
+    const responseForCache = networkResponse.clone();
+
+    try {
+      await cache.put(stableRequest, responseForCache);
+    } catch (error) {
+      console.error("NEWS_API_CACHE_WRITE_FAILED", error);
+    }
+
+    return responseForBrowser;
+  } catch (error) {
+    console.error("NEWS_NETWORK_FAILED", error);
+    const cachedResponse = await cache.match(stableRequest);
+    if (cachedResponse) return cachedResponse;
+
+    return new Response(JSON.stringify({ status: "offline", items: [] }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}
+
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key.startsWith("newsneta-pwa-") && key !== CACHE_NAME).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
+    Promise.all([
+      self.clients.claim(),
+      cleanupOldNewsNetaCaches()
+    ])
   );
 });
 
@@ -31,10 +86,7 @@ self.addEventListener("message", event => {
     return;
   }
   if (event.data?.type === "CLEAR_RUNTIME_CACHE") {
-    event.waitUntil(
-      caches.keys()
-        .then(keys => Promise.all(keys.filter(key => key.startsWith("newsneta-pwa-") && key !== CACHE_NAME).map(key => caches.delete(key))))
-    );
+    event.waitUntil(cleanupOldNewsNetaCaches());
   }
 });
 
@@ -75,30 +127,7 @@ self.addEventListener("fetch", event => {
   }
 
   if (request.url.includes("/.netlify/functions/news")) {
-    event.respondWith(
-      fetch(request, { cache: "no-store" })
-        .then(response => {
-          if (response?.ok) {
-            const stableUrl = new URL(request.url);
-            stableUrl.searchParams.delete("refresh");
-            stableUrl.searchParams.delete("force");
-            stableUrl.searchParams.delete("view");
-            caches.open(API_CACHE_NAME).then(cache => cache.put(stableUrl.href, response.clone()));
-          }
-          return response;
-        })
-        .catch(async() => {
-          const stableUrl = new URL(request.url);
-          stableUrl.searchParams.delete("refresh");
-          stableUrl.searchParams.delete("force");
-          stableUrl.searchParams.delete("view");
-          return caches.match(stableUrl.href);
-        })
-        .then(response => response || new Response(JSON.stringify({ status: "offline", items: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        }))
-    );
+    event.respondWith(handleNewsRequest(request));
     return;
   }
 

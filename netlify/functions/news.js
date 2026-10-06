@@ -31,6 +31,8 @@ const FEEDS = {
   cricket: googleNewsUrl("Cricket Telugu India IPL T20 match score"),
   technology: googleNewsUrl("Technology Telugu news"),
   business: googleNewsUrl("Business Telugu news"),
+  education: googleNewsUrl("Education jobs exams Telugu news Telangana Andhra Pradesh"),
+  jobs: googleNewsUrl("Government jobs recruitment Telugu Telangana Andhra Pradesh"),
   viral: googleNewsUrl("Viral Telugu news")
 };
 
@@ -101,6 +103,8 @@ const CATEGORY_LABELS = {
   cricket: "Cricket",
   technology: "Technology",
   business: "Business",
+  education: "Education",
+  jobs: "Jobs",
   viral: "Viral"
 };
 
@@ -129,6 +133,8 @@ function queryFor(cat, district) {
     cricket: "Cricket Telugu India IPL T20 match score",
     technology: "Technology Telugu news",
     business: "Business Telugu news",
+    education: "Education exams Telugu news Telangana Andhra Pradesh",
+    jobs: "Government jobs recruitment Telugu Telangana Andhra Pradesh",
     viral: "Viral Telugu news"
   };
   return queries[cat] || queries.telangana;
@@ -158,8 +164,11 @@ function inferSentiment(index) {
 
 function publicTitle(title = "") {
   return String(title)
+    .replace(/^RTV\s+Digital\.\s*\.\s*/iu, "")
+    .replace(/#[\p{L}\p{N}_-]+/gu, "")
     .replace(/\s+-\s+[^-]{2,80}$/u, "")
     .replace(/\s*\|\s*[^|]{2,80}$/u, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -241,7 +250,12 @@ function brandedFallbackDecision(intent, reason = "No sufficiently relevant, rig
 
 function expandedNewsDescription(title, cat, district, seedText = "") {
   const cleanTitle = publicTitle(title);
-  const sourceLine = String(seedText || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const sourceLine = cleanText(seedText)
+    .replace(/^RTV\s+Digital\.\s*\.\s*/iu, "")
+    .replace(/#[\p{L}\p{N}_-]+/gu, "")
+    .replace(/\s+(facebook|instagram|youtube|x)\.com\s*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
   return sourceLine && sourceLine.length > 40
     ? sourceLine
     : cleanTitle;
@@ -269,7 +283,8 @@ function freshSorted(items = [], maxAgeDays = FRESH_NEWS_DAYS) {
 function isUsefulTitle(title = "") {
   const clean = String(title).replace(/\s+/g, " ").trim();
   if (clean.length < 14) return false;
-  return !/^(breaking|live|latest|top news|12\s*:\s*00\s*a\.?m\.?|news update)$/iu.test(clean);
+  return !/^(breaking|live|latest|top news|12\s*:\s*00\s*a\.?m\.?|news update)$/iu.test(clean)
+    && !/\b(profile|icc ranking|career statistics)\b/i.test(clean);
 }
 
 async function fetchGNewsItems(cat, district) {
@@ -324,7 +339,7 @@ async function fetchGNewsItems(cat, district) {
       imageLabel: media.label,
       imageRelevanceScore: media.relevanceScore,
       imageStatus: media.visualStatus,
-      views: hashViews(title || `${cat}-${index}`),
+      views: null,
       trust: Math.max(84, 98 - (index % 8)),
       sentiment: inferSentiment(index),
       description,
@@ -595,7 +610,7 @@ exports.handler = async function handler(event) {
         imageLabel: imageResults[index].label,
         imageRelevanceScore: imageResults[index].relevanceScore,
         imageStatus: imageResults[index].visualStatus,
-        views: hashViews(item.title || `${cat}-${index}`),
+        views: null,
         trust: Math.max(76, 96 - (index % 9)),
         sentiment: inferSentiment(index),
         description,

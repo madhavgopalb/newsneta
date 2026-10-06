@@ -1,4 +1,5 @@
-const CACHE_NAME = "newsneta-pwa-v73";
+const CACHE_NAME = "newsneta-pwa-v74";
+const API_CACHE_NAME = "newsneta-api-v1";
 const APP_SHELL = [
   "/manifest.json",
   "/assets/newsneta-logo.jpg",
@@ -19,7 +20,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key.startsWith("newsneta-pwa-") && key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
@@ -76,7 +77,23 @@ self.addEventListener("fetch", event => {
   if (request.url.includes("/.netlify/functions/news")) {
     event.respondWith(
       fetch(request, { cache: "no-store" })
-        .catch(() => caches.match(request))
+        .then(response => {
+          if (response?.ok) {
+            const stableUrl = new URL(request.url);
+            stableUrl.searchParams.delete("refresh");
+            stableUrl.searchParams.delete("force");
+            stableUrl.searchParams.delete("view");
+            caches.open(API_CACHE_NAME).then(cache => cache.put(stableUrl.href, response.clone()));
+          }
+          return response;
+        })
+        .catch(async() => {
+          const stableUrl = new URL(request.url);
+          stableUrl.searchParams.delete("refresh");
+          stableUrl.searchParams.delete("force");
+          stableUrl.searchParams.delete("view");
+          return caches.match(stableUrl.href);
+        })
         .then(response => response || new Response(JSON.stringify({ status: "offline", items: [] }), {
           status: 200,
           headers: { "Content-Type": "application/json" }

@@ -1868,8 +1868,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v73";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v73";
+const APP_BUILD_VERSION = "newsneta-web-v74";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v74";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 
@@ -2074,6 +2074,8 @@ const globalTopStories = [
 ];
 
 let stories = [];
+let isRefreshingNews = false;
+let lastRefreshError = "";
 let districtStories = [];
 const homepageFeeds = {};
 const homepageFeedCategories = ["ap","telangana","politics","cinema","sports","national","international","business","technology","jobs"];
@@ -2510,17 +2512,36 @@ function imageKeyFor(story){
  return "national";
 }
 
+function absoluteMediaUrl(value){
+ const raw = String(value || "").trim();
+ if(!raw || /^(blob:|data:)/i.test(raw)) return raw;
+ try{
+  const url = new URL(raw, location.origin);
+  if(url.protocol === "http:" && location.protocol === "https:") url.protocol = "https:";
+  return url.href;
+ }catch(error){
+  return "";
+ }
+}
+
 function extractSourceImage(item){
+ const mediaItems = Array.isArray(item.media) ? item.media : [];
+ const primaryMedia = mediaItems.find(media=>media?.media_type === "image" && (media.public_url || media.url));
  const candidates = [
+  item.featuredImage,
   item.image,
   item.imageUrl,
   item.thumbnail,
+  item.thumbnailUrl,
+  item.heroImage,
+  primaryMedia?.public_url,
+  primaryMedia?.url,
   item.enclosure?.url,
   item.enclosure?.link,
   item.media?.content?.url,
   item.media?.thumbnail?.url
- ].filter(Boolean);
- return candidates.find(url=>/^(https?:\/\/|\/|assets\/)/i.test(url) && !/avatar|icon|sprite|1x1|pixel/i.test(url));
+ ].filter(Boolean).map(absoluteMediaUrl);
+ return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url) && !/avatar|icon|sprite|1x1|pixel/i.test(url));
 }
 
 function chooseRelevantImage(story,index=0){
@@ -2535,20 +2556,21 @@ function chooseRelevantImage(story,index=0){
 function imageFallback(event){
  const img = event.target;
  img.onerror = null;
- img.src = "assets/newsneta-logo.jpg";
+ console.warn(JSON.stringify({code:"ARTICLE_IMAGE_LOAD_FAILED",articleId:img.closest?.("[data-story-id]")?.dataset.storyId || null,url:img.currentSrc || img.src,timestamp:new Date().toISOString()}));
+ img.src = absoluteMediaUrl("assets/newsneta-logo-header.png");
  img.alt = "NewsNeta";
 }
 
 function normalizeItems(items){
  const freshCutoff = Date.now() - maxStoryAgeDays * 24 * 60 * 60 * 1000;
- return items.map((item,index)=>({
+ return (Array.isArray(items) ? items : []).map((item,index)=>({
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
-  title:item.title || fallbackStories[index % fallbackStories.length].title,
-  category:item.category || fallbackStories[index % fallbackStories.length].category,
+  title:String(item.title || item.headline || "").trim(),
+  category:item.category || "Latest",
   views:Number.isFinite(Number(item.views)) && Number(item.views) > 0 ? Number(item.views) : null,
   sentiment:item.sentiment || ["Positive","Neutral","Mixed"][index % 3],
   trust:item.trust || Math.floor(82 + Math.random()*14),
-  image:(!Array.isArray(item.media) && item.media?.url) || chooseRelevantImage(item,index),
+  image:absoluteMediaUrl(extractSourceImage(item) || chooseRelevantImage(item,index) || "assets/newsneta-logo-header.png"),
   mediaDecision:(!Array.isArray(item.media) && item.media) || item.mediaDecision || null,
   imageLabel:item.imageLabel || (!Array.isArray(item.media) && item.media?.label) || "",
   imageRelevanceScore:Number(item.imageRelevanceScore ?? (!Array.isArray(item.media) ? item.media?.relevanceScore : 0) ?? 0),
@@ -2558,6 +2580,10 @@ function normalizeItems(items){
   description:item.description || item.aiSummary || item.summary || item.contentSnippet || item.content || "",
   body:item.body || item.fullArticle || ""
  })).filter(story=>{
+  if(!story.title){
+   console.warn(JSON.stringify({code:"NEWS_ARTICLE_INVALID",articleId:story.id,reason:"missing title",timestamp:new Date().toISOString()}));
+   return false;
+  }
   const time = new Date(story.pubDate || Date.now()).getTime();
   return Number.isNaN(time) || time >= freshCutoff;
  }).sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
@@ -2981,17 +3007,26 @@ function renderEditorialHomepage(){
  });
 }
 
-async function loadHomepageFeeds(){
- await Promise.all(homepageFeedCategories.map(async category=>{
+async function loadHomepageFeeds(force=false){
+ const queue = [...homepageFeedCategories];
+ const workers = Array.from({length:3}, async()=>{
+  while(queue.length){
+   const category = queue.shift();
   try{
-   const response = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(category)}&refresh=${Date.now()}`, {cache:"no-store"});
+   const refreshQuery = force ? `&refresh=${Date.now()}` : "";
+   const response = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(category)}${refreshQuery}`, {cache:"no-store"});
    if(!response.ok) throw new Error("feed unavailable");
    const data = await response.json();
-   homepageFeeds[category] = normalizeItems(data.items || []).slice(0,6);
+   const incoming = normalizeItems(data.items || []).slice(0,6);
+   if(incoming.length) homepageFeeds[category] = incoming;
   }catch(error){
-   homepageFeeds[category] = publishedCmsStories(category).slice(0,6);
+   const cmsItems = publishedCmsStories(category).slice(0,6);
+   if(!homepageFeeds[category]?.length && cmsItems.length) homepageFeeds[category] = cmsItems;
+   console.error(JSON.stringify({code:"NEWS_FETCH_FAILED",category,message:String(error.message || error),timestamp:new Date().toISOString()}));
   }
- }));
+  }
+ });
+ await Promise.all(workers);
  renderEditorialHomepage();
 }
 
@@ -3131,28 +3166,35 @@ function animateCounters(){
  });
 }
 
-async function loadNews(cat="telangana"){
+async function loadNews(cat="telangana", force=false){
  latestPage = 1;
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
-  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}&refresh=${Date.now()}&view=${view}`, {cache:"no-store"});
+  const refreshQuery = force ? `&refresh=${Date.now()}` : "";
+  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(cat)}${refreshQuery}&view=${view}`, {cache:"no-store"});
   if(!res.ok) throw new Error("news api failed");
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : "RSS fallback";
   newsApiCacheMode = data.cache || "fresh";
   newsApiServedAt = data.servedAt || data.updatedAt || new Date().toISOString();
   const liveItems = normalizeItems(data.items || []);
-  stories = mergePublishedStories(cat, liveItems);
+  const nextStories = mergePublishedStories(cat, liveItems);
+  if(!nextStories.length) throw new Error("news api returned no valid stories");
+  stories = nextStories;
+  lastRefreshError = "";
  }catch(error){
   newsSourceMode = "News service unavailable";
   newsApiCacheMode = "offline";
   newsApiServedAt = new Date().toISOString();
-  stories = mergePublishedStories(cat, []);
+  const cmsOnly = mergePublishedStories(cat, []);
+  if(!stories.length && cmsOnly.length) stories = cmsOnly;
+  lastRefreshError = "Unable to refresh news. Showing the latest available stories.";
+  console.error(JSON.stringify({code:"LATEST_REFRESH_FAILED",category:cat,message:String(error.message || error),timestamp:new Date().toISOString()}));
  }
  const latestTitle = document.getElementById("latestTitle");
  const categoryLabel = categories.find(([id])=>id === cat)?.[1] || "Latest";
  if(latestTitle) latestTitle.textContent = /news$/i.test(categoryLabel) ? categoryLabel : `${categoryLabel} News`;
- lastRefreshAt = new Date();
+ if(!lastRefreshError) lastRefreshAt = new Date();
  nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
  refreshCount += 1;
  render();
@@ -3211,12 +3253,13 @@ function setupDistricts(){
  populate();
 }
 
-async function loadDistrictNews(state, district){
- if(!state || !district) return loadNews(document.querySelector(".nav a.active")?.dataset.cat || "telangana");
+async function loadDistrictNews(state, district, force=false){
+ if(!state || !district) return loadNews(document.querySelector(".nav a.active")?.dataset.cat || "telangana", force);
  latestPage = 1;
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
-  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}&view=${view}`, {cache:"no-store"});
+  const refreshQuery = force ? `&refresh=${Date.now()}` : "";
+  const res = await fetch(`/.netlify/functions/news?cat=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}${refreshQuery}&view=${view}`, {cache:"no-store"});
   if(!res.ok) throw new Error("district news api failed");
   const data = await res.json();
   newsSourceMode = data.status === "ok" ? "Live RSS feed" : newsSourceMode;
@@ -3225,24 +3268,33 @@ async function loadDistrictNews(state, district){
   const liveItems = normalizeItems(data.items || []);
   const cmsPublished = publishedCmsDistrictStories(state, district);
   const baseItems = liveItems.map(story=>({...story, category: district}));
-  stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+  const nextStories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+  if(!nextStories.length) throw new Error("district feed returned no valid stories");
+  stories = nextStories;
+  lastRefreshError = "";
  }catch(error){
   newsSourceMode = "News service unavailable";
   newsApiCacheMode = "offline";
   newsApiServedAt = new Date().toISOString();
   const cmsPublished = publishedCmsDistrictStories(state, district);
   const baseItems = [];
-  stories = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+  const cmsOnly = [...cmsPublished, ...baseItems].filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+  if(!stories.length && cmsOnly.length) stories = cmsOnly;
+  lastRefreshError = "Unable to refresh district news. Showing the latest available stories.";
+  console.error(JSON.stringify({code:"NEWS_FETCH_FAILED",category:state,district,message:String(error.message || error),timestamp:new Date().toISOString()}));
  }
  const latestTitle = document.getElementById("latestTitle");
  if(latestTitle) latestTitle.textContent = `${district} District News`;
- lastRefreshAt = new Date();
+ if(!lastRefreshError) lastRefreshAt = new Date();
  nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
  refreshCount += 1;
  render();
 }
 
-async function refreshAllNews(){
+async function refreshAllNews(request){
+ if(isRefreshingNews) return;
+ const force = request === true || request?.type === "click";
+ isRefreshingNews = true;
  const buttons = [document.getElementById("menuRefreshNow"), document.getElementById("homeRefreshNow")].filter(Boolean);
  buttons.forEach(button=>{
   button.disabled = true;
@@ -3251,15 +3303,21 @@ async function refreshAllNews(){
  });
  const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "latest";
  try{
-  await Promise.all([
-   activeDistrictFilter ? loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district) : loadNews(activeCat),
-   loadHomepageFeeds()
-  ]);
+  await (activeDistrictFilter
+   ? loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district, force)
+   : loadNews(activeCat, force));
+  loadHomepageFeeds(force).catch(error=>console.error(JSON.stringify({
+   code:"NEWS_FETCH_FAILED",
+   category:"homepage-sections",
+   message:String(error.message || error),
+   timestamp:new Date().toISOString()
+  })));
  }finally{
   buttons.forEach(button=>{
    button.disabled = false;
    button.textContent = button.dataset.originalText || "Refresh news";
   });
+  isRefreshingNews = false;
   renderCricketWidget(true);
   renderLocalAlerts();
  }
@@ -3274,7 +3332,7 @@ function updateRefreshStatus(){
  const secondsLeft = nextRefreshAt ? Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000)) : 0;
  const countdown = secondsLeft ? `${Math.floor(secondsLeft / 60)}m ${String(secondsLeft % 60).padStart(2,"0")}s` : "starting";
  const mobileFlag = matchMedia("(max-width: 768px)").matches ? " • Mobile fresh" : "";
- const message = `Auto refresh every 5 min • ${newsSourceMode} • API ${newsApiCacheMode} ${apiTime} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
+ const message = lastRefreshError || `Auto refresh every 5 min • ${newsSourceMode} • API ${newsApiCacheMode} ${apiTime} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
  if(status) status.textContent = message;
  if(menuStatus) menuStatus.textContent = message;
 }
@@ -3930,7 +3988,7 @@ document.getElementById("openEdition").addEventListener("click",async ()=>{
 });
 document.getElementById("openEditionCard")?.addEventListener("click",openTodayEdition);
 document.getElementById("editionRefreshNow")?.addEventListener("click",async ()=>{
- await refreshAllNews();
+ await refreshAllNews(true);
  openTodayEdition();
 });
 document.getElementById("editionListen")?.addEventListener("click",()=>speakTelugu((editionItems().slice(0,3).map(story=>story.title).join(". "))));

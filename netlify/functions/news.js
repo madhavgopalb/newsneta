@@ -152,6 +152,27 @@ function json(statusCode, body, cacheSeconds = 0) {
   };
 }
 
+function logEvent(code, details = {}) {
+  console.error(JSON.stringify({
+    code,
+    timestamp: new Date().toISOString(),
+    ...details
+  }));
+}
+
+async function mapWithConcurrency(items, limit, mapper) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await mapper(items[index], index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 function hashViews(text) {
   let hash = 0;
   for (const char of text) hash = (hash << 5) - hash + char.charCodeAt(0);
@@ -590,8 +611,10 @@ exports.handler = async function handler(event) {
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
     }
-    const imageResults = await Promise.all(
-      rawItems.map((item, index) => articleImage(item, cat, district, index))
+    const imageResults = await mapWithConcurrency(
+      rawItems,
+      5,
+      (item, index) => articleImage(item, cat, district, index)
     );
     const items = rawItems.map((item, index) => {
       const title = publicTitle(item.title);
@@ -632,6 +655,21 @@ exports.handler = async function handler(event) {
     CACHE[cacheKey] = { time: Date.now(), data };
     return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
   } catch (error) {
+    logEvent("NEWS_FETCH_FAILED", {
+      category: cat,
+      district: district || null,
+      endpoint: feedUrl,
+      message: String(error.message || error)
+    });
+    const stale = CACHE[cacheKey]?.data;
+    if (stale?.items?.length) {
+      return json(200, {
+        ...stale,
+        status: "stale",
+        cache: "stale-if-error",
+        servedAt: new Date().toISOString()
+      }, 30);
+    }
     return json(200, {
       status: "fallback",
       category: cat,

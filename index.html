@@ -591,6 +591,10 @@ button{cursor:pointer}
 .news-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
 .thumb{aspect-ratio:16/11;background:linear-gradient(135deg,#d9e2f2,#fff);position:relative;overflow:hidden}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.12) contrast(1.05) brightness(1.04)}
+.media-state{display:grid;place-items:center;width:100%;height:100%;min-height:96px;padding:16px;background:#e8edf3;color:#64748b;font:800 12px/1.4 Inter,sans-serif;text-align:center}
+.media-failed{background:#fef2f2;color:#991b1b}
+.edition-lead>.media-state,.editorial-lead>.media-state{min-height:180px;aspect-ratio:16/10;border-radius:6px}
+.editorial-compact>.media-state,.reader-row>.media-state{width:112px;min-width:112px;aspect-ratio:4/3;min-height:0}
 .badge-row{position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
 .badge{border-radius:999px;background:rgba(0,0,0,.62);color:#fff;padding:5px 8px;font:800 11px/1 Inter,sans-serif;backdrop-filter:blur(8px)}
 .card-body{padding:13px}
@@ -942,6 +946,8 @@ button{cursor:pointer}
  box-shadow:var(--shadow);
 }
 .story-modal img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.story-video{width:100%;aspect-ratio:16/9;background:#000;margin:0 0 18px;overflow:hidden}
+.story-video video,.story-video iframe{width:100%;height:100%;border:0;display:block;object-fit:contain}
 .story-modal-body{padding:18px}
 .story-modal-body h2{font-size:clamp(24px,4vw,38px);line-height:1.16;margin:8px 0 12px}
 .story-modal-body p{color:var(--muted);font-size:16px}
@@ -1868,11 +1874,13 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v76";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v76";
+const APP_BUILD_VERSION = "newsneta-web-v78";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v78";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 const newsRequestTimeoutMs = 12000;
+const isLocalPreview = ["localhost","127.0.0.1","::1"].includes(location.hostname);
+const productionNewsOrigin = "https://newsneta.com";
 
 const districts = {
  telangana: [
@@ -1959,7 +1967,7 @@ function cmsArticleDefaults(article = {}){
  const now = new Date().toISOString();
  const headline = article.headline || article.title || "NewsNeta newsroom article";
  const categoryId = categoryIdForValue(article.category || "telangana");
- const imageUrl = article.image || article.thumbnail || "assets/newsneta-logo.jpg";
+ const imageUrl = article.image || article.thumbnail || null;
  return {
   id: article.id || `cms-${Date.now()}`,
   status: article.status || "draft",
@@ -1989,7 +1997,7 @@ function cmsArticleDefaults(article = {}){
   image: imageUrl,
   videoUrl: article.videoUrl || "",
   youtubeUrl: article.youtubeUrl || "",
-  thumbnail: article.thumbnail || imageUrl,
+  thumbnail: article.thumbnail || imageUrl || null,
   mediaCaption: article.mediaCaption || article.caption || headline,
   altText: article.altText || headline,
   mediaSource: article.mediaSource || "Reporter upload",
@@ -2008,7 +2016,7 @@ function cmsArticleDefaults(article = {}){
    storage_bucket:"reporter-uploads",
    storage_path:`reporter-uploads/${slugify(headline)}`,
    public_url:imageUrl,
-   thumbnail_url:article.thumbnail || imageUrl,
+   thumbnail_url:article.thumbnail || imageUrl || null,
    file_size:"metadata only",
    mime_type:imageUrl.match(/\.(mp4|mov|webm)(\?|$)/i) ? "video/mp4" : "image/webp",
    width:900,
@@ -2529,7 +2537,10 @@ async function fetchNewsPayload(url, context = {}){
  const controller = new AbortController();
  const timeout = setTimeout(()=>controller.abort(), newsRequestTimeoutMs);
  try{
-  const response = await fetch(url, {cache:"no-store", signal:controller.signal});
+  let response = await fetch(url, {cache:"no-store", signal:controller.signal});
+  if(response.status === 404 && isLocalPreview && String(url).startsWith("/.netlify/functions/news")){
+   response = await fetch(new URL(url, productionNewsOrigin).href, {cache:"no-store", signal:controller.signal});
+  }
   if(!response.ok) throw new Error(`news endpoint returned ${response.status}`);
   const payload = await response.json();
   if(!payload || !Array.isArray(payload.items)) throw new Error("news endpoint returned malformed data");
@@ -2566,24 +2577,51 @@ function extractSourceImage(item){
   item.media?.content?.url,
   item.media?.thumbnail?.url
  ].filter(Boolean).map(absoluteMediaUrl);
- return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url) && !/avatar|icon|sprite|1x1|pixel/i.test(url));
+ return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url) && !/avatar|icon|sprite|1x1|pixel|newsneta-logo|branded_fallback/i.test(url)) || null;
 }
 
 function chooseRelevantImage(story,index=0){
- const sourceImage = extractSourceImage(story);
- if(sourceImage) return sourceImage;
- const key = imageKeyFor(story);
- const options = imageLibrary[key] || imageLibrary.national;
- const seed = Array.from(`${story.title || ""}${story.category || ""}`).reduce((sum,ch)=>sum + ch.charCodeAt(0), index);
- return options[seed % options.length];
+ return extractSourceImage(story) || null;
 }
 
 function imageFallback(event){
  const img = event.target;
  img.onerror = null;
  console.warn(JSON.stringify({code:"ARTICLE_IMAGE_LOAD_FAILED",articleId:img.closest?.("[data-story-id]")?.dataset.storyId || null,url:img.currentSrc || img.src,timestamp:new Date().toISOString()}));
- img.src = absoluteMediaUrl("assets/newsneta-logo-header.png");
- img.alt = "NewsNeta";
+ img.removeAttribute("src");
+ img.hidden = true;
+ const host = img.parentElement;
+ if(host && !host.querySelector(".media-state")) host.insertAdjacentHTML("beforeend", `<span class="media-state media-failed" role="status">Image unavailable</span>`);
+}
+
+function storyImageMarkup(story, {alt = story?.title || "", loading = "lazy"} = {}){
+ const url = extractSourceImage(story || {});
+ if(!url) return `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`;
+ return `<img loading="${loading}" src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" onerror="imageFallback(event)">`;
+}
+
+function normalizeYoutubeUrl(value){
+ const raw = String(value || "").trim();
+ if(!raw) return null;
+ try{
+  const url = new URL(raw);
+  let id = "";
+  if(url.hostname === "youtu.be") id = url.pathname.slice(1).split("/")[0];
+  else if(/(^|\.)youtube\.com$/i.test(url.hostname)) id = url.searchParams.get("v") || url.pathname.match(/^\/(?:shorts|embed)\/([^/?]+)/)?.[1] || "";
+  return id ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}` : null;
+ }catch(error){ return null; }
+}
+
+function normalizeArticleVideo(item){
+ const mediaItems = Array.isArray(item?.media) ? item.media : [];
+ const mediaVideo = mediaItems.find(media=>media?.media_type === "video" && (media.public_url || media.url));
+ const youtube = normalizeYoutubeUrl(item?.youtubeUrl || item?.youtube_url || item?.embedUrl || mediaVideo?.youtube_url);
+ if(youtube) return {type:"youtube",url:youtube,posterUrl:absoluteMediaUrl(item?.posterUrl || item?.thumbnailUrl || "") || null};
+ const url = absoluteMediaUrl(item?.videoUrl || item?.video_url || mediaVideo?.public_url || mediaVideo?.url || "");
+ if(!url || !/^https:\/\//i.test(url)) return null;
+ if(/\.m3u8(?:$|\?)/i.test(url)) return {type:"hls",url,posterUrl:absoluteMediaUrl(item?.posterUrl || item?.thumbnailUrl || "") || null};
+ if(/\.(?:mp4|webm)(?:$|\?)/i.test(url)) return {type:"uploaded",url,posterUrl:absoluteMediaUrl(item?.posterUrl || item?.thumbnailUrl || "") || null};
+ return {type:"external",url,posterUrl:absoluteMediaUrl(item?.posterUrl || item?.thumbnailUrl || "") || null};
 }
 
 function normalizeItems(items){
@@ -2595,7 +2633,8 @@ function normalizeItems(items){
   views:Number.isFinite(Number(item.views)) && Number(item.views) > 0 ? Number(item.views) : null,
   sentiment:item.sentiment || ["Positive","Neutral","Mixed"][index % 3],
   trust:item.trust || Math.floor(82 + Math.random()*14),
-  image:absoluteMediaUrl(extractSourceImage(item) || chooseRelevantImage(item,index) || "assets/newsneta-logo-header.png"),
+  image:absoluteMediaUrl(extractSourceImage(item) || "") || null,
+  video:normalizeArticleVideo(item),
   mediaDecision:(!Array.isArray(item.media) && item.media) || item.mediaDecision || null,
   imageLabel:item.imageLabel || (!Array.isArray(item.media) && item.media?.label) || "",
   imageRelevanceScore:Number(item.imageRelevanceScore ?? (!Array.isArray(item.media) ? item.media?.relevanceScore : 0) ?? 0),
@@ -2634,7 +2673,7 @@ function storyCard(story){
  return `<article class="news-card">
   <a href="#" data-story-id="${escapeAttr(storyId)}">
    <div class="thumb">
-    <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}" onerror="imageFallback(event)">
+    ${storyImageMarkup(story)}
     <div class="badge-row"><span class="badge">${story.category}</span>${story.imageLabel ? `<span class="badge">${escapeHtml(story.imageLabel)}</span>` : reporterBadge}</div>
    </div>
   </a>
@@ -2651,7 +2690,7 @@ function renderReel(story){
  const storyId = story.id || story.link || story.title;
  return `<article class="reel" data-story-id="${escapeAttr(storyId)}">
   <div class="reel-progress"><span></span></div>
-  <img loading="lazy" src="${escapeAttr(story.image)}" alt="${escapeAttr(story.title)}" onerror="imageFallback(event)">
+  ${storyImageMarkup(story)}
   <div class="reel-content">
    <span class="tag">${icon(story.category)} ${story.category}</span>
    <h3>${story.title}</h3>
@@ -2711,7 +2750,7 @@ function renderTodayEdition(){
  const lead = items[0];
  topicHost.innerHTML = editionTopics.map(topic=>`<button class="topic-chip ${topic === activeEditionTopic ? "active" : ""}" type="button" data-edition-topic="${topic}">${topic}</button>`).join("");
  leadHost.innerHTML = `<article class="edition-lead">
-  <img loading="lazy" src="${escapeAttr(lead.image)}" alt="${escapeAttr(lead.title)}" onerror="imageFallback(event)">
+  ${storyImageMarkup(lead)}
   <div>
    <span class="tag">${lead.category || "Top Story"}</span>
    <h3>${lead.title}</h3>
@@ -2720,7 +2759,7 @@ function renderTodayEdition(){
   </div>
  </article>`;
  listHost.innerHTML = items.slice(1,7).map(story=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(story.id || story.link || story.title)}">
-  <img loading="lazy" src="${escapeAttr(story.image)}" alt="" onerror="imageFallback(event)">
+  ${storyImageMarkup(story,{alt:""})}
   <h3>${story.title}</h3>
   <p class="summary">${escapeHtml(storySummary(story))}</p>
   <small>${story.category || "News"} • ${readMinutes(story)} min</small>
@@ -3014,12 +3053,12 @@ function editorialSectionMarkup(category, items){
  return `<div class="editorial-section-head"><h2>${labels[category] || category}</h2><button type="button" data-category-tile="${category}">View all →</button></div>
   <div class="editorial-grid">
    <article class="editorial-lead" data-story-id="${storyId(lead)}">
-    <img loading="lazy" src="${escapeAttr(lead.image)}" alt="${escapeAttr(lead.title)}" onerror="imageFallback(event)">
+    ${storyImageMarkup(lead)}
     <h3>${escapeHtml(lead.title)}</h3>
     <p>${escapeHtml(storySummary(lead))}</p>
     <time class="story-time">${relativeStoryTime(lead.pubDate)}</time>
    </article>
-   <div class="editorial-list">${supporting.slice(0,4).map(story=>`<article class="editorial-compact" data-story-id="${storyId(story)}"><img loading="lazy" src="${escapeAttr(story.image)}" alt=""><div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`).join("")}</div>
+   <div class="editorial-list">${supporting.slice(0,4).map(story=>`<article class="editorial-compact" data-story-id="${storyId(story)}">${storyImageMarkup(story,{alt:""})}<div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`).join("")}</div>
   </div>`;
 }
 
@@ -3087,9 +3126,11 @@ function render(){
 }
 
 function renderHeroSlide(){
- const heroStory = heroStories[heroIndex] || {id:"news-unavailable",title:"తాజా వార్తలు తాత్కాలికంగా అందుబాటులో లేవు",category:"NewsNeta",description:"కొద్దిసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.",image:"assets/newsneta-logo-header.png",pubDate:new Date().toISOString()};
- document.getElementById("hero").classList.toggle("branded-placeholder", /newsneta-logo/i.test(String(heroStory.image || "")));
- document.getElementById("hero").style.setProperty("--hero-image", `url("${heroStory.image}")`);
+ const heroStory = heroStories[heroIndex] || {id:"news-unavailable",title:"తాజా వార్తలు తాత్కాలికంగా అందుబాటులో లేవు",category:"NewsNeta",description:"కొద్దిసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.",image:null,pubDate:new Date().toISOString()};
+ const heroImage = extractSourceImage(heroStory);
+ document.getElementById("hero").classList.toggle("branded-placeholder", !heroImage);
+ if(heroImage) document.getElementById("hero").style.setProperty("--hero-image", `url("${heroImage}")`);
+ else document.getElementById("hero").style.removeProperty("--hero-image");
  document.getElementById("hero").dataset.storyId = heroStory.id || heroStory.link || heroStory.title;
  document.getElementById("heroTitle").textContent = heroStory.title;
  document.getElementById("heroSummary").textContent = storySummary(heroStory);
@@ -3261,7 +3302,7 @@ function setupDistricts(){
   try{
    const data = await fetchNewsPayload(`/.netlify/functions/news?cat=${encodeURIComponent(homeStateSelect.value)}&district=${encodeURIComponent(district)}&refresh=${Date.now()}`, {category:homeStateSelect.value,district});
    const items = normalizeItems(data.items || []);
-   host.innerHTML = items.length ? items.slice(0,6).map(story=>`<article class="editorial-compact" data-story-id="${escapeAttr(story.id || story.link || story.title)}"><img loading="lazy" src="${escapeAttr(story.image)}" alt=""><div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`).join("") : `<div class="editorial-empty">No recent ${escapeHtml(district)} stories are available.</div>`;
+   host.innerHTML = items.length ? items.slice(0,6).map(story=>`<article class="editorial-compact" data-story-id="${escapeAttr(story.id || story.link || story.title)}">${storyImageMarkup(story,{alt:""})}<div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`).join("") : `<div class="editorial-empty">No recent ${escapeHtml(district)} stories are available.</div>`;
   }catch(error){
    host.innerHTML = `<div class="editorial-empty">District news is temporarily unavailable.</div>`;
   }
@@ -3575,6 +3616,14 @@ function storyMediaGallery(story){
  return `<h3>Media Gallery</h3><div class="media-list">${images.slice(0,8).map(item=>`<div class="media-item"><img src="${escapeAttr(item.public_url)}" alt="${escapeAttr(item.alt_text || story.title)}" onerror="imageFallback(event)"><small>${escapeHtml(item.caption || item.original_file_name || "")}</small></div>`).join("")}</div>`;
 }
 
+function storyVideoMarkup(story){
+ const video = story?.video || normalizeArticleVideo(story);
+ if(!video) return "";
+ if(video.type === "youtube") return `<div class="story-video"><iframe src="${escapeAttr(video.url)}" title="${escapeAttr(story.title)}" loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
+ if(video.type === "uploaded" || video.type === "hls") return `<div class="story-video"><video src="${escapeAttr(video.url)}" ${video.posterUrl ? `poster="${escapeAttr(video.posterUrl)}"` : ""} controls playsinline preload="metadata">Your browser cannot play this video.</video></div>`;
+ return `<p><a class="pill-btn" href="${escapeAttr(video.url)}" target="_blank" rel="noopener noreferrer">Open video</a></p>`;
+}
+
 function renderStorySummaryMode(story, mode){
  const copy = document.getElementById("storyModalCopy");
  if(!copy) return;
@@ -3586,7 +3635,7 @@ function renderStorySummaryMode(story, mode){
   copy.innerHTML = `<h3>One Minute Brief</h3><p>${escapeHtml(makeSummary(story.title))}</p><ul><li>What happened: ${escapeHtml(story.title)}</li><li>Why it matters: local impact, public services and official updates are being tracked.</li><li>Next update: this story refreshes when verified feed data changes.</li></ul>`;
   return;
  }
- copy.innerHTML = buildExpandedArticle(story) + storyMediaGallery(story);
+ copy.innerHTML = storyVideoMarkup(story) + buildExpandedArticle(story) + storyMediaGallery(story);
 }
 
 function playShortNews(id, button){
@@ -3815,6 +3864,19 @@ function scrollStoryModalToTop(){
  });
 }
 
+function setStoryModalMedia(story){
+ const image = document.getElementById("storyModalImage");
+ if(!image) return;
+ const url = extractSourceImage(story);
+ image.onerror = imageFallback;
+ image.alt = story.title || "";
+ image.hidden = !url;
+ if(url) image.src = url;
+ else image.removeAttribute("src");
+ image.parentElement?.querySelectorAll(".media-state").forEach(item=>item.remove());
+ if(!url) image.insertAdjacentHTML("afterend", `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`);
+}
+
 function openStoryDetail(id){
  const story = findStoryById(id);
  if(!story) return;
@@ -3824,8 +3886,7 @@ function openStoryDetail(id){
   .filter(item => item.title !== story.title && item.category === story.category)
   .concat(stories.filter(item => item.title !== story.title))
   .slice(0,3);
- document.getElementById("storyModalImage").src = story.image;
- document.getElementById("storyModalImage").alt = story.title;
+ setStoryModalMedia(story);
  document.getElementById("storyModalCategory").textContent = story.category || "News";
  document.getElementById("storyModalTitle").textContent = story.title;
  document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story)} min read`;
@@ -3850,8 +3911,7 @@ function openStoryDetail(id){
   .concat(stories.filter(item => item.title !== story.title))
   .slice(0,3);
  const copy = `NewsNeta Desk: ${story.title} అంశంపై తాజా సమాచారం ప్రకారం సంబంధిత పరిణామాలు వేగంగా మారుతున్నాయి. ప్రజలపై ప్రభావం, స్థానిక స్పందన, అధికారిక ప్రకటనలు, తదుపరి నిర్ణయాలపై NewsNeta నిరంతరం అప్డేట్లు అందిస్తుంది. మరిన్ని వివరాలు అందుబాటులోకి వచ్చిన వెంటనే ఈ కథనం నవీకరించబడుతుంది.`;
- document.getElementById("storyModalImage").src = story.image;
- document.getElementById("storyModalImage").alt = story.title;
+ setStoryModalMedia(story);
  document.getElementById("storyModalCategory").textContent = story.category || "News";
  document.getElementById("storyModalTitle").textContent = story.title;
  document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story)} min read`;
@@ -3867,7 +3927,7 @@ function openStoryDetail(id){
   <div class="dash-row"><span>Trust score</span><b>${story.trust || 91}%</b></div>
   <div class="dash-row"><span>Reader mode</span><b>Voice, share, save</b></div>
  `;
- document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${item.id || item.link || item.title}"><img src="${item.image}" alt=""><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
+ document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}">${storyImageMarkup(item,{alt:""})}<h3>${escapeHtml(item.title)}</h3><small>${readMinutes(item)} min</small></a>`).join("");
  document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${makeSummary(story.title)}`);
  document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
  document.getElementById("storyShare").onclick = async ()=>{
@@ -3895,8 +3955,7 @@ function openStoryDetail(id){
   .filter(item => item.title !== story.title && item.category === story.category)
   .concat(stories.filter(item => item.title !== story.title))
   .slice(0,4);
- document.getElementById("storyModalImage").src = story.image;
- document.getElementById("storyModalImage").alt = story.title;
+ setStoryModalMedia(story);
  document.getElementById("storyModalCategory").textContent = story.category || "News";
  document.getElementById("storyModalTitle").textContent = story.title;
  document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story) + 2} min read`;
@@ -3904,7 +3963,7 @@ function openStoryDetail(id){
  document.getElementById("storyModalCopy").classList.remove("reader-large");
  if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
  else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
- document.getElementById("storyModalCopy").innerHTML = buildExpandedArticle(story) + storyMediaGallery(story);
+ document.getElementById("storyModalCopy").innerHTML = storyVideoMarkup(story) + buildExpandedArticle(story) + storyMediaGallery(story);
  document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
  document.querySelectorAll("#storyLike,#storyImportant,#storyComment").forEach(button=>button.classList.remove("active"));
  if("speechSynthesis" in window) speechSynthesis.cancel();
@@ -3918,7 +3977,7 @@ function openStoryDetail(id){
    <span>${readMinutes(story) + 2} min read</span>
   </div>
  `;
- document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}"><img src="${escapeAttr(item.image)}" alt="" onerror="imageFallback(event)"><h3>${item.title}</h3><small>${readMinutes(item)} min</small></a>`).join("");
+ document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}">${storyImageMarkup(item,{alt:""})}<h3>${escapeHtml(item.title)}</h3><small>${readMinutes(item)} min</small></a>`).join("");
  document.getElementById("storyModalListen").onclick = ()=>speakTelugu(`${story.title}. ${cleanText(document.getElementById("storyModalCopy").innerText).slice(0,900)}`);
  document.getElementById("storyFontToggle").onclick = ()=>document.getElementById("storyModalCopy").classList.toggle("reader-large");
  document.querySelectorAll("[data-social-share]").forEach(button=>{
@@ -5080,7 +5139,18 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pageshow", event=>refreshMobileFreshness(Boolean(event.persisted)));
 window.addEventListener("focus", ()=>refreshMobileFreshness(false));
 window.addEventListener("online", refreshAllNews);
-if("serviceWorker" in navigator){
+async function disableLocalPreviewServiceWorker(){
+ if(!isLocalPreview || !("serviceWorker" in navigator)) return;
+ const registrations = await navigator.serviceWorker.getRegistrations();
+ await Promise.all(registrations.map(registration=>registration.unregister()));
+ if("caches" in window){
+  const keys = await caches.keys();
+  await Promise.all(keys.filter(key=>key.startsWith("newsneta-")).map(key=>caches.delete(key)));
+ }
+}
+if(isLocalPreview){
+ disableLocalPreviewServiceWorker().catch(error=>console.warn("LOCAL_SW_CLEANUP_FAILED", error));
+}else if("serviceWorker" in navigator){
  let refreshingForNewWorker = false;
  navigator.serviceWorker.addEventListener("controllerchange",()=>{
   if(refreshingForNewWorker) return;
@@ -5099,7 +5169,7 @@ if("serviceWorker" in navigator){
    });
   });
   setInterval(()=>registration.update?.(), 15 * 60 * 1000);
- }).catch(()=>{});
+ }).catch(error=>console.error("SERVICE_WORKER_REGISTRATION_FAILED", error));
 }
 enforceFreshClientShell().catch(()=>{});
 </script>

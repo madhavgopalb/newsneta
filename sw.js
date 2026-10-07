@@ -1,7 +1,8 @@
-const CACHE_VERSION = "v76";
+const CACHE_VERSION = "v78";
 const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
 const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
-const NEWSNETA_CACHE_PREFIXES = ["newsneta-pwa-", "newsneta-api-"];
+const MEDIA_CACHE_NAME = `newsneta-media-${CACHE_VERSION}`;
+const NEWSNETA_CACHE_PREFIXES = ["newsneta-pwa-", "newsneta-api-", "newsneta-media-"];
 const APP_SHELL = [
   "/manifest.json",
   "/assets/newsneta-logo.jpg",
@@ -22,7 +23,8 @@ self.addEventListener("install", event => {
 function isObsoleteNewsNetaCache(key) {
   return NEWSNETA_CACHE_PREFIXES.some(prefix => key.startsWith(prefix))
     && key !== CACHE_NAME
-    && key !== API_CACHE_NAME;
+    && key !== API_CACHE_NAME
+    && key !== MEDIA_CACHE_NAME;
 }
 
 async function cleanupOldNewsNetaCaches() {
@@ -71,6 +73,30 @@ async function handleNewsRequest(request) {
   }
 }
 
+function isCacheableImage(response) {
+  return Boolean(response?.ok && response.headers.get("content-type")?.toLowerCase().startsWith("image/"));
+}
+
+async function handleImageRequest(request) {
+  const cache = await caches.open(MEDIA_CACHE_NAME);
+  const cached = await cache.match(request);
+  const network = fetch(request).then(async response => {
+    if (isCacheableImage(response)) {
+      try {
+        await cache.put(request, response.clone());
+      } catch (error) {
+        console.error("MEDIA_CACHE_WRITE_FAILED", error);
+      }
+    }
+    return response;
+  });
+  if (cached) {
+    network.catch(error => console.error("MEDIA_REVALIDATE_FAILED", error));
+    return cached;
+  }
+  return network;
+}
+
 self.addEventListener("activate", event => {
   event.waitUntil(
     Promise.all([
@@ -94,6 +120,16 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
+
+  if (request.destination === "video" || request.headers.has("range")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  if (request.destination === "image") {
+    event.respondWith(handleImageRequest(request).catch(() => new Response("", { status: 503 })));
+    return;
+  }
 
   if (url.origin !== self.location.origin) {
     event.respondWith(

@@ -222,14 +222,14 @@ function visualStatus(score, imageType) {
 }
 
 function mediaDecision({
-  url = BRANDED_FALLBACK,
-  source = "NewsNeta",
+  url = null,
+  source = "",
   originalUrl = "",
   photographer = "",
-  copyrightOwner = "NewsNeta",
-  license = "NewsNeta branded asset",
+  copyrightOwner = "",
+  license = "",
   attributionRequired = false,
-  imageType = "branded_fallback",
+  imageType = "missing",
   label = "",
   score = 10,
   intent = {},
@@ -266,7 +266,17 @@ function mediaDecision({
 }
 
 function brandedFallbackDecision(intent, reason = "No sufficiently relevant, rights-aware image was found") {
-  return mediaDecision({intent, reasons: [reason]});
+  return mediaDecision({
+    url: null,
+    source: "",
+    originalUrl: "",
+    copyrightOwner: "",
+    license: "",
+    imageType: "missing",
+    score: 0,
+    intent,
+    reasons: [reason]
+  });
 }
 
 function expandedNewsDescription(title, cat, district, seedText = "") {
@@ -345,7 +355,7 @@ async function fetchGNewsItems(cat, district) {
           intent,
           reasons: ["Image was supplied with the same provider article", "Headline and image share the provider record"]
         })
-      : await commonsImage(intent.query || imageSearchQuery(title, cat, district), intent);
+      : brandedFallbackDecision(intent, "The licensed provider did not supply an article image");
     return {
       id: article.url || `${cat}-gnews-${index}`,
       title,
@@ -356,6 +366,8 @@ async function fetchGNewsItems(cat, district) {
       district: district || null,
       state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
       image: media.url,
+      imageUrl: media.url,
+      video: null,
       media,
       imageLabel: media.label,
       imageRelevanceScore: media.relevanceScore,
@@ -492,7 +504,7 @@ async function commonsImage(query, intent = {}) {
     }
     const info = best.page.imageinfo?.[0] || {};
     const decision = mediaDecision({
-      url: info.thumburl || info.url || BRANDED_FALLBACK,
+      url: info.thumburl || info.url || null,
       source: "Wikimedia Commons",
       imageType: "archive",
       label: "FILE PHOTO",
@@ -532,7 +544,21 @@ function extractMetaImage(html = "") {
 async function articleImage(item, cat, district, index) {
   const title = publicTitle(item.title);
   const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
-  const licensedFallback = () => commonsImage(intent.query || imageSearchQuery(title, cat, district), intent);
+  const feedImage = item.enclosure?.url || item.enclosure?.link || item.media?.content?.url || item.media?.thumbnail?.url || "";
+  if (trustedImageUrl(feedImage)) {
+    return mediaDecision({
+      url: feedImage,
+      originalUrl: feedImage,
+      source: "Article feed",
+      copyrightOwner: "Article publisher",
+      license: "Publisher-associated editorial image; verify syndication terms",
+      imageType: "event_candidate",
+      score: 86,
+      intent,
+      reasons: ["Image was supplied in the same RSS article record"]
+    });
+  }
+  const licensedFallback = () => brandedFallbackDecision(intent, "The article did not expose a usable associated image");
   if (!item.link) return await licensedFallback();
 
   const controller = new AbortController();
@@ -581,7 +607,17 @@ exports.handler = async function handler(event) {
   }
 
   try {
-    const licensedItems = await fetchGNewsItems(cat, district);
+    let licensedItems = null;
+    try {
+      licensedItems = await fetchGNewsItems(cat, district);
+    } catch (error) {
+      logEvent("NEWS_PROVIDER_FAILED", {
+        provider: "gnews",
+        category: cat,
+        district: district || null,
+        message: error instanceof Error ? error.message : "Licensed news provider request failed"
+      });
+    }
     if (licensedItems) {
       const data = {
         status: "ok",
@@ -629,6 +665,8 @@ exports.handler = async function handler(event) {
         district: district || null,
         state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
         image: imageResults[index].url,
+        imageUrl: imageResults[index].url,
+        video: null,
         media: imageResults[index],
         imageLabel: imageResults[index].label,
         imageRelevanceScore: imageResults[index].relevanceScore,

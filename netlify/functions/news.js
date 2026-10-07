@@ -12,7 +12,7 @@ const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
 const FRESH_NEWS_DAYS = 3;
 const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
-const AUTO_IMAGE_THRESHOLD = 70;
+const AUTO_IMAGE_THRESHOLD = 55;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -42,7 +42,7 @@ const IMAGE_SETS = {
     "https://images.unsplash.com/photo-1590253230532-a67f6bc61c9e?auto=format&fit=crop&w=1000&q=76"
   ],
   ap: [
-    "https://images.unsplash.com/photo-1627894006066-b457d2fa7f6b?auto=format&fit=crop&w=1000&q=76",
+    "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1000&q=76",
     "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=76"
   ],
   politics: [
@@ -279,6 +279,22 @@ function brandedFallbackDecision(intent, reason = "No sufficiently relevant, rig
   });
 }
 
+function representativeImageDecision(title, cat, district, index, intent, reason) {
+  const url = selectImage(title, cat, district, index);
+  return mediaDecision({
+    url,
+    originalUrl: url,
+    source: "Unsplash",
+    copyrightOwner: "Unsplash contributor",
+    license: "Unsplash License",
+    imageType: "representative",
+    label: "REPRESENTATIVE IMAGE",
+    score: 62,
+    intent,
+    reasons: [reason, "Selected from the matching NewsNeta topic photo collection"]
+  });
+}
+
 function expandedNewsDescription(title, cat, district, seedText = "") {
   const cleanTitle = publicTitle(title);
   const sourceLine = cleanText(seedText)
@@ -343,7 +359,7 @@ async function fetchGNewsItems(cat, district) {
     const title = publicTitle(article.title);
     const description = expandedNewsDescription(title, cat, district, article.description);
     const intent = extractImageIntent(title, cat, district, description);
-    const media = trustedImageUrl(article.image)
+    let media = trustedImageUrl(article.image)
       ? mediaDecision({
           url: article.image,
           originalUrl: article.image,
@@ -355,7 +371,14 @@ async function fetchGNewsItems(cat, district) {
           intent,
           reasons: ["Image was supplied with the same provider article", "Headline and image share the provider record"]
         })
-      : brandedFallbackDecision(intent, "The licensed provider did not supply an article image");
+      : null;
+    if (!media) {
+      const query = imageSearchQuery(title, cat, district);
+      const archive = await commonsImage(query, {...intent, query});
+      media = archive.url
+        ? archive
+        : representativeImageDecision(title, cat, district, index, intent, "The licensed provider did not supply an article image");
+    }
     return {
       id: article.url || `${cat}-gnews-${index}`,
       title,
@@ -408,6 +431,12 @@ function imageSearchQuery(title, cat, district) {
   const text = `${title} ${cat}`.toLowerCase();
   const asciiWords = String(title).match(/[a-z][a-z0-9-]{3,}/gi)?.slice(0, 4).join(" ");
   if (asciiWords && !/telangana|andhra|pradesh|news|update|states/i.test(asciiWords)) return `${asciiWords} India`;
+  if (/yoga|యోగ/.test(text)) return "yoga competition India";
+  if (/bus|rtc|depot|బస్సు|డిపో|ఆర్టీసీ/.test(text)) return "public bus transport India";
+  if (/forest|tribal|గిరిజన|అటవీ|ఫారెస్ట్/.test(text)) return "tribal forest India";
+  if (/cabinet|కేబినెట్|secretariat|సచివాలయ/.test(text)) return cat === "ap" ? "Andhra Pradesh government secretariat" : "Telangana government secretariat";
+  if (/court|judge|కోర్టు|న్యాయ/.test(text)) return "court building India";
+  if (/police|arrest|crime|పోలీస్|అరెస్ట్|నేరం/.test(text)) return "police India";
   if (/cricket|ipl|sports|క్రికెట్|క్రీడ/.test(text)) return "cricket stadium India";
   if (/cinema|movie|film|సినిమా|బాక్సాఫీస్/.test(text)) return "Telugu cinema";
   if (/school|education|results|గురుకుల|పాఠశాల|విద్య/.test(text)) return "school education India";
@@ -455,8 +484,9 @@ function commonsMetadata(info = {}) {
   };
 }
 
-function candidateRelevance(page = {}, intent = {}) {
+function candidateRelevance(page = {}, intent = {}, query = "") {
   const haystack = `${page.title || ""} ${page.imageinfo?.[0]?.extmetadata?.ImageDescription?.value || ""}`.toLowerCase();
+  const queryTokens = String(query).toLowerCase().match(/[a-z]{4,}/g) || [];
   const tokens = [...(intent.entities || []), ...(intent.event || []), intent.location, intent.category]
     .filter(Boolean)
     .map(value => String(value).toLowerCase());
@@ -464,7 +494,8 @@ function candidateRelevance(page = {}, intent = {}) {
   const entityMatch = (intent.entities || []).some(entity => haystack.includes(String(entity).toLowerCase()));
   const eventMatch = (intent.event || []).some(event => haystack.includes(String(event).toLowerCase()));
   const locationMatch = intent.location && haystack.includes(String(intent.location).toLowerCase());
-  return Math.min(86, 48 + matches * 8 + (entityMatch ? 10 : 0) + (eventMatch ? 8 : 0) + (locationMatch ? 8 : 0));
+  const queryMatches = [...new Set(queryTokens)].filter(token => haystack.includes(token)).length;
+  return Math.min(88, 48 + matches * 8 + queryMatches * 5 + (entityMatch ? 10 : 0) + (eventMatch ? 8 : 0) + (locationMatch ? 8 : 0));
 }
 
 async function commonsImage(query, intent = {}) {
@@ -496,7 +527,7 @@ async function commonsImage(query, intent = {}) {
     const pages = Object.values(payload.query?.pages || {});
     const ranked = pages
       .filter(page => commonsPhotoOk(page, query))
-      .map(page => ({page, score: candidateRelevance(page, intent)}))
+      .map(page => ({page, score: candidateRelevance(page, intent, query)}))
       .sort((a, b) => b.score - a.score);
     const best = ranked[0];
     if (!best || best.score < AUTO_IMAGE_THRESHOLD) {
@@ -527,18 +558,22 @@ function trustedImageUrl(url = "") {
     && !/s0-w300/i.test(url);
 }
 
-function extractMetaImage(html = "") {
+function extractMetaImages(html = "") {
   const patterns = [
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
     /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i
   ];
+  const images = [];
   for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match?.[1]) return match[1].replace(/&amp;/g, "&");
+    for (const match of html.matchAll(new RegExp(pattern.source, `${pattern.flags}g`))) {
+      if (match?.[1]) images.push(match[1].replace(/&amp;/g, "&"));
+    }
   }
-  return "";
+  const imageSrc = html.match(/<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)/i)?.[1];
+  if (imageSrc) images.push(imageSrc.replace(/&amp;/g, "&"));
+  return [...new Set(images)];
 }
 
 async function articleImage(item, cat, district, index) {
@@ -558,11 +593,15 @@ async function articleImage(item, cat, district, index) {
       reasons: ["Image was supplied in the same RSS article record"]
     });
   }
-  const licensedFallback = () => brandedFallbackDecision(intent, "The article did not expose a usable associated image");
+  const licensedFallback = async reason => {
+    const query = imageSearchQuery(title, cat, district);
+    const archive = await commonsImage(query, {...intent, query});
+    return archive.url ? archive : representativeImageDecision(title, cat, district, index, intent, reason);
+  };
   if (!item.link) return await licensedFallback();
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2200);
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     const response = await fetch(item.link, {
       signal: controller.signal,
@@ -571,8 +610,13 @@ async function articleImage(item, cat, district, index) {
         "Accept": "text/html,application/xhtml+xml"
       }
     });
+    if (!response.ok) return await licensedFallback(`Article page returned HTTP ${response.status}`);
     const html = await response.text();
-    const image = extractMetaImage(html);
+    const image = extractMetaImages(html)
+      .map(value => {
+        try { return new URL(value, item.link).href; } catch (error) { return ""; }
+      })
+      .find(trustedImageUrl);
     return trustedImageUrl(image) ? mediaDecision({
       url: image,
       originalUrl: image,
@@ -583,9 +627,9 @@ async function articleImage(item, cat, district, index) {
       score: 86,
       intent,
       reasons: ["Image is declared by the same article as its social image", "Candidate is tied to the article URL"]
-    }) : await licensedFallback();
+    }) : await licensedFallback("The article did not expose a usable associated image");
   } catch (error) {
-    return await licensedFallback();
+    return await licensedFallback("The publisher page could not be inspected for an associated image");
   } finally {
     clearTimeout(timeout);
   }

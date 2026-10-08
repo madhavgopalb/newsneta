@@ -184,13 +184,22 @@ function inferSentiment(index) {
 }
 
 function publicTitle(title = "") {
-  return String(title)
+  const clean = String(title)
     .replace(/^RTV\s+Digital\.\s*\.\s*/iu, "")
     .replace(/#[\p{L}\p{N}_-]+/gu, "")
     .replace(/\s+-\s+[^-]{2,80}$/u, "")
     .replace(/\s*\|\s*[^|]{2,80}$/u, "")
     .replace(/\s+/g, " ")
     .trim();
+  const mixedPrefix = clean.match(/^([A-Za-z][A-Za-z0-9 .&/-]{1,48}):\s*(.*[\u0C00-\u0C7F].*)$/u);
+  return mixedPrefix ? mixedPrefix[2].trim() : clean;
+}
+
+function publisherFromItem(item = {}) {
+  const explicit = cleanText(item.source?.name || item.creator || item.author || "");
+  if (explicit) return explicit;
+  const rawTitle = String(item.title || "");
+  return cleanText(rawTitle.match(/\s+-\s+([^-]{2,80})$/u)?.[1] || rawTitle.match(/\s*\|\s*([^|]{2,80})$/u)?.[1] || "");
 }
 
 function cleanText(value = "") {
@@ -303,9 +312,10 @@ function expandedNewsDescription(title, cat, district, seedText = "") {
     .replace(/\s+(facebook|instagram|youtube|x)\.com\s*$/i, "")
     .replace(/\s+/g, " ")
     .trim();
-  return sourceLine && sourceLine.length > 40
-    ? sourceLine
-    : cleanTitle;
+  const normalizedTitle = cleanTitle.toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  const normalizedSource = sourceLine.toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  if (!sourceLine || sourceLine.length < 40 || normalizedSource === normalizedTitle || normalizedSource.startsWith(normalizedTitle)) return "";
+  return sourceLine;
 }
 
 function articleTime(item = {}) {
@@ -377,7 +387,7 @@ async function fetchGNewsItems(cat, district) {
       const archive = await commonsImage(query, {...intent, query});
       media = archive.url
         ? archive
-        : representativeImageDecision(title, cat, district, index, intent, "The licensed provider did not supply an article image");
+        : brandedFallbackDecision(intent, "The licensed provider did not supply a sufficiently relevant article image");
     }
     return {
       id: article.url || `${cat}-gnews-${index}`,
@@ -385,6 +395,7 @@ async function fetchGNewsItems(cat, district) {
       link: article.url || "#",
       pubDate: article.publishedAt,
       desk: "NewsNeta",
+      source: cleanText(article.source?.name || ""),
       category: district || CATEGORY_LABELS[cat] || "Telugu",
       district: district || null,
       state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
@@ -396,8 +407,8 @@ async function fetchGNewsItems(cat, district) {
       imageRelevanceScore: media.relevanceScore,
       imageStatus: media.visualStatus,
       views: null,
-      trust: Math.max(84, 98 - (index % 8)),
-      sentiment: inferSentiment(index),
+      trust: null,
+      sentiment: null,
       description,
       body: description,
       aiSummary: description
@@ -596,7 +607,7 @@ async function articleImage(item, cat, district, index) {
   const licensedFallback = async reason => {
     const query = imageSearchQuery(title, cat, district);
     const archive = await commonsImage(query, {...intent, query});
-    return archive.url ? archive : representativeImageDecision(title, cat, district, index, intent, reason);
+    return archive.url ? archive : brandedFallbackDecision(intent, reason);
   };
   if (!item.link) return await licensedFallback();
 
@@ -705,6 +716,7 @@ exports.handler = async function handler(event) {
         link: item.link,
         pubDate: item.pubDate || item.isoDate,
         desk: "NewsNeta",
+        source: publisherFromItem(item),
         category: district || CATEGORY_LABELS[cat] || "Telugu",
         district: district || null,
         state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
@@ -716,8 +728,8 @@ exports.handler = async function handler(event) {
         imageRelevanceScore: imageResults[index].relevanceScore,
         imageStatus: imageResults[index].visualStatus,
         views: null,
-        trust: Math.max(76, 96 - (index % 9)),
-        sentiment: inferSentiment(index),
+        trust: null,
+        sentiment: null,
         description,
         body: description,
         aiSummary: description

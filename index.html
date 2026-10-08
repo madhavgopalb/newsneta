@@ -559,7 +559,7 @@ button{cursor:pointer}
 .side-stack .glass-panel{height:100%;padding:0;overflow:hidden}
 .side-stack .panel-title{display:block;margin:0}
 .side-stack .panel-title h3,.panel-live-tag{display:none}
-.side-stack .counter-list{max-height:390px;overflow:auto;padding:8px 18px 0;scrollbar-color:rgba(21,155,216,.35) transparent}
+.side-stack .counter-list{max-height:none;overflow:visible;padding:8px 18px 0}
 .side-stack .counter-row{padding:14px 0}
 .side-stack .counter-row strong{font-size:17px;line-height:1.42}
 .panel-title,.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
@@ -605,6 +605,7 @@ button{cursor:pointer}
 .card-body h3{margin:0 0 10px;font-size:20px;line-height:1.3;font-weight:900;overflow-wrap:anywhere}
 .summary{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px;overflow-wrap:anywhere}
 .news-card .summary{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.summary:empty,.hero p:empty,.editorial-lead p:empty{display:none}
 .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font:700 12px/1 Inter,sans-serif}
 .refresh-note{margin-top:9px;color:var(--muted);font:700 11px/1.3 Inter,sans-serif}
 .voice-btn{border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);height:34px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font-weight:800}
@@ -676,10 +677,9 @@ button{cursor:pointer}
 .category-tile strong{font-size:15px}
 .category-tile span{font:800 18px/1 Inter,sans-serif;color:var(--brand)}
 #latestGrid{
- max-height:760px;
- overflow:auto;
- padding-right:6px;
- scrollbar-width:thin;
+ max-height:none;
+ overflow:visible;
+ padding-right:0;
  grid-template-columns:repeat(2,minmax(0,1fr));
 }
 #latestGrid .news-card:first-child{
@@ -1290,14 +1290,16 @@ body{background:var(--bg)}
 .hero-grid{grid-template-columns:minmax(0,1.75fr) minmax(320px,.75fr);align-items:stretch}
 .hero{aspect-ratio:auto;min-height:0;overflow:hidden}
 .hero.branded-placeholder::before{background-size:contain;background-repeat:no-repeat;background-color:#fff}
+.hero.branded-placeholder::before{display:none}
 .hero h2{max-width:820px}
 .side-stack{min-height:0}
 .side-stack .glass-panel{height:100%;border-radius:4px;box-shadow:none}
-.side-stack .counter-list{max-height:540px}
+.side-stack .counter-list{max-height:none;overflow:visible}
 .counter-row{grid-template-columns:76px minmax(0,1fr);gap:10px;align-items:center}
 .counter-row img,.counter-row .media-state{width:76px;height:57px;min-height:57px}
 .counter-row time{color:var(--brand);font:800 11px/1.4 Inter,sans-serif;white-space:nowrap}
 .counter-row strong{font-size:15px}
+.counter-row.no-media{grid-template-columns:1fr}
 .editorial-section{padding:22px 0;border-top:2px solid var(--ink)}
 .editorial-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
 .editorial-section-head h2{font-size:25px;line-height:1.2;margin:0}
@@ -1311,6 +1313,23 @@ body{background:var(--bg)}
 .editorial-compact{display:grid;grid-template-columns:112px minmax(0,1fr);gap:12px;padding:0 0 12px;margin:0 0 12px;border-bottom:1px solid var(--line);cursor:pointer}
 .editorial-compact img{width:112px;aspect-ratio:4/3;object-fit:cover;background:#e5e7eb}
 .editorial-compact h3{font-size:16px;line-height:1.4;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.editorial-compact.no-media{grid-template-columns:1fr}
+.state-preview-list{display:grid;gap:0;border-top:1px solid var(--line)}
+.state-preview-card{display:grid;grid-template-columns:116px minmax(0,1fr);gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;min-width:0}
+.state-preview-card img{width:116px;aspect-ratio:16/10;object-fit:cover;background:#e5e7eb}
+.state-preview-card.no-media{grid-template-columns:1fr}
+.state-preview-card h3{font-size:16px;line-height:1.4;margin:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.state-preview-card time{margin-top:6px}
+.news-card.no-media .card-body{padding:18px}
+#latestGrid .news-card:first-child.no-media{display:block}
+.thumb.media-unavailable{display:none}
+#editorialHomepageSections{display:flex;flex-direction:column}
+#editorialHomepageSections>.regional-pair:has(#andhraPradeshNews){order:1}
+#politicsNews{order:2}
+#districtNewsSection{order:3}
+#editorialHomepageSections>.regional-pair:has(#cinemaNews){order:4}
+#editorialHomepageSections>.regional-pair:has(#nationalNews){order:5}
+#editorialHomepageSections>.triple-sections{order:6}
 .story-time{display:block;color:var(--muted);font:700 11px/1.4 Inter,sans-serif;margin-top:5px}
 .regional-pair,.triple-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
 .triple-sections{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -1337,6 +1356,7 @@ body{background:var(--bg)}
  .editorial-grid,.regional-pair,.triple-sections,.district-editorial{grid-template-columns:1fr}
  .editorial-lead h3{font-size:21px}.editorial-compact{grid-template-columns:96px minmax(0,1fr)}
  .editorial-compact img{width:96px}.editorial-compact h3{font-size:15px}
+ .state-preview-card{grid-template-columns:96px minmax(0,1fr)}.state-preview-card img{width:96px}
  .footer-inner{grid-template-columns:1fr 1fr}.footer-brand{grid-column:1/-1}
  .bottom-nav{padding-bottom:env(safe-area-inset-bottom)}
 }
@@ -1880,8 +1900,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v80";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v80";
+const APP_BUILD_VERSION = "newsneta-web-v81";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v81";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 5 * 60 * 1000;
 const newsRequestTimeoutMs = 12000;
@@ -2070,23 +2090,8 @@ function ensureCmsSample(){
  return primaryCmsArticle();
 }
 
-const fallbackStories = [
- {title:"తెలంగాణలో కొత్త అభివృద్ధి ప్రణాళికలపై కీలక సమీక్ష", category:"Telangana", views:98240, sentiment:"Positive", trust:94, image:"https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=75"},
- {title:"ఆంధ్రప్రదేశ్ పెట్టుబడులపై పరిశ్రమల శాఖ తాజా ప్రకటన", category:"Andhra Pradesh", views:87210, sentiment:"Neutral", trust:89, image:"https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=75"},
- {title:"జాతీయ రాజకీయాల్లో కొత్త కూటములపై చర్చ వేగం", category:"Politics", views:76420, sentiment:"Mixed", trust:86, image:"https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=75"},
- {title:"సినిమా రిలీజ్‌లతో తెలుగు బాక్సాఫీస్‌లో రికార్డు వసూళ్లు", category:"Cinema", views:69880, sentiment:"Positive", trust:92, image:"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=75"},
- {title:"క్రికెట్ మ్యాచ్‌లో చివరి ఓవర్ ఉత్కంఠ, అభిమానుల్లో సందడి", category:"Sports", views:65770, sentiment:"Positive", trust:90, image:"https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=900&q=75"},
- {title:"AI టూల్స్‌తో స్థానిక భాషా మీడియా వేగంగా మారుతోంది", category:"Technology", views:61320, sentiment:"Positive", trust:95, image:"https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=75"},
- {title:"స్టార్టప్ మార్కెట్‌లో కొత్త పెట్టుబడుల ప్రవాహం", category:"Business", views:58760, sentiment:"Neutral", trust:91, image:"https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=75"},
- {title:"సోషల్ మీడియాలో వైరల్ అవుతున్న వీడియోపై ఫ్యాక్ట్ చెక్", category:"Viral", views:55210, sentiment:"Alert", trust:78, image:"https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&w=900&q=75"}
-];
-
-const globalTopStories = [
- {id:"global-economy", title:"ప్రపంచ మార్కెట్లలో కీలక మార్పులు, ఆసియా సూచీలపై ప్రభావం", category:"Global", views:112400, sentiment:"Neutral", trust:92, image:"https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=75", link:"#"},
- {id:"global-diplomacy", title:"అంతర్జాతీయ వేదికపై కొత్త ఒప్పందాలపై దేశాల మధ్య చర్చలు", category:"International", views:108900, sentiment:"Mixed", trust:91, image:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=75", link:"#"},
- {id:"global-tech", title:"టెక్నాలజీ రంగంలో కొత్త భద్రతా మార్గదర్శకాలు విడుదల", category:"Technology", views:98750, sentiment:"Positive", trust:94, image:"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=75", link:"#"},
- {id:"global-climate", title:"వాతావరణ హెచ్చరికలతో తీరప్రాంతాల్లో అప్రమత్తత పెంపు", category:"World", views:94300, sentiment:"Alert", trust:93, image:"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=75", link:"#"}
-];
+const fallbackStories = [];
+const globalTopStories = [];
 
 let stories = [];
 let isRefreshingNews = false;
@@ -2383,7 +2388,7 @@ function makeSummary(title){
 function storySummary(story){
  const direct = cleanText(story?.description || story?.summary || story?.aiSummary || story?.contentSnippet || "");
  if(direct) return direct.length > 320 ? `${direct.slice(0, 317)}...` : direct;
- return makeSummary(story?.title || "");
+ return "";
 }
 
 function escapeAttr(value){
@@ -2597,13 +2602,39 @@ function imageFallback(event){
  img.removeAttribute("src");
  img.hidden = true;
  const host = img.parentElement;
- if(host && !host.querySelector(".media-state")) host.insertAdjacentHTML("beforeend", `<span class="media-state media-failed" role="status">Image unavailable</span>`);
+ host?.classList.add("media-unavailable");
+ img.closest(".news-card")?.classList.add("no-media");
+ img.closest(".state-preview-card")?.classList.add("no-media");
 }
 
 function storyImageMarkup(story, {alt = story?.title || "", loading = "lazy"} = {}){
  const url = extractSourceImage(story || {});
- if(!url) return `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`;
+ if(!url) return "";
  return `<img loading="${loading}" src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" onerror="imageFallback(event)">`;
+}
+
+function stableStoryIdentity(story = {}){
+ const explicitId = String(story.id || "").trim();
+ if(explicitId) return explicitId;
+ const rawLink = String(story.link || "").trim();
+ if(rawLink && rawLink !== "#"){
+  try{
+   const url = new URL(rawLink, location.origin);
+   ["utm_source","utm_medium","utm_campaign","refresh","force","view"].forEach(key=>url.searchParams.delete(key));
+   return `${url.hostname}${url.pathname}${url.search}`.toLowerCase();
+  }catch(error){ /* Fall through to normalized title identity. */ }
+ }
+ return String(story.title || "").toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function canonicalStories(items = []){
+ const seen = new Set();
+ return items.filter(story=>{
+  const identity = stableStoryIdentity(story);
+  if(!identity || seen.has(identity)) return false;
+  seen.add(identity);
+  return true;
+ });
 }
 
 function normalizeYoutubeUrl(value){
@@ -2636,9 +2667,10 @@ function normalizeItems(items){
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
   title:String(item.title || item.headline || "").trim(),
   category:item.category || "Latest",
+  source:item.source || item.publisher || item.sourceName || "",
   views:Number.isFinite(Number(item.views)) && Number(item.views) > 0 ? Number(item.views) : null,
-  sentiment:item.sentiment || ["Positive","Neutral","Mixed"][index % 3],
-  trust:item.trust || Math.floor(82 + Math.random()*14),
+  sentiment:item.sentiment || null,
+  trust:Number.isFinite(Number(item.trust)) ? Number(item.trust) : null,
   image:absoluteMediaUrl(extractSourceImage(item) || "") || null,
   video:normalizeArticleVideo(item),
   mediaDecision:(!Array.isArray(item.media) && item.media) || item.mediaDecision || null,
@@ -2675,18 +2707,20 @@ function formatStoryDate(dateText){
 function storyCard(story){
  const refreshedAt = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "loading";
  const storyId = story.id || story.link || story.title;
- const reporterBadge = story.reporterUpload ? `<span class="badge">${story.sourceLabel || "Reporter Upload"}</span>` : `<span class="badge">NewsNeta</span>`;
- return `<article class="news-card">
+ const reporterBadge = story.reporterUpload ? `<span class="badge">${story.sourceLabel || "Reporter Upload"}</span>` : (story.source ? `<span class="badge">${escapeHtml(story.source)}</span>` : "");
+ const summary = storySummary(story);
+ const imageMarkup = storyImageMarkup(story);
+ return `<article class="news-card ${imageMarkup ? "" : "no-media"}">
   <a href="#" data-story-id="${escapeAttr(storyId)}">
-   <div class="thumb">
-    ${storyImageMarkup(story)}
+   ${imageMarkup ? `<div class="thumb">
+    ${imageMarkup}
     <div class="badge-row"><span class="badge">${story.category}</span>${story.imageLabel ? `<span class="badge">${escapeHtml(story.imageLabel)}</span>` : reporterBadge}</div>
-   </div>
+   </div>` : ""}
   </a>
   <div class="card-body">
    <a href="#" data-story-id="${escapeAttr(storyId)}"><h3>${escapeHtml(story.title)}</h3></a>
-   <p class="summary">${escapeHtml(storySummary(story))}</p>
-   <div class="meta"><span>${relativeStoryTime(story.pubDate)} • ${readMinutes(story)} min read</span><button class="voice-btn" type="button" data-speak="${escapeAttr(story.title)}">Listen</button></div>
+   ${summary ? `<p class="summary">${escapeHtml(summary)}</p>` : ""}
+   <div class="meta"><span>${story.source ? `${escapeHtml(story.source)} • ` : ""}${relativeStoryTime(story.pubDate)} • ${readMinutes(story)} min read</span><button class="voice-btn" type="button" data-speak="${escapeAttr(story.title)}">Listen</button></div>
    <div class="refresh-note">Checked at ${refreshedAt}</div>
   </div>
  </article>`;
@@ -2725,7 +2759,7 @@ function renderHomeDesk(sorted){
  }).join("");
  const today = document.getElementById("todayEditionText");
  if(today){
-  const count = sorted.length + fallbackStories.length;
+  const count = sorted.length;
   const localizedTime = lastRefreshAt ? lastRefreshAt.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "loading";
   if(currentLanguage === "en") today.textContent = `${count} stories in today's edition • ${localizedTime} refresh • Telangana, Andhra Pradesh, National, Weather and Live updates.`;
   else if(currentLanguage === "hi") today.textContent = `${count} खबरें आज के संस्करण में • ${localizedTime} रिफ्रेश • तेलंगाना, आंध्र प्रदेश, राष्ट्रीय, मौसम और लाइव अपडेट्स.`;
@@ -3032,12 +3066,16 @@ function renderPagedFeed({items, page, pageSize, gridId, pagerId, pageKey, empty
 function renderSideNewsPanel(sorted){
  const list = document.getElementById("trendingList");
  if(!list) return;
- const latest = [...stories].sort((a,b)=>new Date(b.pubDate || b.publishedAt || 0) - new Date(a.pubDate || a.publishedAt || 0));
- const items = latest;
+ const items = canonicalStories([...stories]).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0) || new Date(b.pubDate || 0)-new Date(a.pubDate || 0));
  const title = document.getElementById("trendingTitle");
- if(title) title.textContent = "Latest News";
+ if(title) title.textContent = currentLanguage === "te" ? "ట్రెండింగ్ / ఎక్కువగా చదివినవి" : "Trending / Most Read";
+ const sideTab = document.getElementById("sideLatestTab");
+ if(sideTab) sideTab.textContent = currentLanguage === "te" ? "ట్రెండింగ్ వార్తలు" : "Trending News";
  document.getElementById("sideLatestTab")?.classList.add("active");
- list.innerHTML = items.length ? items.slice(0,8).map(s=>`<a class="counter-row" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}">${storyImageMarkup(s,{alt:""})}<span class="counter-row-copy"><strong>${escapeHtml(s.title)}</strong><time>${formatStoryDate(s.pubDate)}</time></span></a>`).join("") : `<div class="editorial-empty">Latest news is temporarily unavailable.</div>`;
+ list.innerHTML = items.length ? items.slice(0,8).map(s=>{
+  const media = storyImageMarkup(s,{alt:""});
+  return `<a class="counter-row ${media ? "" : "no-media"}" href="#" data-story-id="${escapeAttr(s.id || s.link || s.title)}">${media}<span class="counter-row-copy"><strong>${escapeHtml(s.title)}</strong><time>${formatStoryDate(s.pubDate)}</time></span></a>`;
+ }).join("") : `<div class="editorial-empty">Latest news is temporarily unavailable.</div>`;
 }
 
 function relativeStoryTime(value){
@@ -3052,7 +3090,9 @@ function relativeStoryTime(value){
 }
 
 function editorialSectionMarkup(category, items){
- const labels = {ap:"Andhra Pradesh",telangana:"Telangana",politics:"Politics",cinema:"Cinema",sports:"Sports",national:"National",international:"International",business:"Business",technology:"Technology",jobs:"Jobs & Education"};
+ const labels = currentLanguage === "te"
+  ? {ap:"ఆంధ్రప్రదేశ్",telangana:"తెలంగాణ",politics:"రాజకీయాలు",cinema:"సినిమా",sports:"క్రీడలు",national:"జాతీయం",international:"అంతర్జాతీయం",business:"బిజినెస్",technology:"టెక్నాలజీ",jobs:"విద్య మరియు ఉద్యోగాలు"}
+  : {ap:"Andhra Pradesh",telangana:"Telangana",politics:"Politics",cinema:"Cinema",sports:"Sports",national:"National",international:"International",business:"Business",technology:"Technology",jobs:"Jobs & Education"};
  if(!items.length) return `<div class="editorial-section-head"><h2>${labels[category] || category}</h2></div><div class="editorial-empty">No recent stories are available in this section.</div>`;
  const [lead,...supporting] = items;
  const storyId = story => escapeAttr(story.id || story.link || story.title);
@@ -3064,14 +3104,30 @@ function editorialSectionMarkup(category, items){
     <p>${escapeHtml(storySummary(lead))}</p>
     <time class="story-time">${relativeStoryTime(lead.pubDate)}</time>
    </article>
-   <div class="editorial-list">${supporting.slice(0,4).map(story=>`<article class="editorial-compact" data-story-id="${storyId(story)}">${storyImageMarkup(story,{alt:""})}<div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`).join("")}</div>
+   <div class="editorial-list">${supporting.slice(0,4).map(story=>{const media=storyImageMarkup(story,{alt:""});return `<article class="editorial-compact ${media ? "" : "no-media"}" data-story-id="${storyId(story)}">${media}<div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`;}).join("")}</div>
   </div>`;
+}
+
+function compactStateSectionMarkup(category, items){
+ const labels = currentLanguage === "te"
+  ? {ap:"ఆంధ్రప్రదేశ్",telangana:"తెలంగాణ"}
+  : {ap:"Andhra Pradesh",telangana:"Telangana"};
+ const visible = canonicalStories(items).slice(0,5);
+ const label = labels[category] || category;
+ if(!visible.length) return `<div class="editorial-section-head"><h2>${label}</h2></div><div class="editorial-empty">ఈ విభాగంలో తాజా కథనాలు ప్రస్తుతం అందుబాటులో లేవు.</div>`;
+ return `<div class="editorial-section-head"><h2>${label}</h2><button type="button" data-category-tile="${category}">View all →</button></div>
+  <div class="state-preview-list">${visible.map(story=>{
+   const media = storyImageMarkup(story,{alt:""});
+   return `<article class="state-preview-card ${media ? "" : "no-media"}" data-story-id="${escapeAttr(story.id || story.link || story.title)}">${media}<div><h3>${escapeHtml(story.title)}</h3><time class="story-time">${relativeStoryTime(story.pubDate)}</time></div></article>`;
+  }).join("")}</div>`;
 }
 
 function renderEditorialHomepage(){
  document.querySelectorAll("[data-home-feed]").forEach(section=>{
   const category = section.dataset.homeFeed;
-  section.innerHTML = editorialSectionMarkup(category, homepageFeeds[category] || []);
+  section.innerHTML = category === "ap" || category === "telangana"
+   ? compactStateSectionMarkup(category, homepageFeeds[category] || [])
+   : editorialSectionMarkup(category, homepageFeeds[category] || []);
  });
 }
 
@@ -3083,8 +3139,8 @@ async function loadHomepageFeeds(force=false){
   try{
    const refreshQuery = force ? `&refresh=${Date.now()}` : "";
    const data = await fetchNewsPayload(`/.netlify/functions/news?cat=${encodeURIComponent(category)}${refreshQuery}`, {category});
-   const incoming = normalizeItems(data.items || []).slice(0,6);
-   if(incoming.length) homepageFeeds[category] = incoming;
+   const incoming = normalizeItems(data.items || []);
+   homepageFeeds[category] = canonicalStories([...publishedCmsStories(category), ...incoming]).slice(0,6);
   }catch(error){
    const cmsItems = publishedCmsStories(category).slice(0,6);
    if(!homepageFeeds[category]?.length && cmsItems.length) homepageFeeds[category] = cmsItems;
@@ -3114,7 +3170,7 @@ function render(){
  renderSideNewsPanel(sorted);
  document.getElementById("reelsFeed").innerHTML = sorted.slice(0,6).map(renderReel).join("");
  document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
- latestFeedItems = sorted.filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+ latestFeedItems = canonicalStories(sorted);
  renderPagedFeed({
   items: latestFeedItems,
   page: latestPage,
@@ -3140,7 +3196,7 @@ function renderHeroSlide(){
  document.getElementById("hero").dataset.storyId = heroStory.id || heroStory.link || heroStory.title;
  document.getElementById("heroTitle").textContent = heroStory.title;
  document.getElementById("heroSummary").textContent = storySummary(heroStory);
- document.getElementById("heroSource").textContent = `${heroStory.category || t("topStory")} • ${relativeStoryTime(heroStory.pubDate)}`;
+ document.getElementById("heroSource").textContent = `${heroStory.source ? `${heroStory.source} • ` : ""}${heroStory.category || t("topStory")} • ${relativeStoryTime(heroStory.pubDate)}`;
  document.getElementById("heroDots").innerHTML = heroStories.map((_,index)=>`<button class="hero-dot ${index === heroIndex ? "active" : ""}" type="button" data-hero-index="${index}" aria-label="Top story ${index + 1}"></button>`).join("");
 }
 
@@ -3513,21 +3569,16 @@ function buildDetailedArticle(story){
 
 function buildExpandedArticle(story){
  const fullArticle = cleanText(story.fullArticle || story.body);
- const summary = cleanText(story.description || story.summary || story.aiSummary || makeSummary(story.title));
+ const summary = cleanText(story.description || story.summary || story.aiSummary || "");
  const category = story.category || "News";
  const trust = story.trust || 91;
  const location = story.district || story.state || "NewsNeta coverage area";
  const updated = formatStoryDate(story.pubDate || lastRefreshAt || new Date());
  const isReporterStory = Boolean(story.reporterUpload);
  const title = story.title || "NewsNeta story";
- const bodyParagraphs = fullArticle
-  ? fullArticle.split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,8)
-  : [
-   `${title}. ${summary}`,
-   `The latest development has drawn attention because it may influence decisions, public discussion, and follow-up action connected with ${location}.`,
-   `Officials, stakeholders, and readers are watching for the next confirmed update. The story may continue to evolve as more details become available.`,
-   `The immediate focus is on what changed, who is affected, and what readers should know before the next update is published.`
-  ];
+ const verifiedText = fullArticle || summary;
+ if(!verifiedText) return `<p>ఈ కథనానికి అదనపు ధృవీకరించిన వివరాలు ప్రస్తుతం అందుబాటులో లేవు. ప్రచురణకర్త నుంచి సమాచారం వచ్చిన తర్వాత పూర్తి కథనం నవీకరించబడుతుంది.</p>`;
+ const bodyParagraphs = verifiedText.split(/(?<=[.!?।])\s+/).filter(Boolean).slice(0,12);
  return bodyParagraphs
   .filter(Boolean)
   .slice(0,8)
@@ -3633,12 +3684,13 @@ function storyVideoMarkup(story){
 function renderStorySummaryMode(story, mode){
  const copy = document.getElementById("storyModalCopy");
  if(!copy) return;
+ const verifiedSummary = cleanText(story.description || story.summary || story.aiSummary || story.body || story.fullArticle || "");
  if(mode === "quick"){
-  copy.innerHTML = `<h3>Quick Summary</h3><ul><li>${escapeHtml(makeSummary(story.title))}</li><li>Category: ${escapeHtml(story.category || "News")}</li><li>Updated: ${formatStoryDate(story.pubDate || lastRefreshAt)}</li></ul>`;
+  copy.innerHTML = `<h3>Quick Summary</h3>${verifiedSummary ? `<p>${escapeHtml(verifiedSummary)}</p>` : `<p>Additional verified details are not yet available.</p>`}<p>${escapeHtml(story.source || "")} ${formatStoryDate(story.pubDate || lastRefreshAt)}</p>`;
   return;
  }
  if(mode === "minute"){
-  copy.innerHTML = `<h3>One Minute Brief</h3><p>${escapeHtml(makeSummary(story.title))}</p><ul><li>What happened: ${escapeHtml(story.title)}</li><li>Why it matters: local impact, public services and official updates are being tracked.</li><li>Next update: this story refreshes when verified feed data changes.</li></ul>`;
+  copy.innerHTML = `<h3>One Minute Brief</h3><p>${escapeHtml(verifiedSummary || story.title)}</p>`;
   return;
  }
  copy.innerHTML = storyVideoMarkup(story) + buildExpandedArticle(story) + storyMediaGallery(story);
@@ -3964,7 +4016,8 @@ function openStoryDetail(id){
  setStoryModalMedia(story);
  document.getElementById("storyModalCategory").textContent = story.category || "News";
  document.getElementById("storyModalTitle").textContent = story.title;
- document.getElementById("storyModalMeta").textContent = `NewsNeta Desk • ${formatStoryDate(story.pubDate)} • ${readMinutes(story) + 2} min read`;
+ const storyPublisher = cleanText(story.source || story.author || story.desk || "NewsNeta");
+ document.getElementById("storyModalMeta").textContent = `${storyPublisher} • ${formatStoryDate(story.pubDate)} • ${readMinutes(story) + 2} min read`;
  document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} ఈ కథనంలో నేపథ్యం, స్థానిక ప్రభావం, ముఖ్యాంశాలు, తదుపరి అప్‌డేట్లు వివరంగా అందుబాటులో ఉన్నాయి.`;
  document.getElementById("storyModalCopy").classList.remove("reader-large");
  if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
@@ -3978,6 +4031,7 @@ function openStoryDetail(id){
  document.getElementById("storyModalFacts").innerHTML = `
   <div class="story-info-strip">
    <span>${escapeHtml(story.category || "News")}</span>
+   <span>${escapeHtml(storyPublisher)}</span>
    ${story.reporterUpload ? `<span>Reporter Upload</span>` : ""}
    <span>${formatStoryDate(story.pubDate || lastRefreshAt)}</span>
    <span>${readMinutes(story) + 2} min read</span>
@@ -4344,7 +4398,7 @@ function publishedCmsStories(cat){
    views: Number(article.analytics?.views || 0) || null,
    sentiment:"Neutral",
    trust: article.trust || 91,
-   image: firstImage || thumbnailImage || article.image || "assets/newsneta-logo.jpg",
+   image: firstImage || thumbnailImage || article.image || null,
    reporterUpload:true,
    sourceLabel:"Reporter Upload",
    pubDate: article.publishedAt || new Date().toISOString(),
@@ -4355,8 +4409,7 @@ function publishedCmsStories(cat){
 
 function mergePublishedStories(category, baseItems){
  const cmsPublished = publishedCmsStories(category);
- return [...cmsPublished, ...baseItems]
-  .filter((story,index,array)=>array.findIndex(item=>(item.id || item.link || item.title) === (story.id || story.link || story.title)) === index);
+ return canonicalStories([...cmsPublished, ...baseItems]);
 }
 
 function publishedCmsDistrictStories(state, district){

@@ -1832,7 +1832,7 @@ body{background:var(--bg)}
  <div class="modal-backdrop" id="storyBackdrop" role="dialog" aria-modal="true" aria-labelledby="storyModalTitle">
   <article class="story-modal">
    <button class="icon-btn" id="closeStory" type="button" aria-label="Close story" style="position:absolute;right:24px;top:24px;z-index:2;background:rgba(255,255,255,.92)">×</button>
-   <img id="storyModalImage" src="assets/newsneta-logo.jpg" alt="" onerror="imageFallback(event)">
+   <img id="storyModalImage" alt="" hidden onerror="imageFallback(event)">
    <div class="story-modal-body">
     <span class="tag" id="storyModalCategory">News</span>
     <h2 id="storyModalTitle">Story title</h2>
@@ -1900,10 +1900,11 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v81";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v81";
+const APP_BUILD_VERSION = "newsneta-web-v82";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v82";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
-const refreshIntervalMs = 5 * 60 * 1000;
+const refreshIntervalMs = 2 * 60 * 1000;
+const categoryRefreshIntervalMs = 5 * 60 * 1000;
 const newsRequestTimeoutMs = 12000;
 const isLocalPreview = ["localhost","127.0.0.1","::1"].includes(location.hostname);
 const productionNewsOrigin = "https://newsneta.com";
@@ -2100,6 +2101,7 @@ let districtStories = [];
 const homepageFeeds = {};
 const homepageFeedCategories = ["ap","telangana","politics","cinema","sports","national","international","business","technology","jobs"];
 let lastRefreshAt = null;
+let lastHomepageRefreshAt = null;
 let refreshCount = 0;
 let nextRefreshAt = null;
 let newsSourceMode = "Static preview";
@@ -3149,6 +3151,7 @@ async function loadHomepageFeeds(force=false){
   }
  });
  await Promise.all(workers);
+ lastHomepageRefreshAt = new Date();
  renderEditorialHomepage();
 }
 
@@ -3414,6 +3417,11 @@ async function loadDistrictNews(state, district, force=false){
 async function refreshAllNews(request){
  if(isRefreshingNews) return;
  const force = request === true || request?.type === "click";
+ if(!force && (document.hidden || !navigator.onLine)){
+  nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
+  updateRefreshStatus();
+  return;
+ }
  isRefreshingNews = true;
  const buttons = [document.getElementById("menuRefreshNow"), document.getElementById("homeRefreshNow")].filter(Boolean);
  buttons.forEach(button=>{
@@ -3426,12 +3434,15 @@ async function refreshAllNews(request){
   await (activeDistrictFilter
    ? loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district, force)
    : loadNews(activeCat, force));
-  loadHomepageFeeds(force).catch(error=>console.error(JSON.stringify({
-   code:"NEWS_FETCH_FAILED",
-   category:"homepage-sections",
-   message:String(error.message || error),
-   timestamp:new Date().toISOString()
-  })));
+  const homepageStale = !lastHomepageRefreshAt || Date.now() - lastHomepageRefreshAt.getTime() >= categoryRefreshIntervalMs;
+  if(force || homepageStale){
+   loadHomepageFeeds(force).catch(error=>console.error(JSON.stringify({
+    code:"NEWS_FETCH_FAILED",
+    category:"homepage-sections",
+    message:String(error.message || error),
+    timestamp:new Date().toISOString()
+   })));
+  }
  }finally{
   buttons.forEach(button=>{
    button.disabled = false;
@@ -3452,7 +3463,7 @@ function updateRefreshStatus(){
  const secondsLeft = nextRefreshAt ? Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000)) : 0;
  const countdown = secondsLeft ? `${Math.floor(secondsLeft / 60)}m ${String(secondsLeft % 60).padStart(2,"0")}s` : "starting";
  const mobileFlag = matchMedia("(max-width: 768px)").matches ? " • Mobile fresh" : "";
- const message = lastRefreshError || `Auto refresh every 5 min • ${newsSourceMode} • API ${newsApiCacheMode} ${apiTime} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
+ const message = lastRefreshError || `Active news refresh every 2 min • Categories every 5 min • ${newsSourceMode} • API ${newsApiCacheMode} ${apiTime} • Last checked ${time} • Reloads ${refreshCount} • Next in ${countdown}${mobileFlag}`;
  if(status) status.textContent = message;
  if(menuStatus) menuStatus.textContent = message;
 }
@@ -4702,7 +4713,7 @@ function cmsManageScreen(role){
   <div class="workflow-note" id="cmsWorkflowNote">${role === "admin" ? "Admin can publish approved stories and delete any article." : role === "reviewer" ? "Reviewer can approve stories submitted by reporters." : "Reporter can upload drafts and submit them for review."}</div>
  </div>`;
 }
-function cmsAnalyticsScreen(){
+function cmsAnalyticsScreen(role){
  return `<div class="cms-screen">
   <div class="cms-screen-head"><div><strong>Analytics</strong><small>Traffic, districts, engagement, alerts and AI quality.</small></div><span class="chip">Live</span></div>
   <div class="dashboard-metrics">
@@ -4716,13 +4727,14 @@ function cmsAnalyticsScreen(){
    <div class="cms-feature-card"><strong>AI Tools</strong><small>Auto-summary, tagging, headline checks and TTS ready.</small></div>
    <div class="cms-feature-card"><strong>Revenue Slots</strong><small>Sponsored, display and video ad placements available.</small></div>
   </div>
+  ${role === "admin" ? `<div class="cms-feature-card"><strong>NewsNeta Production Health</strong><small>Admin-only ingestion, freshness and media diagnostics. The access token is used for this request only and is not stored.</small><label>Health access token<input id="cmsHealthToken" type="password" autocomplete="off" placeholder="Admin health token"></label><button class="pill-btn admin-login-btn" id="cmsLoadHealth" type="button">Load Health</button><pre id="cmsHealthOutput" class="storage-note">Health data not loaded.</pre></div>` : ""}
  </div>`;
 }
 
 function cmsScreenMarkup(role, screen="article"){
  if(screen === "video") return cmsVideoScreen(role);
  if(screen === "manage") return cmsManageScreen(role);
- if(screen === "analytics") return cmsAnalyticsScreen();
+ if(screen === "analytics") return cmsAnalyticsScreen(role);
  return `<div class="cms-screen">
   <div class="cms-screen-head"><div><strong>Article Upload</strong><small>Create, review, approve and publish Telugu news.</small></div><span class="chip">Article</span></div>
  ${cmsWorkflowForm(role)}
@@ -4898,6 +4910,20 @@ function bindCmsUploadInputs(){
 
 function bindCmsScreen(role){
  bindCmsUploadInputs();
+ document.getElementById("cmsLoadHealth")?.addEventListener("click", async()=>{
+  const output = document.getElementById("cmsHealthOutput");
+  const token = document.getElementById("cmsHealthToken")?.value || "";
+  if(!output || role !== "admin") return;
+  output.textContent = "Loading production health...";
+  try{
+   const response = await fetch("/.netlify/functions/news-health", {cache:"no-store", headers:{Authorization:`Bearer ${token}`}});
+   const payload = await response.json();
+   if(!response.ok) throw new Error(payload.message || `Health API ${response.status}`);
+   output.textContent = JSON.stringify(payload, null, 2);
+  }catch(error){
+   output.textContent = `Health data unavailable: ${error.message || error}`;
+  }
+ });
  document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
   event.preventDefault();
   const article = primaryCmsArticle();

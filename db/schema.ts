@@ -28,6 +28,14 @@ export const articles = pgTable('articles', {
   thumbnailUrl: text('thumbnail_url'),
   imageAlt: text('image_alt'),
   media: jsonb('media').$type<Array<Record<string, unknown>>>().notNull().default([]),
+  sourceProvider: varchar('source_provider', { length: 80 }),
+  sourceArticleId: varchar('source_article_id', { length: 320 }),
+  sourceUrl: text('source_url'),
+  sourceName: varchar('source_name', { length: 200 }),
+  sourcePublishedAt: timestamp('source_published_at', { withTimezone: true }),
+  featuredMedia: jsonb('featured_media').$type<Record<string, unknown> | null>(),
+  ingestedAt: timestamp('ingested_at', { withTimezone: true }),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   tags: jsonb('tags').$type<string[]>().notNull().default([]),
   isBreaking: boolean('is_breaking').notNull().default(false),
   isTopStory: boolean('is_top_story').notNull().default(false),
@@ -43,6 +51,7 @@ export const articles = pgTable('articles', {
   index('articles_latest_idx').on(table.status, table.publishedAt),
   index('articles_category_idx').on(table.category, table.publishedAt),
   index('articles_location_idx').on(table.state, table.district, table.publishedAt),
+  index('articles_source_freshness_idx').on(table.status, table.sourcePublishedAt),
 ])
 
 export const articleWorkflow = pgTable('article_workflow', {
@@ -56,3 +65,23 @@ export const articleWorkflow = pgTable('article_workflow', {
   actorRole: varchar('actor_role', { length: 40 }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [index('article_workflow_article_idx').on(table.articleId, table.createdAt)])
+
+
+export const ingestionRuns = pgTable('ingestion_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: varchar('provider', { length: 80 }).notNull(),
+  status: varchar('status', { length: 40 }).notNull(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  durationMs: integer('duration_ms'),
+  articlesFetched: integer('articles_fetched').notNull().default(0),
+  articlesInserted: integer('articles_inserted').notNull().default(0),
+  articlesUpdated: integer('articles_updated').notNull().default(0),
+  articlesRejected: integer('articles_rejected').notNull().default(0),
+  categories: jsonb('categories').$type<string[]>().notNull().default([]),
+  errors: jsonb('errors').$type<Array<Record<string, unknown>>>().notNull().default([]),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+}, table => [
+  index('ingestion_runs_started_idx').on(table.startedAt),
+  index('ingestion_runs_status_idx').on(table.status, table.startedAt),
+])

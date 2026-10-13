@@ -12,7 +12,7 @@ const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
 const FRESH_NEWS_DAYS = 3;
 const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
-const AUTO_IMAGE_THRESHOLD = 55;
+const AUTO_IMAGE_THRESHOLD = 70;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -35,6 +35,23 @@ const FEEDS = {
   jobs: googleNewsUrl("Government jobs recruitment Telugu Telangana Andhra Pradesh"),
   viral: googleNewsUrl("Viral Telugu news")
 };
+
+const CATEGORY_ALIASES = {
+  andhra: "ap",
+  "andhra-pradesh": "ap",
+  andhrapradesh: "ap",
+  tg: "telangana",
+  ts: "telangana",
+  tech: "technology",
+  world: "international",
+  india: "national"
+};
+
+function normalizeCategory(value = "") {
+  const requested = String(value || "telangana").trim().toLowerCase().replace(/\s+/g, "-");
+  const normalized = CATEGORY_ALIASES[requested] || requested;
+  return Object.prototype.hasOwnProperty.call(FEEDS, normalized) ? normalized : "telangana";
+}
 
 const IMAGE_SETS = {
   telangana: [
@@ -331,10 +348,22 @@ function isFreshArticle(item = {}, maxAgeDays = FRESH_NEWS_DAYS) {
 }
 
 function freshSorted(items = [], maxAgeDays = FRESH_NEWS_DAYS) {
+  const seen = new Set();
   return items
     .filter(item => isFreshArticle(item, maxAgeDays))
     .filter(item => isUsefulTitle(publicTitle(item.title || "")))
-    .sort((a, b) => articleTime(b) - articleTime(a));
+    .sort((a, b) => articleTime(b) - articleTime(a))
+    .filter(item => {
+      const titleKey = publicTitle(item.title || "")
+        .toLocaleLowerCase("te-IN")
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim();
+      const linkKey = String(item.url || item.link || "").split("?")[0].toLowerCase();
+      const identity = titleKey || linkKey;
+      if (!identity || seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    });
 }
 
 function isUsefulTitle(title = "") {
@@ -383,11 +412,7 @@ async function fetchGNewsItems(cat, district) {
         })
       : null;
     if (!media) {
-      const query = imageSearchQuery(title, cat, district);
-      const archive = await commonsImage(query, {...intent, query});
-      media = archive.url
-        ? archive
-        : brandedFallbackDecision(intent, "The licensed provider did not supply a sufficiently relevant article image");
+      media = brandedFallbackDecision(intent, "The licensed provider did not supply an article-associated image");
     }
     return {
       id: article.url || `${cat}-gnews-${index}`,
@@ -587,69 +612,91 @@ function extractMetaImages(html = "") {
   return [...new Set(images)];
 }
 
-async function articleImage(item, cat, district, index) {
+function feedAssociatedMedia(item, cat, district) {
   const title = publicTitle(item.title);
   const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
   const feedImage = item.enclosure?.url || item.enclosure?.link || item.media?.content?.url || item.media?.thumbnail?.url || "";
-  if (trustedImageUrl(feedImage)) {
-    return mediaDecision({
-      url: feedImage,
-      originalUrl: feedImage,
-      source: "Article feed",
-      copyrightOwner: "Article publisher",
-      license: "Publisher-associated editorial image; verify syndication terms",
-      imageType: "event_candidate",
-      score: 86,
-      intent,
-      reasons: ["Image was supplied in the same RSS article record"]
-    });
+  if (!trustedImageUrl(feedImage)) {
+    return brandedFallbackDecision(intent, "The feed did not supply an article-associated licensed image");
   }
-  const licensedFallback = async reason => {
-    const query = imageSearchQuery(title, cat, district);
-    const archive = await commonsImage(query, {...intent, query});
-    return archive.url ? archive : brandedFallbackDecision(intent, reason);
-  };
-  if (!item.link) return await licensedFallback();
+  return mediaDecision({
+    url: feedImage,
+    originalUrl: feedImage,
+    source: "Article feed",
+    copyrightOwner: "Article publisher",
+    license: "Publisher-associated editorial image; verify syndication terms",
+    imageType: "event_candidate",
+    score: 86,
+    intent,
+    reasons: ["Image was supplied in the same RSS article record"]
+  });
+}
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+async function articleImage(item, cat, district) {
+  return feedAssociatedMedia(item, cat, district);
+}
+
+function mergeCanonicalArticles(primary = [], secondary = []) {
+  const seen = new Set();
+  return [...primary, ...secondary].filter(article => {
+    const identity = String(article.id || article.link || article.title || "").toLowerCase();
+    if (!identity || seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
+}
+
+async function persistedArticles(cat, district, limit = 24) {
   try {
-    const response = await fetch(item.link, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; NewsNeta/1.0)",
-        "Accept": "text/html,application/xhtml+xml"
-      }
+    const { getDatabase } = require("@netlify/database");
+    const { pool } = getDatabase();
+    const values = [cat, limit];
+    let districtClause = "";
+    if (district) {
+      values.splice(1, 0, district);
+      districtClause = " AND lower(district) = lower($2)";
+    }
+    const limitIndex = district ? 3 : 2;
+    const result = await pool.query({
+      text: `SELECT id, title, summary, body, category, state, district, image_url,
+        thumbnail_url, featured_media, source_url, source_name, published_at,
+        source_published_at, views FROM articles
+        WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}
+          AND published_at >= now() - interval '3 days'
+        ORDER BY published_at DESC LIMIT $${limitIndex}`,
+      values
     });
-    if (!response.ok) return await licensedFallback(`Article page returned HTTP ${response.status}`);
-    const html = await response.text();
-    const image = extractMetaImages(html)
-      .map(value => {
-        try { return new URL(value, item.link).href; } catch (error) { return ""; }
-      })
-      .find(trustedImageUrl);
-    return trustedImageUrl(image) ? mediaDecision({
-      url: image,
-      originalUrl: image,
-      source: new URL(item.link).hostname,
-      copyrightOwner: new URL(item.link).hostname,
-      license: "Publisher-associated editorial image; verify syndication terms",
-      imageType: "event_candidate",
-      score: 86,
-      intent,
-      reasons: ["Image is declared by the same article as its social image", "Candidate is tied to the article URL"]
-    }) : await licensedFallback("The article did not expose a usable associated image");
+    return result.rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      description: row.summary || "",
+      body: row.body || row.summary || "",
+      category: row.category,
+      state: row.state,
+      district: row.district,
+      image: row.featured_media?.url || row.image_url || null,
+      imageUrl: row.featured_media?.url || row.image_url || null,
+      thumbnailUrl: row.featured_media?.thumbnailUrl || row.thumbnail_url || null,
+      media: row.featured_media || null,
+      featuredMedia: row.featured_media || null,
+      link: row.source_url || `#article-${row.id}`,
+      source: row.source_name || "NewsNeta",
+      pubDate: row.source_published_at || row.published_at,
+      views: row.views || 0,
+      persisted: true
+    }));
   } catch (error) {
-    return await licensedFallback("The publisher page could not be inspected for an associated image");
-  } finally {
-    clearTimeout(timeout);
+    logEvent("NEWS_DATABASE_READ_FAILED", { category: cat, district: district || null, message: error.message });
+    return [];
   }
 }
 
 exports.handler = async function handler(event) {
-  const cat = event.queryStringParameters?.cat || "telangana";
-  const district = event.queryStringParameters?.district || "";
-  const forceRefresh = Boolean(event.queryStringParameters?.refresh || event.queryStringParameters?.force);
+  const params = event.queryStringParameters || {};
+  const cat = normalizeCategory(params.cat || params.category || "telangana");
+  const district = cleanText(params.district || "");
+  const forceRefresh = Boolean(params.refresh || params.force);
+  const ingestionMode = params.ingest === "1";
   const cacheKey = district ? `${cat}:${district.toLowerCase()}` : cat;
   const feedUrl = feedFor(cat, district);
 
@@ -659,6 +706,21 @@ exports.handler = async function handler(event) {
       cache: "memory",
       servedAt: new Date().toISOString()
     });
+  }
+
+  const persisted = await persistedArticles(cat, district);
+  if (!forceRefresh && persisted.length) {
+    const data = {
+      status: "ok",
+      provider: "newsneta-database",
+      category: cat,
+      district: district || null,
+      freshnessWindowDays: FRESH_NEWS_DAYS,
+      updatedAt: new Date().toISOString(),
+      items: persisted
+    };
+    CACHE[cacheKey] = { time: Date.now(), data };
+    return json(200, { ...data, cache: "database", servedAt: new Date().toISOString() });
   }
 
   try {
@@ -681,7 +743,7 @@ exports.handler = async function handler(event) {
         district: district || null,
         freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
-        items: licensedItems
+        items: mergeCanonicalArticles(licensedItems, persisted).slice(0, 24)
       };
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
@@ -697,16 +759,14 @@ exports.handler = async function handler(event) {
         district: district || null,
         freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
-        items: []
+        items: persisted
       };
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
     }
-    const imageResults = await mapWithConcurrency(
-      rawItems,
-      5,
-      (item, index) => articleImage(item, cat, district, index)
-    );
+    const imageResults = ingestionMode
+      ? rawItems.map(item => feedAssociatedMedia(item, cat, district))
+      : await mapWithConcurrency(rawItems, 5, (item, index) => articleImage(item, cat, district, index));
     const items = rawItems.map((item, index) => {
       const title = publicTitle(item.title);
       const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);
@@ -743,7 +803,7 @@ exports.handler = async function handler(event) {
       district: district || null,
       freshnessWindowDays: FRESH_NEWS_DAYS,
       updatedAt: new Date().toISOString(),
-      items
+      items: mergeCanonicalArticles(items, persisted).slice(0, 24)
     };
 
     CACHE[cacheKey] = { time: Date.now(), data };
@@ -755,6 +815,9 @@ exports.handler = async function handler(event) {
       endpoint: feedUrl,
       message: String(error.message || error)
     });
+    if (persisted.length) {
+      return json(200, { status: "stale", provider: "newsneta-database", category: cat, district: district || null, items: persisted, cache: "database-fallback", servedAt: new Date().toISOString() }, 30);
+    }
     const stale = CACHE[cacheKey]?.data;
     if (stale?.items?.length) {
       return json(200, {
@@ -777,3 +840,5 @@ exports.handler = async function handler(event) {
     }, forceRefresh ? 0 : 60);
   }
 };
+
+exports._test = { brandedFallbackDecision, feedAssociatedMedia, freshSorted, normalizeCategory, trustedImageUrl };

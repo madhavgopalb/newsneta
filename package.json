@@ -6,7 +6,8 @@
     "check": "node --check netlify/functions/news.js",
     "check:playstore": "node scripts/verify-playstore-readiness.js",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "netlify database migrations apply"
+    "db:migrate": "netlify database migrations apply",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@netlify/database": "^2.0.1",

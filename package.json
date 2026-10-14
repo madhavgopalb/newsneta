@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "netlify dev",
-    "check": "node --check netlify/lib/news-core.js && node --check netlify/functions/news.mjs && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/news-health.mjs",
+    "check": "node --check netlify/lib/news-core.js && node --check netlify/functions/news.mjs && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/news-health.mjs && node --check netlify/lib/cms-auth.js && node --check netlify/functions/cms.mjs && node --check netlify/functions/media.mjs",
     "check:playstore": "node scripts/verify-playstore-readiness.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.4",
     "@netlify/database": "^2.0.1",
     "drizzle-orm": "^1.0.0-beta.22",
     "rss-parser": "^3.13.0"

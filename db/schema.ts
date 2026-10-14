@@ -43,6 +43,7 @@ export const articles = pgTable('articles', {
   isEditorsPick: boolean('is_editors_pick').notNull().default(false),
   isTodaysEdition: boolean('is_todays_edition').notNull().default(false),
   views: integer('views').notNull().default(0),
+  contentRevision: integer('content_revision').notNull().default(1),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -85,3 +86,23 @@ export const ingestionRuns = pgTable('ingestion_runs', {
   index('ingestion_runs_started_idx').on(table.startedAt),
   index('ingestion_runs_status_idx').on(table.status, table.startedAt),
 ])
+
+export const mediaAssets = pgTable('media_assets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  articleId: uuid('article_id').references(() => articles.id, { onDelete: 'set null' }),
+  storageKey: text('storage_key').notNull().unique(),
+  publicUrl: text('public_url').notNull(),
+  mimeType: varchar('mime_type', { length: 120 }).notNull(),
+  fileName: text('file_name').notNull(),
+  fileSize: integer('file_size').notNull(),
+  caption: text('caption'),
+  altText: text('alt_text'),
+  source: text('source'),
+  copyrightOwner: text('copyright_owner'),
+  license: text('license'),
+  status: varchar('status', { length: 40 }).notNull().default('pending'),
+  uploadedBy: varchar('uploaded_by', { length: 160 }).notNull(),
+  approvedBy: varchar('approved_by', { length: 160 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [index('media_assets_article_idx').on(table.articleId, table.status, table.createdAt)])

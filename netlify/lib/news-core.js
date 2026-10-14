@@ -659,7 +659,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
     const result = await pool.query({
       text: `SELECT id, title, summary, body, category, state, district, image_url,
         thumbnail_url, featured_media, source_url, source_name, published_at,
-        source_published_at, views FROM articles
+        source_published_at, views, content_revision FROM articles
         WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}
           AND published_at >= now() - interval '3 days'
         ORDER BY published_at DESC LIMIT $${limitIndex}`,
@@ -682,6 +682,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       source: row.source_name || "NewsNeta",
       pubDate: row.source_published_at || row.published_at,
       views: row.views || 0,
+      contentRevision: row.content_revision || 1,
       persisted: true
     }));
   } catch (error) {

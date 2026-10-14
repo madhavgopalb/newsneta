@@ -1,6 +1,6 @@
 const crypto = require("node:crypto");
 const { getDatabase } = require("@netlify/database");
-const { handler: fetchNews } = require("./news");
+const { handler: fetchNews } = require("../functions/news");
 
 const LOCK_ID = 638281002;
 const DEFAULT_CATEGORIES = ["latest", "ap", "telangana", "politics", "national", "international", "cinema", "sports", "cricket", "technology", "business", "education", "jobs", "viral"];

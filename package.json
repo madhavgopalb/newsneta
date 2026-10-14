@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "netlify dev",
-    "check": "node --check netlify/functions/news.js",
+    "check": "node --check netlify/functions/news.js && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/news-health.mjs",
     "check:playstore": "node scripts/verify-playstore-readiness.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",

@@ -1,14 +1,13 @@
-const { getDatabase } = require("@netlify/database");
+import { getDatabase } from "@netlify/database";
 
-const json = (statusCode, body) => ({
-  statusCode,
-  headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
-  body: JSON.stringify(body)
+const json = (status, body) => Response.json(body, {
+  status,
+  headers: { "Cache-Control": "no-store" }
 });
 
-exports.handler = async function handler(event) {
+export default async function handler(request) {
   const expected = process.env.ADMIN_HEALTH_TOKEN;
-  const supplied = String(event.headers?.authorization || "").replace(/^Bearer\s+/i, "");
+  const supplied = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!expected || supplied !== expected) return json(401, { status: "unauthorized" });
 
   try {
@@ -41,4 +40,4 @@ exports.handler = async function handler(event) {
     console.error(JSON.stringify({ code: "HEALTH_DASHBOARD_FAILED", message: error.message, timestamp: new Date().toISOString() }));
     return json(503, { status: "unavailable", message: "Health data is temporarily unavailable." });
   }
-};
+}

@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const news = require("../netlify/functions/news")._test;
+const news = require("../netlify/lib/news-core")._test;
 const ingestion = require("../netlify/lib/ingest-news-core")._test;
 
 test("category aliases preserve canonical feeds", () => {

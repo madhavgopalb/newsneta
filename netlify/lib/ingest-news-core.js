@@ -1,5 +1,5 @@
 const crypto = require("node:crypto");
-const { handler: fetchNews } = require("../functions/news");
+const { handler: fetchNews, _test: newsTest } = require("./news-core");
 
 const LOCK_ID = 638281002;
 const DEFAULT_CATEGORIES = ["latest", "ap", "telangana", "politics", "national", "international", "cinema", "sports", "cricket", "technology", "business", "education", "jobs", "viral"];
@@ -78,9 +78,10 @@ async function mapWithConcurrency(items, limit, mapper) {
   return results;
 }
 
-async function ingestCategory(client, category) {
+async function ingestCategory(client, category, getDatabase) {
+  category = newsTest.normalizeCategory(category);
   const result = await withRetry(async () => {
-    const response = await fetchNews({ queryStringParameters: { cat: category, force: String(Date.now()), ingest: "1" } });
+    const response = await fetchNews({ queryStringParameters: { cat: category, force: String(Date.now()), ingest: "1" } }, getDatabase);
     if (response.statusCode !== 200) throw new Error(`News API HTTP ${response.statusCode}`);
     const payload = JSON.parse(response.body || "{}");
     if (!Array.isArray(payload.items)) throw new Error("Malformed provider response");
@@ -160,7 +161,7 @@ exports.handler = async function handler(getDatabase) {
       while (queue.length) {
         const category = queue.shift();
         try {
-          const result = await ingestCategory(client, category);
+          const result = await ingestCategory(client, category, getDatabase);
           for (const key of Object.keys(totals)) totals[key] += result.counts[key] || 0;
         } catch (error) {
           errors.push({ category, message: error.message, at: new Date().toISOString() });

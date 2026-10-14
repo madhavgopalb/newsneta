@@ -646,9 +646,8 @@ function mergeCanonicalArticles(primary = [], secondary = []) {
   });
 }
 
-async function persistedArticles(cat, district, limit = 24) {
+async function persistedArticles(cat, district, limit = 24, getDatabase) {
   try {
-    const { getDatabase } = require("@netlify/database");
     const { pool } = getDatabase();
     const values = [cat, limit];
     let districtClause = "";
@@ -691,7 +690,7 @@ async function persistedArticles(cat, district, limit = 24) {
   }
 }
 
-exports.handler = async function handler(event) {
+exports.handler = async function handler(event, getDatabase) {
   const params = event.queryStringParameters || {};
   const cat = normalizeCategory(params.cat || params.category || "telangana");
   const district = cleanText(params.district || "");
@@ -708,7 +707,7 @@ exports.handler = async function handler(event) {
     });
   }
 
-  const persisted = await persistedArticles(cat, district);
+  const persisted = await persistedArticles(cat, district, 24, getDatabase);
   if (!forceRefresh && persisted.length) {
     const data = {
       status: "ok",

@@ -261,7 +261,8 @@ export default async function handler(request) {
   } catch (error) {
     console.error(JSON.stringify({code:"CMS_REQUEST_FAILED",message:error.message,timestamp:new Date().toISOString()}));
     if (error.code === "23505") return json(409,{status:"error",message:"Article slug already exists"});
-    return json(error.status||500,{status:"error",message:error.status?error.message:"CMS request failed"});
+    const publicMessage = error.status ? error.message : (process.env.CONTEXT === "production" ? "CMS request failed" : clean(error.message, 300));
+    return json(error.status||500,{status:"error",message:publicMessage});
   }
 }
 

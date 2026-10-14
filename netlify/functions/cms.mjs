@@ -88,6 +88,13 @@ function featuredMedia(media) {
   };
 }
 
+async function listWorkflow(pool, user, articleId) {
+  if (!isUuid(articleId)) throw fail("Invalid article ID", 400);
+  if (!["reviewer", "admin"].includes(user.role)) throw fail("Role cannot inspect workflow", 403);
+  const result = await pool.query({ text: "SELECT from_status,to_status,action,comments,actor_id,actor_role,created_at FROM article_workflow WHERE article_id=$1 ORDER BY created_at,id", values: [articleId] });
+  return result.rows;
+}
+
 async function saveArticle(pool, user, data) {
   if (!["reporter", "admin"].includes(user.role)) throw fail("Role cannot edit articles", 403);
   const value = normalizedArticle(data);
@@ -242,6 +249,7 @@ export default async function handler(request) {
     if (!user) return json(401,{status:"unauthorized"});
     const { pool } = getDatabase();
     if (request.method === "GET" && action === "list") return json(200,{status:"ok",items:await listArticles(pool)});
+    if (request.method === "GET" && action === "workflow") return json(200,{status:"ok",items:await listWorkflow(pool,user,url.searchParams.get("id"))});
     if (request.method !== "POST") return json(405,{status:"method-not-allowed"});
     if (action === "upload") return json(201,{status:"ok",media:await uploadMedia(request,pool,user)});
     const data = await request.json();

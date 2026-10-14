@@ -708,7 +708,7 @@ exports.handler = async function handler(event, getDatabase) {
   }
 
   const persisted = await persistedArticles(cat, district, 24, getDatabase);
-  if (!forceRefresh && persisted.length) {
+  if (!ingestionMode && persisted.length) {
     const data = {
       status: "ok",
       provider: "newsneta-database",

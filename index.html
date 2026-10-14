@@ -1900,8 +1900,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v84";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v84";
+const APP_BUILD_VERSION = "newsneta-web-v85";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v85";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 2 * 60 * 1000;
 const categoryRefreshIntervalMs = 5 * 60 * 1000;
@@ -1987,6 +1987,7 @@ async function cmsApi(action, {method="POST", body=null, form=null} = {}){
 
 function serverArticlePayload(article){
  return {
+  id:/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(article.id||"")) ? article.id : undefined, contentRevision:article.contentRevision,
   headline:article.headline, englishTitle:article.englishHeadline, summary:article.summary, body:article.body,
   category:categoryIdForValue(article.category), state:article.state, district:article.district,
   slug:article.slug, tags:article.tags, breaking:article.breaking, topStory:article.featuredRequest,
@@ -1998,7 +1999,7 @@ async function reloadCmsArticles(){
  if(!cmsSessionToken) return;
  const localDrafts = cmsArticles.filter(item=>item.id !== cmsSampleArticle.id && ["draft","changes_requested"].includes(item.status));
  const payload = await cmsApi("list", {method:"GET"});
- const serverItems = (payload.items || []).map(item=>cmsArticleDefaults({...item,id:item.id,englishHeadline:item.english_title,image:item.image,thumbnail:item.thumbnail,media:item.media || [],featuredMediaId:item.featured_media?.id || null,publishedAt:item.published_at,updatedAt:item.updated_at}));
+ const serverItems = (payload.items || []).map(item=>cmsArticleDefaults({...item,id:item.id,englishHeadline:item.english_title,image:item.image,thumbnail:item.thumbnail,media:item.media || [],featuredMediaId:item.featured_media?.id || null,publishedAt:item.published_at,updatedAt:item.updated_at,contentRevision:item.content_revision}));
  const serverIds = new Set(serverItems.map(item=>item.id));
  cmsArticles = [...serverItems, ...localDrafts.filter(item=>!serverIds.has(item.id))];
  saveCmsArticles();
@@ -2011,10 +2012,12 @@ async function persistCmsArticle(article, transitionTo=null){
   article.id = saved.article.id;
   article.slug = saved.article.slug;
   article.status = saved.article.status;
+  article.contentRevision = saved.article.content_revision;
  }
  if(transitionTo){
   const transitioned = await cmsApi("transition", {body:{id:article.id,to:transitionTo,comments:article.notes || ""}});
   article.status = transitioned.article.status;
+  article.contentRevision = transitioned.article.content_revision;
   article.publishedAt = transitioned.article.published_at || article.publishedAt;
  }
  await reloadCmsArticles();
@@ -2037,6 +2040,7 @@ function cmsArticleDefaults(article = {}){
  return {
   id: article.id || `cms-${Date.now()}`,
   status: article.status || "draft",
+  contentRevision: Number(article.contentRevision || article.content_revision || 0),
   headline,
   shortHeadline: article.shortHeadline || article.englishHeadline || headline,
   englishHeadline: article.englishHeadline || "",

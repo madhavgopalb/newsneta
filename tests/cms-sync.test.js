@@ -19,10 +19,10 @@ test("CMS credentials are verified by role without exposing passwords to the bro
 
 test("CMS sessions are signed, expire, and reject tampering", () => {
   const now = Date.UTC(2026, 9, 14, 6);
-  const token = auth.signSession({ id: "reporter@example.test", role: "reporter" }, "test-session-secret", now);
-  assert.equal(auth.verifySession(token, "test-session-secret", now + 1000).role, "reporter");
-  assert.equal(auth.verifySession(`${token}x`, "test-session-secret", now + 1000), null);
-  assert.equal(auth.verifySession(token, "test-session-secret", now + 9 * 60 * 60 * 1000), null);
+  const token = auth.signSession({ id: "reporter@example.test", role: "reporter" }, "test-session-secret-at-least-32-chars", now);
+  assert.equal(auth.verifySession(token, "test-session-secret-at-least-32-chars", now + 1000).role, "reporter");
+  assert.equal(auth.verifySession(`${token}x`, "test-session-secret-at-least-32-chars", now + 1000), null);
+  assert.equal(auth.verifySession(token, "test-session-secret-at-least-32-chars", now + 9 * 60 * 60 * 1000), null);
 });
 
 test("editorial role transitions enforce reporter review and admin publication", () => {
@@ -44,4 +44,16 @@ test("public news API exposes canonical content revision and CMS media", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "news-core.js"), "utf8");
   assert.match(source, /content_revision FROM articles/);
   assert.match(source, /featured_media\?\.url \|\| row\.image_url/);
+});
+
+test("public media requires approved media on a published CMS article", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "functions", "media.mjs"), "utf8");
+  assert.match(source, /m\.status='approved'/);
+  assert.match(source, /a\.status='published'/);
+  assert.match(source, /a\.source_provider='newsneta-cms'/);
+});
+
+test("browser sends immutable server article IDs back to CMS", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(source, /id:\/\^\[0-9a-f\]\{8\}/);
 });

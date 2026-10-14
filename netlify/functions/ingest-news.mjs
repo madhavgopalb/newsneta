@@ -1,7 +1,6 @@
-import { createRequire } from "node:module";
+import ingestionCore from "../lib/ingest-news-core.js";
 
-const require = createRequire(import.meta.url);
-const { handler: runIngestion } = require("../lib/ingest-news-core.js");
+const { handler: runIngestion } = ingestionCore;
 
 export default async function handler() {
   const result = await runIngestion();
@@ -13,4 +12,3 @@ export default async function handler() {
     }
   });
 }
-

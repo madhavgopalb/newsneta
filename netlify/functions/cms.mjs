@@ -105,7 +105,8 @@ async function uploadMedia(request, pool, user) {
   if (!allowedMime.has(file.type) || file.size > maxUpload(file.type)) throw Object.assign(new Error("Unsupported media type or file size"), { status: 400 });
   const extension = clean(file.name, 180).split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
   const key = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
-  const store = getStore({ name: "newsneta-media", consistency: "strong" });
+  const suffix = process.env.CONTEXT === "production" ? "" : `-${String(process.env.DEPLOY_ID || process.env.CONTEXT || "local").replace(/[^a-z0-9-]/gi, "-")}`;
+  const store = getStore({ name: "newsneta-media" + suffix, consistency: "strong" });
   await store.set(key, file, { metadata: { contentType: file.type, fileName: file.name, uploadedBy: user.id } });
   const publicUrl = `${new URL(request.url).origin}/.netlify/functions/media?key=${encodeURIComponent(key)}`;
   const inserted = await pool.query({

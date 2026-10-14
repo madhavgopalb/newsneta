@@ -1987,6 +1987,7 @@ async function cmsApi(action, {method="POST", body=null, form=null} = {}){
 
 function serverArticlePayload(article){
  return {
+  id:/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(article.id||"")) ? article.id : undefined,
   headline:article.headline, englishTitle:article.englishHeadline, summary:article.summary, body:article.body,
   category:categoryIdForValue(article.category), state:article.state, district:article.district,
   slug:article.slug, tags:article.tags, breaking:article.breaking, topStory:article.featuredRequest,

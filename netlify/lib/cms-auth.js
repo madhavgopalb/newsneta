@@ -22,14 +22,14 @@ function authenticateCredentials(email, password, role, env = process.env) {
 }
 
 function signSession(user, secret, now = Date.now()) {
-  if (!secret) throw new Error("CMS_SESSION_SECRET is not configured");
+  if (!secret || String(secret).length < 32) throw new Error("CMS_SESSION_SECRET must contain at least 32 characters");
   const payload = encode({ ...user, iat: now, exp: now + 8 * 60 * 60 * 1000 });
   const signature = crypto.createHmac("sha256", secret).update(payload).digest("base64url");
   return `${payload}.${signature}`;
 }
 
 function verifySession(token, secret, now = Date.now()) {
-  if (!token || !secret) return null;
+  if (!token || !secret || String(secret).length < 32 || String(token).length > 4096) return null;
   const [payload, signature] = String(token).split(".");
   if (!payload || !signature) return null;
   const expected = crypto.createHmac("sha256", secret).update(payload).digest("base64url");

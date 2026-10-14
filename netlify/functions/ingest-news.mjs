@@ -1,4 +1,5 @@
 import { getDatabase } from "@netlify/database";
+import "rss-parser";
 import ingestionCore from "../lib/ingest-news-core.js";
 
 const { handler: runIngestion } = ingestionCore;

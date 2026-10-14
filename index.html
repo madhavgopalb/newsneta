@@ -1900,8 +1900,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v83";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v83";
+const APP_BUILD_VERSION = "newsneta-web-v84";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v84";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 2 * 60 * 1000;
 const categoryRefreshIntervalMs = 5 * 60 * 1000;
@@ -1930,25 +1930,10 @@ const stateLabels = {
  ap: "Andhra Pradesh Districts"
 };
 
-const cmsUsers = {
- "admin@newsneta.in": {
-  password:"newsneta-demo",
-  role:"admin",
-  name:"Admin Desk",
-  location:{city:"Hyderabad", lat:17.385, lon:78.4867}
- },
- "reporter@newsneta.in": {
-  password:"newsneta-demo",
-  role:"reporter",
-  name:"District Reporter",
-  location:{city:"Vijayawada", lat:16.5062, lon:80.648}
- },
- "reviewer@newsneta.in": {
-  password:"newsneta-demo",
-  role:"reviewer",
-  name:"Review Desk",
-  location:{city:"Visakhapatnam", lat:17.6868, lon:83.2185}
- }
+const cmsRoleProfiles = {
+ admin:{name:"Admin Desk",location:{city:"Hyderabad",lat:17.385,lon:78.4867}},
+ reporter:{name:"District Reporter",location:{city:"Vijayawada",lat:16.5062,lon:80.648}},
+ reviewer:{name:"Review Desk",location:{city:"Visakhapatnam",lat:17.6868,lon:83.2185}}
 };
 
 let currentCmsUser = null;
@@ -1984,6 +1969,60 @@ function loadCmsArticles(){
 
 function saveCmsArticles(){
  localStorage.setItem("newsneta-cms-articles", JSON.stringify(cmsArticles));
+}
+
+let cmsSessionToken = sessionStorage.getItem("newsneta-cms-token") || "";
+
+async function cmsApi(action, {method="POST", body=null, form=null} = {}){
+ const response = await fetch(`/.netlify/functions/cms?action=${encodeURIComponent(action)}`, {
+  method,
+  cache:"no-store",
+  headers:form ? {Authorization:`Bearer ${cmsSessionToken}`} : {Authorization:`Bearer ${cmsSessionToken}`,"Content-Type":"application/json"},
+  body:form || (body ? JSON.stringify(body) : null)
+ });
+ const payload = await response.json();
+ if(!response.ok) throw new Error(payload.message || `CMS API ${response.status}`);
+ return payload;
+}
+
+function serverArticlePayload(article){
+ return {
+  headline:article.headline, englishTitle:article.englishHeadline, summary:article.summary, body:article.body,
+  category:categoryIdForValue(article.category), state:article.state, district:article.district,
+  slug:article.slug, tags:article.tags, breaking:article.breaking, topStory:article.featuredRequest,
+  altText:article.altText, featuredMediaId:article.featuredMediaId || article.featured_media?.id || null
+ };
+}
+
+async function reloadCmsArticles(){
+ if(!cmsSessionToken) return;
+ const localDrafts = cmsArticles.filter(item=>item.id !== cmsSampleArticle.id && ["draft","changes_requested"].includes(item.status));
+ const payload = await cmsApi("list", {method:"GET"});
+ const serverItems = (payload.items || []).map(item=>cmsArticleDefaults({...item,id:item.id,englishHeadline:item.english_title,image:item.image,thumbnail:item.thumbnail,media:item.media || [],featuredMediaId:item.featured_media?.id || null,publishedAt:item.published_at,updatedAt:item.updated_at}));
+ const serverIds = new Set(serverItems.map(item=>item.id));
+ cmsArticles = [...serverItems, ...localDrafts.filter(item=>!serverIds.has(item.id))];
+ saveCmsArticles();
+}
+
+async function persistCmsArticle(article, transitionTo=null){
+ if(!cmsSessionToken) throw new Error("CMS session is not available");
+ if(currentCmsUser?.role === "reporter" || currentCmsUser?.role === "admin"){
+  const saved = await cmsApi("save", {body:serverArticlePayload(article)});
+  article.id = saved.article.id;
+  article.slug = saved.article.slug;
+  article.status = saved.article.status;
+ }
+ if(transitionTo){
+  const transitioned = await cmsApi("transition", {body:{id:article.id,to:transitionTo,comments:article.notes || ""}});
+  article.status = transitioned.article.status;
+  article.publishedAt = transitioned.article.published_at || article.publishedAt;
+ }
+ await reloadCmsArticles();
+ if(["published","unpublished","archived","deleted"].includes(transitionTo)){
+  const activeCategory=document.querySelector(".nav a.active")?.dataset.cat || "latest";
+  await loadNews(activeCategory, true);
+  await loadHomepageFeeds(true);
+ }
 }
 
 function slugify(value){
@@ -2078,14 +2117,14 @@ function hydrateCmsArticles(){
 
 function primaryCmsArticle(){
  hydrateCmsArticles();
- if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")) cmsArticles = [{...cmsSampleArticle}];
+ if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")) cmsArticles = [cmsArticleDefaults(cmsSessionToken ? {id:`draft-${Date.now()}`,status:"draft",headline:"",body:"",summary:"",category:"telangana",state:"Telangana",district:"Hyderabad",media:[]} : {...cmsSampleArticle})];
  cmsArticles = cmsArticles.map(cmsArticleDefaults);
  return cmsArticles[0];
 }
 
 function ensureCmsSample(){
  if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")){
-  cmsArticles = [{...cmsSampleArticle}];
+  cmsArticles = [cmsArticleDefaults(cmsSessionToken ? {id:`draft-${Date.now()}`,status:"draft",headline:"",body:"",summary:"",category:"telangana",state:"Telangana",district:"Hyderabad",media:[]} : {...cmsSampleArticle})];
   saveCmsArticles();
  }
  return primaryCmsArticle();
@@ -4376,6 +4415,7 @@ function categoryLabelForId(id){
 }
 
 function publishedCmsStories(cat){
+ if(!currentCmsUser) return [];
  const requested = categoryIdForValue(cat);
  const includeAllPublished = !cat || requested === "latest";
  return cmsArticles
@@ -4779,6 +4819,7 @@ function updateArticleFromReporterForm(article){
  article.updatedAt = new Date().toISOString();
  const uploadedMedia = [...(cmsUploadSession.images || []).map(item=>item.metadata), cmsUploadSession.thumbnail?.metadata, cmsUploadSession.video?.metadata].filter(Boolean);
  if(cmsUploadSession.images?.[0]?.metadata?.public_url) article.image = cmsUploadSession.images[0].metadata.public_url;
+ if(cmsUploadSession.images?.[0]?.metadata?.id) article.featuredMediaId = cmsUploadSession.images[0].metadata.id;
  if(cmsUploadSession.thumbnail?.metadata?.public_url) article.thumbnail = cmsUploadSession.thumbnail.metadata.public_url;
  article.media = uploadedMedia.length ? uploadedMedia.map(item=>({
   ...item,
@@ -4822,6 +4863,42 @@ function readFileAsDataUrl(file){
  });
 }
 
+async function uploadCmsFileToServer(kind, file, position, config, note){
+ const form = new FormData();
+ form.append("file", file);
+ form.append("caption", document.getElementById("cmsMediaCaption")?.value || file.name);
+ form.append("altText", document.getElementById("cmsAltText")?.value || file.name);
+ form.append("source", document.getElementById("cmsMediaSource")?.value || "NewsNeta reporter upload");
+ form.append("copyrightOwner", document.getElementById("cmsCopyrightOwner")?.value || "NewsNeta");
+ form.append("license", document.getElementById("cmsMediaLicense")?.value || "NewsNeta editorial use");
+ const payload = await cmsApi("upload", {form});
+ const media = payload.media;
+ const metadata = {
+  id:media.id, media_type:file.type.startsWith("video/") ? "video" : "image", file_name:media.file_name,
+  original_file_name:media.file_name, storage_provider:"Netlify Blobs", storage_bucket:"newsneta-media",
+  storage_path:media.storage_key, public_url:media.public_url, thumbnail_url:media.public_url,
+  file_size:formatBytes(media.file_size), mime_type:media.mime_type, caption:media.caption,
+  alt_text:media.alt_text, source:media.source, copyright_owner:media.copyright_owner,
+  license:media.license, uploaded_by:media.uploaded_by, uploaded_at:media.created_at
+ };
+ const uploadItem = {id:`upload-${kind}-${Date.now()}`,file,localUrl:media.public_url,metadata};
+ if(kind === "image"){
+  cmsUploadSession.images = cmsUploadSession.images || [];
+  cmsUploadSession.images.push(uploadItem);
+  cmsUploadSession.image = cmsUploadSession.images[0];
+ }else cmsUploadSession[kind] = uploadItem;
+ const field = document.getElementById(config.urlField);
+ if(field && (kind !== "image" || position === 0)) field.value = media.public_url;
+ const preview = document.getElementById(config.preview);
+ if(preview){
+  const tag = kind === "video" ? `<video src="${escapeAttr(media.public_url)}" controls></video>` : `<img src="${escapeAttr(media.public_url)}" alt="">`;
+  preview.classList.add("show");
+  if(kind === "image" && position > 0) preview.insertAdjacentHTML("beforeend", `${tag}<b>${escapeHtml(file.name)}</b><small>Uploaded securely</small>`);
+  else preview.innerHTML = `${tag}<b>${escapeHtml(file.name)}</b><small>Stored in NewsNeta media storage</small>`;
+ }
+ if(note) note.textContent = `${file.name} uploaded and attached to the server article.`;
+}
+
 async function handleCmsFileUpload(kind, file, position = 0){
  const config = uploadConfig(kind);
  const note = document.getElementById("cmsWorkflowNote");
@@ -4832,6 +4909,10 @@ async function handleCmsFileUpload(kind, file, position = 0){
  }
  if(file.size > config.max){
   if(note) note.textContent = `${file.name} is too large. Max allowed is ${formatBytes(config.max)}.`;
+  return;
+ }
+ if(cmsSessionToken){
+  await uploadCmsFileToServer(kind, file, position, config, note);
   return;
  }
  if(kind !== "image" && cmsUploadSession[kind]?.localUrl) URL.revokeObjectURL(cmsUploadSession[kind].localUrl);
@@ -4924,7 +5005,7 @@ function bindCmsScreen(role){
    output.textContent = `Health data unavailable: ${error.message || error}`;
   }
  });
- document.getElementById("storyUploadForm")?.addEventListener("submit",event=>{
+ document.getElementById("storyUploadForm")?.addEventListener("submit",async event=>{
   event.preventDefault();
   const article = primaryCmsArticle();
   if(role === "reporter"){
@@ -4966,25 +5047,32 @@ function bindCmsScreen(role){
     document.getElementById("cmsWorkflowNote").textContent = "Admin scheduled the article for publication.";
    }
   }
-  saveCmsArticles();
-  switchCmsScreen("manage");
+  try{
+   const targetStatus = article.status;
+   await persistCmsArticle(article, targetStatus === "draft" ? null : targetStatus);
+   saveCmsArticles();
+   switchCmsScreen("manage");
+  }catch(error){
+   const note=document.getElementById("cmsWorkflowNote");
+   if(note) note.textContent=`Server sync failed: ${error.message || error}`;
+  }
  });
  document.querySelectorAll("[data-ai-action]").forEach(button=>{
   button.addEventListener("click",()=>fillAssistantContent(button.dataset.aiAction));
  });
  document.querySelectorAll("[data-save-draft]").forEach(button=>{
-  button.addEventListener("click",()=>{
+  button.addEventListener("click",async()=>{
    const article = primaryCmsArticle();
    updateArticleFromReporterForm(article);
    addWorkflowEntry(article, "draft", "Draft saved", "Reporter saved draft without submitting.");
    notifyArticle(article, "draft_saved", "Draft saved in newsroom workspace.");
-   saveCmsArticles();
+   try{ await persistCmsArticle(article); saveCmsArticles(); }catch(error){ article.notes=`Server sync failed: ${error.message || error}`; }
    const note = document.getElementById("cmsWorkflowNote");
    if(note) note.textContent = "Draft saved. You can continue editing or submit for review.";
   });
  });
  document.querySelectorAll("[data-queue-action]").forEach(button=>{
-  button.addEventListener("click",()=>{
+  button.addEventListener("click",async()=>{
    const article = cmsArticles.find(item=>item.id === button.dataset.articleId);
    if(!article) return;
    const action = button.dataset.queueAction;
@@ -5012,19 +5100,19 @@ function bindCmsScreen(role){
     addWorkflowEntry(article, "archived", "Admin archived", "Article moved to archive.");
     notifyArticle(article, "article_archived", "Article archived by admin.");
    }
-   saveCmsArticles();
-   switchCmsScreen("manage");
+   try{ await persistCmsArticle(article, article.status === "draft" ? null : article.status); saveCmsArticles(); switchCmsScreen("manage"); }
+   catch(error){ const note=document.getElementById("cmsWorkflowNote"); if(note) note.textContent=`Server sync failed: ${error.message || error}`; }
   });
  });
  document.querySelectorAll("[data-delete-article]").forEach(button=>{
-  button.addEventListener("click",()=>{
-   deleteCmsArticle(button.dataset.deleteArticle);
-   switchCmsScreen("manage");
+  button.addEventListener("click",async()=>{
+   try{ await cmsApi("delete", {body:{id:button.dataset.deleteArticle}}); deleteCmsArticle(button.dataset.deleteArticle); switchCmsScreen("manage"); }
+   catch(error){ const note=document.getElementById("cmsWorkflowNote"); if(note) note.textContent=`Delete failed: ${error.message || error}`; }
   });
  });
  document.querySelectorAll("[data-reset-sample]").forEach(button=>{
   button.addEventListener("click",()=>{
-   cmsArticles = [{...cmsSampleArticle}];
+   cmsArticles = [cmsArticleDefaults(cmsSessionToken ? {id:`draft-${Date.now()}`,status:"draft",headline:"",body:"",summary:"",category:"telangana",state:"Telangana",district:"Hyderabad",media:[]} : {...cmsSampleArticle})];
    saveCmsArticles();
    switchCmsScreen("article");
   });
@@ -5097,10 +5185,13 @@ function openRoleDashboard(role, user = currentCmsUser){
   dashboard.hidden = true;
   currentCmsUser = null;
   sessionStorage.removeItem("newsneta-cms-user");
+  sessionStorage.removeItem("newsneta-cms-token");
+  cmsSessionToken = "";
   document.querySelector(".login-modal")?.classList.remove("authenticated");
   document.getElementById("loginTitle").textContent = "Login";
   document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
   renderWeather();
+  loadNews("latest", true);
  });
  content.querySelectorAll(".dashboard-action").forEach(button=>{
   button.addEventListener("click",()=>{
@@ -5116,31 +5207,31 @@ function openRoleDashboard(role, user = currentCmsUser){
  bindCmsScreen(role);
 }
 
-document.getElementById("loginForm").addEventListener("submit",event=>{
+document.getElementById("loginForm").addEventListener("submit",async event=>{
  event.preventDefault();
  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
  const password = document.getElementById("loginPassword").value;
  const role = document.getElementById("roleSelect").value;
  const errorBox = document.getElementById("loginError");
- const user = cmsUsers[email];
- if(!user || user.password !== password || user.role !== role){
-  if(errorBox){
-   errorBox.textContent = "Login failed. Please use the correct email, password, and matching role.";
-   errorBox.classList.add("show");
-  }
-  return;
+ try{
+  const response = await fetch("/.netlify/functions/cms?action=login", {method:"POST",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password,role})});
+  const payload = await response.json();
+  if(!response.ok) throw new Error(payload.message || "Login failed");
+  cmsSessionToken = payload.token;
+  sessionStorage.setItem("newsneta-cms-token", cmsSessionToken);
+  sessionStorage.setItem("newsneta-cms-user", email);
+  const profile = cmsRoleProfiles[role] || cmsRoleProfiles.reporter;
+  currentCmsUser = {...payload.user,...profile};
+  await reloadCmsArticles();
+  if(errorBox){ errorBox.textContent=""; errorBox.classList.remove("show"); }
+  document.querySelector(".login-modal")?.classList.add("authenticated");
+  document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
+  document.getElementById("loginTitle").textContent = "Newsroom Dashboard";
+  openRoleDashboard(role, currentCmsUser);
+  renderWeather();
+ }catch(error){
+  if(errorBox){ errorBox.textContent=error.message || "Login failed."; errorBox.classList.add("show"); }
  }
- currentCmsUser = user;
- sessionStorage.setItem("newsneta-cms-user", email);
- if(errorBox){
-  errorBox.textContent = "";
-  errorBox.classList.remove("show");
- }
- document.querySelector(".login-modal")?.classList.add("authenticated");
- document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
- document.getElementById("loginTitle").textContent = "Newsroom Dashboard";
- openRoleDashboard(role, user);
- renderWeather();
 });
 document.getElementById("summarizeBtn").addEventListener("click",()=>{
  const text = document.getElementById("summaryInput").value.trim();

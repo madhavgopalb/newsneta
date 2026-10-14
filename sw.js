@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v83";
+const CACHE_VERSION = "v84";
 const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
 const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
 const MEDIA_CACHE_NAME = `newsneta-media-${CACHE_VERSION}`;
@@ -160,6 +160,11 @@ self.addEventListener("fetch", event => {
         })
         .catch(() => caches.match("/index.html"))
     );
+    return;
+  }
+
+  if (request.url.includes("/.netlify/functions/cms")) {
+    event.respondWith(fetch(request, { cache: "no-store" }));
     return;
   }
 

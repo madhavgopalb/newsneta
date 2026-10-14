@@ -5,6 +5,7 @@ const { handler: runIngestion } = ingestionCore;
 
 export default async function handler() {
   const result = await runIngestion(getDatabase);
+  console.info(JSON.stringify({ code: "INGESTION_RESULT", statusCode: result.statusCode, body: JSON.parse(result.body || "{}") }));
   return new Response(result.body, {
     status: result.statusCode,
     headers: {

@@ -68,3 +68,36 @@ test("service worker clones before cache write and keeps representation paramete
   assert.doesNotMatch(source, /searchParams\.delete\("category"\)/);
   assert.doesNotMatch(source, /searchParams\.delete\("district"\)/);
 });
+
+test("service worker uses network-first media and does not cache failed images", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
+  const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
+  assert.match(source, /CACHE_VERSION = "v83"/);
+  assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
+  assert.match(mediaHandler, /isCacheableImage\(response\)/);
+  assert.match(mediaHandler, /cache\.match\(request\)/);
+});
+
+test("ingestion preserves valid persisted media when a later source update has none", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
+  assert.match(source, /image_url=COALESCE\(EXCLUDED\.image_url, articles\.image_url\)/);
+  assert.match(source, /featured_media=COALESCE\(EXCLUDED\.featured_media, articles\.featured_media\)/);
+});
+test("media validation falls back from rejected HEAD to a successful image GET", async () => {
+  const originalFetch = global.fetch;
+  const methods = [];
+  global.fetch = async (_url, options = {}) => {
+    methods.push(options.method);
+    if (options.method === "HEAD") return new Response("", { status: 405 });
+    return new Response(new Uint8Array([0xff, 0xd8, 0xff]), {
+      status: 206,
+      headers: { "content-type": "image/jpeg" }
+    });
+  };
+  try {
+    assert.equal(await ingestion.validateMediaUrl("https://media.example/article.jpg"), true);
+    assert.deepEqual(methods, ["HEAD", "GET"]);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

@@ -53,17 +53,31 @@ function canonicalArticle(item, category, provider) {
 
 async function validateMediaUrl(url) {
   if (!url || !/^https:\/\//i.test(url) || /logo|placeholder|sprite|icon/i.test(url)) return false;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  try {
-    const response = await fetch(url, { method: "HEAD", redirect: "follow", signal: controller.signal });
-    const type = String(response.headers.get("content-type") || "").toLowerCase();
-    return response.ok && type.startsWith("image/");
-  } catch (error) {
-    return false;
-  } finally {
-    clearTimeout(timeout);
+  for (const method of ["HEAD", "GET"]) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(url, {
+        method,
+        redirect: "follow",
+        signal: controller.signal,
+        headers: method === "GET"
+          ? { Accept: "image/avif,image/webp,image/*", Range: "bytes=0-1023" }
+          : { Accept: "image/avif,image/webp,image/*" }
+      });
+      const type = String(response.headers.get("content-type") || "").toLowerCase();
+      if (response.ok && type.startsWith("image/")) {
+        if (response.body) await response.body.cancel().catch(() => {});
+        return true;
+      }
+      if (response.body) await response.body.cancel().catch(() => {});
+    } catch (error) {
+      // Some licensed image CDNs reject HEAD while serving GET normally.
+    } finally {
+      clearTimeout(timeout);
+    }
   }
+  return false;
 }
 
 async function mapWithConcurrency(items, limit, mapper) {
@@ -115,8 +129,10 @@ async function ingestCategory(client, category, getDatabase) {
         category=CASE WHEN articles.category='latest' THEN EXCLUDED.category WHEN EXCLUDED.category='latest' THEN articles.category ELSE EXCLUDED.category END, state=EXCLUDED.state, district=EXCLUDED.district,
         source_url=EXCLUDED.source_url, source_name=EXCLUDED.source_name,
         source_published_at=EXCLUDED.source_published_at, published_at=EXCLUDED.published_at,
-        image_url=EXCLUDED.image_url, thumbnail_url=EXCLUDED.thumbnail_url,
-        media=EXCLUDED.media, featured_media=EXCLUDED.featured_media,
+        image_url=COALESCE(EXCLUDED.image_url, articles.image_url),
+        thumbnail_url=COALESCE(EXCLUDED.thumbnail_url, articles.thumbnail_url),
+        media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media ELSE articles.media END,
+        featured_media=COALESCE(EXCLUDED.featured_media, articles.featured_media),
         last_seen_at=now(), updated_at=now()
       RETURNING (xmax = 0) AS inserted`,
       values: [

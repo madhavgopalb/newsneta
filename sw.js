@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v82";
+const CACHE_VERSION = "v83";
 const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
 const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
 const MEDIA_CACHE_NAME = `newsneta-media-${CACHE_VERSION}`;
@@ -79,22 +79,23 @@ function isCacheableImage(response) {
 
 async function handleImageRequest(request) {
   const cache = await caches.open(MEDIA_CACHE_NAME);
-  const cached = await cache.match(request);
-  const network = fetch(request).then(async response => {
+  try {
+    const response = await fetch(request, { cache: "no-store" });
     if (isCacheableImage(response)) {
       try {
         await cache.put(request, response.clone());
       } catch (error) {
         console.error("MEDIA_CACHE_WRITE_FAILED", error);
       }
+      return response;
     }
-    return response;
-  });
-  if (cached) {
-    network.catch(error => console.error("MEDIA_REVALIDATE_FAILED", error));
-    return cached;
+    throw new Error(`Image HTTP ${response.status}`);
+  } catch (error) {
+    console.error("MEDIA_NETWORK_FAILED", error);
+    const cached = await cache.match(request);
+    if (cached && isCacheableImage(cached)) return cached;
+    return new Response("", { status: 503 });
   }
-  return network;
 }
 
 self.addEventListener("activate", event => {

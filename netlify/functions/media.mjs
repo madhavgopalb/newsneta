@@ -15,7 +15,7 @@ export default async function handler(request) {
     status: 200,
     headers: {
       "Content-Type": entry.metadata?.contentType || "application/octet-stream",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "private, no-store, max-age=0",
       "X-Content-Type-Options": "nosniff"
     }
   });

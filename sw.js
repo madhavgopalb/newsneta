@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v84";
+const CACHE_VERSION = "v85";
 const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
 const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
 const MEDIA_CACHE_NAME = `newsneta-media-${CACHE_VERSION}`;
@@ -87,6 +87,10 @@ async function handleImageRequest(request) {
       } catch (error) {
         console.error("MEDIA_CACHE_WRITE_FAILED", error);
       }
+      return response;
+    }
+    if ([401, 403, 404, 410].includes(response.status)) {
+      await cache.delete(request);
       return response;
     }
     throw new Error(`Image HTTP ${response.status}`);

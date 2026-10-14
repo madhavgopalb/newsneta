@@ -1,9 +1,10 @@
+import { getDatabase } from "@netlify/database";
 import ingestionCore from "../lib/ingest-news-core.js";
 
 const { handler: runIngestion } = ingestionCore;
 
 export default async function handler() {
-  const result = await runIngestion();
+  const result = await runIngestion(getDatabase);
   return new Response(result.body, {
     status: result.statusCode,
     headers: {

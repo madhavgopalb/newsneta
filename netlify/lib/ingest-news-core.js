@@ -1,5 +1,4 @@
 const crypto = require("node:crypto");
-const { getDatabase } = require("@netlify/database");
 const { handler: fetchNews } = require("../functions/news");
 
 const LOCK_ID = 638281002;
@@ -133,7 +132,7 @@ async function ingestCategory(client, category) {
   return { provider, counts };
 }
 
-exports.handler = async function handler() {
+exports.handler = async function handler(getDatabase) {
   const startedAt = Date.now();
   let connection;
   try {

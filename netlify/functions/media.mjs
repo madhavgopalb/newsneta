@@ -66,14 +66,20 @@ export default async function handler(request) {
   const key = new URL(request.url).searchParams.get("key");
   if (!key || key.includes("..") || key.startsWith("/")) return notFound();
 
-  const { pool } = getDatabase();
-  const result = await pool.query({
-    text: `SELECT m.storage_key,m.mime_type,m.file_name,m.file_size
-      FROM media_assets m JOIN articles a ON a.id=m.article_id
-      WHERE m.storage_key=$1 AND m.status='approved' AND a.status='published'
-        AND a.source_provider='newsneta-cms' LIMIT 1`,
-    values: [key]
-  });
+  let result;
+  try {
+    const { pool } = getDatabase();
+    result = await pool.query({
+      text: `SELECT m.storage_key,m.mime_type,m.file_name,m.file_size
+        FROM media_assets m JOIN articles a ON a.id=m.article_id
+        WHERE m.storage_key=$1 AND m.status='approved' AND a.status='published'
+          AND a.source_provider='newsneta-cms' LIMIT 1`,
+      values: [key]
+    });
+  } catch (error) {
+    console.error(JSON.stringify({ code: "MEDIA_DATABASE_UNAVAILABLE", message: error.message, timestamp: new Date().toISOString() }));
+    return new Response("Media temporarily unavailable", { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "30" } });
+  }
   const asset = result.rows[0];
   if (!asset) return notFound();
 

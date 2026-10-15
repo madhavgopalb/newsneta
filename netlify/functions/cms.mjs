@@ -45,7 +45,7 @@ async function saveArticle(pool, user, data) {
     if (!media) throw Object.assign(new Error("Featured media was not found"), { status: 400 });
   }
   const featured = media ? {
-    id: media.id, url: media.public_url, thumbnailUrl: media.public_url, mimeType: media.mime_type,
+    id: media.id, url: media.public_url, thumbnailUrl: media.mime_type.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : media.public_url, mimeType: media.mime_type,
     caption: media.caption, altText: media.alt_text, source: media.source, copyrightOwner: media.copyright_owner,
     license: media.license, imageType: "cms_approved", relevanceScore: media.status === "approved" ? 100 : 80
   } : null;
@@ -64,7 +64,7 @@ async function saveArticle(pool, user, data) {
       RETURNING *`,
     values: [slug, headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || null, body,
       category, clean(data.state, 80) || null, clean(data.district, 120) || null, user.id,
-      media?.public_url || null, media?.alt_text || clean(data.altText, 500) || null,
+      media?.mime_type?.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : (media?.public_url || null), media?.alt_text || clean(data.altText, 500) || null,
       JSON.stringify(featured ? [featured] : []), JSON.stringify(featured),
       JSON.stringify(Array.isArray(data.tags) ? data.tags.map(tag => clean(tag, 80)).filter(Boolean) : clean(data.tags, 500).split(",").map(tag => tag.trim()).filter(Boolean)),
       Boolean(data.breaking), Boolean(data.topStory)]

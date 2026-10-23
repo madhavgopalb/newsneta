@@ -12,7 +12,10 @@ const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
 const FRESH_NEWS_DAYS = 3;
 const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
-const AUTO_IMAGE_THRESHOLD = 70;
+// Archive candidates are always labelled as file photos. A score of 60 still
+// requires multiple query/entity matches while allowing Telugu headlines whose
+// English location or event terms only appear in the image catalogue metadata.
+const AUTO_IMAGE_THRESHOLD = 60;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -633,7 +636,13 @@ function feedAssociatedMedia(item, cat, district) {
 }
 
 async function articleImage(item, cat, district) {
-  return feedAssociatedMedia(item, cat, district);
+  const associated = feedAssociatedMedia(item, cat, district);
+  if (associated.url) return associated;
+
+  const title = publicTitle(item.title);
+  const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
+  const query = imageSearchQuery(title, cat, district);
+  return commonsImage(query, intent);
 }
 
 function mergeCanonicalArticles(primary = [], secondary = []) {
@@ -665,7 +674,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
         ORDER BY published_at DESC LIMIT $${limitIndex}`,
       values
     });
-    return result.rows.map(row => ({
+    const articles = result.rows.map(row => ({
       id: row.id,
       title: row.title,
       description: row.summary || "",
@@ -686,6 +695,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       contentRevision: row.content_revision || 1,
       persisted: true
     }));
+    return freshSorted(articles, FRESH_NEWS_DAYS).slice(0, limit);
   } catch (error) {
     logEvent("NEWS_DATABASE_READ_FAILED", { category: cat, district: district || null, message: error.message });
     return [];
@@ -842,4 +852,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { brandedFallbackDecision, feedAssociatedMedia, freshSorted, normalizeCategory, trustedImageUrl };
+exports._test = { articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, trustedImageUrl };

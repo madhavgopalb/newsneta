@@ -35,6 +35,48 @@ test("RSS media remains associated with the same article", () => {
   assert.equal(media.imageType, "event_candidate");
 });
 
+test("RSS stories without embedded media use a rights-aware relevant archive image", async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({
+    query: {
+      pages: {
+        1: {
+          title: "File:Hyderabad traffic road.jpg",
+          imageinfo: [{
+            mime: "image/jpeg",
+            thumburl: "https://upload.wikimedia.org/hyderabad-traffic.jpg",
+            url: "https://upload.wikimedia.org/hyderabad-traffic-original.jpg",
+            descriptionurl: "https://commons.wikimedia.org/wiki/File:Hyderabad_traffic_road.jpg",
+            extmetadata: {
+              LicenseShortName: { value: "CC BY-SA 4.0" },
+              Artist: { value: "Test photographer" },
+              ImageDescription: { value: "Hyderabad traffic road" }
+            }
+          }]
+        }
+      }
+    }
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  try {
+    const media = await news.articleImage({ title: "Hyderabad traffic road update" }, "telangana", "Hyderabad");
+    assert.equal(media.url, "https://upload.wikimedia.org/hyderabad-traffic.jpg");
+    assert.equal(media.source, "Wikimedia Commons");
+    assert.equal(media.imageType, "archive");
+    assert.match(media.license, /CC/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("fresh news deduplicates canonical headline variants", () => {
+  const now = new Date().toISOString();
+  const items = news.freshSorted([
+    { title: "తెలంగాణలో తాజా వార్త", link: "https://example.com/a", pubDate: now },
+    { title: "తెలంగాణలో తాజా వార్త", link: "https://example.com/b", pubDate: now }
+  ]);
+  assert.equal(items.length, 1);
+});
+
 test("placeholder and logo image URLs are rejected", () => {
   assert.equal(news.trustedImageUrl("https://example.com/logo.png"), false);
   assert.equal(news.trustedImageUrl("https://example.com/placeholder.jpg"), false);

@@ -35,6 +35,48 @@ test("RSS media remains associated with the same article", () => {
   assert.equal(media.imageType, "event_candidate");
 });
 
+test("RSS stories without embedded media use a rights-aware relevant archive image", async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({
+    query: {
+      pages: {
+        1: {
+          title: "File:Hyderabad traffic road.jpg",
+          imageinfo: [{
+            mime: "image/jpeg",
+            thumburl: "https://upload.wikimedia.org/hyderabad-traffic.jpg",
+            url: "https://upload.wikimedia.org/hyderabad-traffic-original.jpg",
+            descriptionurl: "https://commons.wikimedia.org/wiki/File:Hyderabad_traffic_road.jpg",
+            extmetadata: {
+              LicenseShortName: { value: "CC BY-SA 4.0" },
+              Artist: { value: "Test photographer" },
+              ImageDescription: { value: "Hyderabad traffic road" }
+            }
+          }]
+        }
+      }
+    }
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  try {
+    const media = await news.articleImage({ title: "Hyderabad traffic road update" }, "telangana", "Hyderabad");
+    assert.equal(media.url, "https://upload.wikimedia.org/hyderabad-traffic.jpg");
+    assert.equal(media.source, "Wikimedia Commons");
+    assert.equal(media.imageType, "archive");
+    assert.match(media.license, /CC/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("fresh news deduplicates canonical headline variants", () => {
+  const now = new Date().toISOString();
+  const items = news.freshSorted([
+    { title: "తెలంగాణలో తాజా వార్త", link: "https://example.com/a", pubDate: now },
+    { title: "తెలంగాణలో తాజా వార్త", link: "https://example.com/b", pubDate: now }
+  ]);
+  assert.equal(items.length, 1);
+});
+
 test("placeholder and logo image URLs are rejected", () => {
   assert.equal(news.trustedImageUrl("https://example.com/logo.png"), false);
   assert.equal(news.trustedImageUrl("https://example.com/placeholder.jpg"), false);
@@ -72,7 +114,7 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v84"/);
+  assert.match(source, /CACHE_VERSION = "v85"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);
@@ -82,6 +124,18 @@ test("ingestion preserves valid persisted media when a later source update has n
   const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
   assert.match(source, /image_url=COALESCE\(EXCLUDED\.image_url, articles\.image_url\)/);
   assert.match(source, /featured_media=COALESCE\(EXCLUDED\.featured_media, articles\.featured_media\)/);
+});
+
+test("scheduled ingestion uses the rights-aware resolver instead of enclosure-only media", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../netlify/lib/news-core.js"), "utf8");
+  const resolver = source.slice(source.indexOf("const imageResults ="), source.indexOf("const items = rawItems.map"));
+  assert.match(resolver, /articleImage\(item, cat, district, index\)/);
+  assert.doesNotMatch(resolver, /rawItems\.map\(item => feedAssociatedMedia/);
+});
+
+test("licensed archive thumbnails are requested at a page-appropriate size", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../netlify/lib/news-core.js"), "utf8");
+  assert.match(source, /iiurlwidth: "800"/);
 });
 test("media validation falls back from rejected HEAD to a successful image GET", async () => {
   const originalFetch = global.fetch;

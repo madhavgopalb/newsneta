@@ -12,7 +12,10 @@ const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
 const FRESH_NEWS_DAYS = 3;
 const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
-const AUTO_IMAGE_THRESHOLD = 70;
+// Archive candidates are always labelled as file photos. A score of 60 still
+// requires multiple query/entity matches while allowing Telugu headlines whose
+// English location or event terms only appear in the image catalogue metadata.
+const AUTO_IMAGE_THRESHOLD = 60;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -550,7 +553,7 @@ async function commonsImage(query, intent = {}) {
     gsrlimit: "8",
     prop: "imageinfo",
     iiprop: "url|mime|extmetadata",
-    iiurlwidth: "1200"
+    iiurlwidth: "800"
   });
 
   try {
@@ -633,7 +636,13 @@ function feedAssociatedMedia(item, cat, district) {
 }
 
 async function articleImage(item, cat, district) {
-  return feedAssociatedMedia(item, cat, district);
+  const associated = feedAssociatedMedia(item, cat, district);
+  if (associated.url) return associated;
+
+  const title = publicTitle(item.title);
+  const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
+  const query = imageSearchQuery(title, cat, district);
+  return commonsImage(query, intent);
 }
 
 function mergeCanonicalArticles(primary = [], secondary = []) {
@@ -665,7 +674,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
         ORDER BY published_at DESC LIMIT $${limitIndex}`,
       values
     });
-    return result.rows.map(row => ({
+    const articles = result.rows.map(row => ({
       id: row.id,
       title: row.title,
       description: row.summary || "",
@@ -673,9 +682,10 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       category: row.category,
       state: row.state,
       district: row.district,
-      image: row.featured_media?.url || row.image_url || null,
-      imageUrl: row.featured_media?.url || row.image_url || null,
+      image: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || row.image_url || null) : (row.featured_media?.url || row.image_url || null),
+      imageUrl: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || row.image_url || null) : (row.featured_media?.url || row.image_url || null),
       thumbnailUrl: row.featured_media?.thumbnailUrl || row.thumbnail_url || null,
+      video: String(row.featured_media?.mimeType || "").startsWith("video/") ? { type: "uploaded", url: row.featured_media.url, mimeType: row.featured_media.mimeType, posterUrl: row.featured_media.thumbnailUrl || row.thumbnail_url || row.image_url || null } : null,
       media: row.featured_media || null,
       featuredMedia: row.featured_media || null,
       link: row.source_url || `#article-${row.id}`,
@@ -685,6 +695,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       contentRevision: row.content_revision || 1,
       persisted: true
     }));
+    return freshSorted(articles, FRESH_NEWS_DAYS).slice(0, limit);
   } catch (error) {
     logEvent("NEWS_DATABASE_READ_FAILED", { category: cat, district: district || null, message: error.message });
     return [];
@@ -764,9 +775,10 @@ exports.handler = async function handler(event, getDatabase) {
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
     }
-    const imageResults = ingestionMode
-      ? rawItems.map(item => feedAssociatedMedia(item, cat, district))
-      : await mapWithConcurrency(rawItems, 5, (item, index) => articleImage(item, cat, district, index));
+    // Google News RSS does not normally expose enclosures. Scheduled ingestion
+    // must therefore use the same rights-aware resolver as a live request;
+    // otherwise text-only rows become authoritative and suppress valid media.
+    const imageResults = await mapWithConcurrency(rawItems, ingestionMode ? 4 : 5, (item, index) => articleImage(item, cat, district, index));
     const items = rawItems.map((item, index) => {
       const title = publicTitle(item.title);
       const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);
@@ -841,4 +853,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { brandedFallbackDecision, feedAssociatedMedia, freshSorted, normalizeCategory, trustedImageUrl };
+exports._test = { articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, trustedImageUrl };

@@ -149,7 +149,7 @@ async function ingestCategory(client, category, getDatabase) {
   return { provider, counts };
 }
 
-exports.handler = async function handler(getDatabase) {
+exports.handler = async function handler(getDatabase, categoryOverride = null) {
   const startedAt = Date.now();
   let connection;
   try {
@@ -159,7 +159,9 @@ exports.handler = async function handler(getDatabase) {
   }
   const client = await connection.pool.connect();
   const categories = safeText(process.env.NEWS_INGEST_CATEGORIES).split(",").map(value => value.trim()).filter(Boolean);
-  const selected = categories.length ? categories : DEFAULT_CATEGORIES;
+  const selected = Array.isArray(categoryOverride) && categoryOverride.length
+    ? categoryOverride.map(newsTest.normalizeCategory).filter((value, index, values) => values.indexOf(value) === index)
+    : (categories.length ? categories : DEFAULT_CATEGORIES);
   const errors = [];
   const totals = { fetched: 0, inserted: 0, updated: 0, rejected: 0, withoutMedia: 0, brokenMedia: 0 };
   let runId;

@@ -38,6 +38,7 @@ function canonicalArticle(item, category, provider) {
     title: safeText(item.title),
     summary: safeText(item.description || item.summary || item.aiSummary),
     body: safeText(item.body || item.description || item.summary || item.title),
+    contentStatus: item.contentStatus === "licensed_full_text" ? "licensed_full_text" : "brief",
     category,
     state: item.state || (category === "ap" ? "Andhra Pradesh" : category === "telangana" ? "Telangana" : null),
     district: item.district || null,
@@ -119,13 +120,13 @@ async function ingestCategory(client, category, getDatabase) {
         slug, title, summary, body, category, state, district, status, author_id,
         image_url, thumbnail_url, media, featured_media, source_provider,
         source_article_id, source_url, source_name, source_published_at,
-        published_at, ingested_at, last_seen_at, created_at, updated_at
+        published_at, ingested_at, last_seen_at, created_at, updated_at, content_status
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,'published',$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$17,now(),now(),now(),now()
+        $1,$2,$3,$4,$5,$6,$7,'published',$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$17,now(),now(),now(),now(),$18
       ) ON CONFLICT (source_provider, source_article_id)
         WHERE source_provider IS NOT NULL AND source_article_id IS NOT NULL
       DO UPDATE SET
-        title=EXCLUDED.title, summary=EXCLUDED.summary, body=EXCLUDED.body,
+        title=EXCLUDED.title, summary=EXCLUDED.summary, body=EXCLUDED.body, content_status=EXCLUDED.content_status,
         category=CASE WHEN articles.category='latest' THEN EXCLUDED.category WHEN EXCLUDED.category='latest' THEN articles.category ELSE EXCLUDED.category END, state=EXCLUDED.state, district=EXCLUDED.district,
         source_url=EXCLUDED.source_url, source_name=EXCLUDED.source_name,
         source_published_at=EXCLUDED.source_published_at, published_at=EXCLUDED.published_at,
@@ -140,7 +141,7 @@ async function ingestCategory(client, category, getDatabase) {
         article.state, article.district, article.authorId, article.imageUrl,
         article.thumbnailUrl, JSON.stringify(article.featuredMedia ? [article.featuredMedia] : []),
         JSON.stringify(article.featuredMedia), provider, article.identity, article.sourceUrl,
-        article.sourceName, article.publishedAt
+        article.sourceName, article.publishedAt, article.contentStatus
       ]
     });
     if (query.rows[0]?.inserted) counts.inserted += 1;

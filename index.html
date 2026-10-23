@@ -1001,6 +1001,10 @@ button{cursor:pointer}
 .story-detail-copy h3{margin:18px 0 8px;font-size:18px;color:var(--ink)}
 .story-detail-copy ul{margin:8px 0 0;padding-left:20px}
 .story-detail-copy li{margin:7px 0}
+.article-content-full p{font-size:17px;line-height:1.85;color:var(--ink)}
+.article-content-brief{padding:18px;border-left:4px solid var(--accent);background:var(--soft);border-radius:4px}
+.article-content-brief h3{margin-top:0}
+.article-source-link a{display:inline-flex;align-items:center;min-height:42px;padding:9px 14px;border:1px solid var(--accent);color:var(--accent);font-weight:800;text-decoration:none;border-radius:4px}
 .article-lead{font-size:17px;color:var(--ink)!important;font-weight:750}
 .article-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
 .article-context-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:11px}
@@ -2733,7 +2737,12 @@ function normalizeItems(items){
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
   description:item.description || item.aiSummary || item.summary || item.contentSnippet || item.content || "",
-  body:item.body || item.fullArticle || ""
+  body:item.body || item.fullArticle || "",
+  fullArticle:item.fullArticle || (item.contentStatus && item.contentStatus !== "brief" ? item.body : "") || "",
+  contentStatus:item.contentStatus || item.content_status || (item.reporterUpload ? "newsroom_full_text" : "brief"),
+  sourceUrl:item.sourceUrl || item.source_url || (/^https?:\/\//i.test(item.link || "") ? item.link : ""),
+  updatedAt:item.updatedAt || item.updated_at || item.pubDate || "",
+  imageAlt:item.imageAlt || item.image_alt || ""
  })).filter(story=>{
   if(!story.title){
    console.warn(JSON.stringify({code:"NEWS_ARTICLE_INVALID",articleId:story.id,reason:"missing title",timestamp:new Date().toISOString()}));
@@ -3237,6 +3246,7 @@ function render(){
  document.getElementById("categoryGrid").innerHTML = categories.map(([id,label])=>`<a class="category-tile" href="#latestGrid" data-category-tile="${id}"><strong>${icon(label)} ${categoryLabel(id,label)}</strong></a>`).join("");
  renderEditorialHomepage();
  updateRefreshStatus();
+ window.requestAnimationFrame(openDirectStoryIfReady);
 }
 
 function renderHeroSlide(){
@@ -3567,7 +3577,7 @@ function cleanText(value){
  return String(value || "").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
 }
 
-function buildDetailedArticle(story){
+function legacyBuildDetailedArticle(story){
  const fullArticle = cleanText(story.fullArticle || story.body);
  const base = fullArticle || cleanText(story.description) || makeSummary(story.title);
  const category = story.category || "News";
@@ -3627,7 +3637,7 @@ function buildDetailedArticle(story){
  `;
 }
 
-function buildExpandedArticle(story){
+function legacyBuildExpandedArticle(story){
  const fullArticle = cleanText(story.fullArticle || story.body);
  const summary = cleanText(story.description || story.summary || story.aiSummary || "");
  const category = story.category || "News";
@@ -3727,6 +3737,38 @@ function buildExpandedArticle(story){
   <div class="article-note"><b>Editorial note:</b> Live stories can change. Reporter-published stories preserve the submitted article body where available, while live feed stories are expanded with newsroom context and visible update signals.</div>`;
 }
 
+function articleBodyMarkup(value){
+ const text = String(value || "").replace(/\r\n?/g, "\n").trim();
+ if(!text) return "";
+ const blocks = text.split(/\n{2,}/).map(block=>block.trim()).filter(Boolean);
+ return blocks.map(block=>{
+  const lines = block.split("\n").map(line=>line.trim()).filter(Boolean);
+  if(lines.length === 1 && /^(?:#{1,3}\s+|.{1,80}:$)/.test(lines[0])){
+   return `<h3>${escapeHtml(lines[0].replace(/^#{1,3}\s+/, ""))}</h3>`;
+  }
+  return `<p>${lines.map(escapeHtml).join("<br>")}</p>`;
+ }).join("");
+}
+
+function buildExpandedArticle(story){
+ const status = story.contentStatus || "brief";
+ const isFullArticle = status === "newsroom_full_text" || status === "licensed_full_text";
+ const fullBody = story.fullArticle || (isFullArticle ? story.body : "");
+ const summary = cleanText(story.description || story.summary || story.aiSummary || "");
+ if(isFullArticle && cleanText(fullBody)){
+  return `<div class="article-content article-content-full" data-content-status="${escapeAttr(status)}">${articleBodyMarkup(fullBody)}</div>`;
+ }
+ const labels = currentLanguage === "te"
+  ? { title:"వార్తా సంక్షిప్తం", unavailable:"ఈ వార్తకు పూర్తి కథనం ప్రస్తుతం అందుబాటులో లేదు.", original:"అసలు నివేదిక చదవండి" }
+  : currentLanguage === "hi"
+   ? { title:"समाचार संक्षेप", unavailable:"इस समाचार का पूरा लेख अभी उपलब्ध नहीं है.", original:"मूल रिपोर्ट पढ़ें" }
+   : { title:"News Brief", unavailable:"The full article is not currently available for this feed item.", original:"Read original report" };
+ const sourceLink = story.sourceUrl
+  ? `<p class="article-source-link"><a href="${escapeAttr(story.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.original)} →</a></p>`
+  : "";
+ return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3><p>${escapeHtml(summary || labels.unavailable)}</p>${sourceLink}</div>`;
+}
+
 function storyMediaGallery(story){
  const images = Array.isArray(story.media) ? story.media.filter(item=>item.media_type === "image" && item.public_url) : [];
  if(images.length <= 1) return "";
@@ -3769,7 +3811,7 @@ function initializeVideoPlayers(root=document){
 function renderStorySummaryMode(story, mode){
  const copy = document.getElementById("storyModalCopy");
  if(!copy) return;
- const verifiedSummary = cleanText(story.description || story.summary || story.aiSummary || story.body || story.fullArticle || "");
+ const verifiedSummary = cleanText(story.description || story.summary || story.aiSummary || story.fullArticle || story.body || "");
  if(mode === "quick"){
   copy.innerHTML = `<h3>Quick Summary</h3>${verifiedSummary ? `<p>${escapeHtml(verifiedSummary)}</p>` : `<p>Additional verified details are not yet available.</p>`}<p>${escapeHtml(story.source || "")} ${formatStoryDate(story.pubDate || lastRefreshAt)}</p>`;
   return;
@@ -3998,7 +4040,15 @@ function setStoryModalMedia(story){
  if(!url) image.insertAdjacentHTML("afterend", `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`);
 }
 
-function openStoryDetail(id){
+function openDirectStoryIfReady(){
+ const requested = new URL(location.href).searchParams.get("article");
+ const backdrop = document.getElementById("storyBackdrop");
+ if(!requested || backdrop?.classList.contains("open")) return;
+ const story = findStoryById(requested);
+ if(story) openStoryDetail(requested);
+}
+
+function legacyOpenStoryDetailV1(id){
  const story = findStoryById(id);
  if(!story) return;
  const modal = document.querySelector(".story-modal");
@@ -4024,7 +4074,7 @@ function openStoryDetail(id){
 document.getElementById("storyBackdrop").classList.add("open");
 }
 
-function openStoryDetail(id){
+function legacyOpenStoryDetailV2(id){
  const story = findStoryById(id);
  if(!story) return;
  const related = stories
@@ -4080,11 +4130,14 @@ function openStoryDetail(id){
  document.getElementById("storyModalCategory").textContent = story.category || "News";
  document.getElementById("storyModalTitle").textContent = story.title;
  const storyPublisher = cleanText(story.source || story.author || story.desk || "NewsNeta");
- document.getElementById("storyModalMeta").textContent = `${storyPublisher} • ${formatStoryDate(story.pubDate)} • ${readMinutes(story) + 2} min read`;
- document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} ఈ కథనంలో నేపథ్యం, స్థానిక ప్రభావం, ముఖ్యాంశాలు, తదుపరి అప్‌డేట్లు వివరంగా అందుబాటులో ఉన్నాయి.`;
+ const publishedLabel = formatStoryDate(story.publishedAt || story.pubDate);
+ const updatedLabel = story.updatedAt && new Date(story.updatedAt).getTime() !== new Date(story.publishedAt || story.pubDate).getTime()
+  ? ` • Updated ${formatStoryDate(story.updatedAt)}` : "";
+ document.getElementById("storyModalMeta").textContent = `${storyPublisher} • ${publishedLabel}${updatedLabel} • ${readMinutes(story)} min read`;
+ const verifiedSummary = cleanText(story.description || story.summary || story.aiSummary || "");
+ document.getElementById("storyModalSummary").textContent = verifiedSummary;
+ document.getElementById("storyModalSummary").hidden = !verifiedSummary;
  document.getElementById("storyModalCopy").classList.remove("reader-large");
- if(currentLanguage === "en") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} Background, local impact, key points and next updates are available in this reader view.`;
- else if(currentLanguage === "hi") document.getElementById("storyModalSummary").textContent = `${makeSummary(story.title)} पृष्ठभूमि, स्थानीय असर, मुख्य बातें और अगले अपडेट इस रीडर व्यू में उपलब्ध हैं.`;
  document.getElementById("storyModalCopy").innerHTML = storyVideoMarkup(story) + buildExpandedArticle(story) + storyMediaGallery(story);
  document.querySelectorAll("[data-summary-mode]").forEach(button=>button.classList.toggle("active", button.dataset.summaryMode === "full"));
  document.querySelectorAll("#storyLike,#storyImportant,#storyComment").forEach(button=>button.classList.remove("active"));
@@ -4096,8 +4149,9 @@ function openStoryDetail(id){
    <span>${escapeHtml(story.category || "News")}</span>
    <span>${escapeHtml(storyPublisher)}</span>
    ${story.reporterUpload ? `<span>Reporter Upload</span>` : ""}
-   <span>${formatStoryDate(story.pubDate || lastRefreshAt)}</span>
-   <span>${readMinutes(story) + 2} min read</span>
+   <span>${escapeHtml(story.contentStatus === "brief" ? "News Brief" : "Full Article")}</span>
+   <span>${publishedLabel}</span>
+   <span>${readMinutes(story)} min read</span>
   </div>
  `;
  document.getElementById("storyRelated").innerHTML = related.map(item=>`<a class="reader-row" href="#" data-story-id="${escapeAttr(item.id || item.link || item.title)}">${storyImageMarkup(item,{alt:""})}<h3>${escapeHtml(item.title)}</h3><small>${readMinutes(item)} min</small></a>`).join("");
@@ -4114,6 +4168,11 @@ function openStoryDetail(id){
  };
  document.getElementById("storyBackdrop").classList.add("open");
  document.body.classList.add("lock");
+ const directUrl = new URL(location.href);
+ directUrl.searchParams.set("article", story.id || story.link || story.title);
+ history.replaceState({article:story.id || story.link || story.title}, "", directUrl);
+ document.title = `${story.title} | NewsNeta`;
+ document.querySelector('meta[name="description"]')?.setAttribute("content", verifiedSummary || story.title);
  scrollStoryModalToTop();
 }
 
@@ -4123,6 +4182,11 @@ function closeStoryModal(){
  document.getElementById("storyBackdrop")?.classList.remove("open");
  document.querySelector(".story-modal")?.removeAttribute("data-story-id");
  document.body.classList.remove("lock");
+ document.getElementById("storyModalSummary")?.removeAttribute("hidden");
+ const directUrl = new URL(location.href);
+ directUrl.searchParams.delete("article");
+ history.replaceState({}, "", directUrl);
+ document.title = "NewsNeta - Telugu News";
 }
 
 document.getElementById("closeStory").addEventListener("click",event=>{
@@ -4197,7 +4261,11 @@ document.getElementById("readerQuestionBtn")?.addEventListener("click",()=>{
  const out = document.getElementById("readerQuestionOut");
  if(out) out.textContent = input?.value ? `Newsroom question received: ${input.value}. We will connect it to a related explainer or live update.` : "Type a question about any story first.";
 });
-document.getElementById("topArrow").addEventListener("click",()=>window.scrollTo({top:0, behavior:"smooth"}));
+document.getElementById("topArrow").addEventListener("click",()=>{
+ document.documentElement.scrollTop = 0;
+ document.body.scrollTop = 0;
+ window.scrollTo(0, 0);
+});
 window.addEventListener("scroll",()=>{
  const topThreshold = matchMedia("(max-width: 640px)").matches ? 160 : 520;
  document.getElementById("topArrow").classList.toggle("show", window.scrollY > topThreshold);

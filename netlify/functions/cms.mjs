@@ -16,7 +16,7 @@ async function listArticles(pool, user) {
     text: `SELECT id, slug, title AS headline, english_title, summary, body, category, state, district,
       status, author_id AS reporter, reviewer_id AS reviewer, publisher_id AS admin,
       image_url AS image, thumbnail_url AS thumbnail, image_alt, media, featured_media,
-      tags, is_breaking, is_top_story, scheduled_at, published_at, content_revision,
+      tags, is_breaking, is_top_story, scheduled_at, published_at, content_revision, content_status,
       created_at, updated_at
       FROM articles
       WHERE source_provider='newsneta-cms'
@@ -51,15 +51,15 @@ async function saveArticle(pool, user, data) {
   } : null;
   const result = await pool.query({
     text: `INSERT INTO articles (slug,title,english_title,summary,body,category,state,district,status,author_id,
-      image_url,thumbnail_url,image_alt,media,featured_media,tags,is_breaking,is_top_story,source_provider,source_article_id,content_revision)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9,$10,$10,$11,$12::jsonb,$13::jsonb,$14::jsonb,$15,$16,'newsneta-cms',$1,1)
+      image_url,thumbnail_url,image_alt,media,featured_media,tags,is_breaking,is_top_story,source_provider,source_article_id,content_revision,content_status)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9,$10,$10,$11,$12::jsonb,$13::jsonb,$14::jsonb,$15,$16,'newsneta-cms',$1,1,'newsroom_full_text')
       ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, english_title=EXCLUDED.english_title,
       summary=EXCLUDED.summary, body=EXCLUDED.body, category=EXCLUDED.category, state=EXCLUDED.state,
       district=EXCLUDED.district, image_url=COALESCE(EXCLUDED.image_url,articles.image_url),
       thumbnail_url=COALESCE(EXCLUDED.thumbnail_url,articles.thumbnail_url), image_alt=COALESCE(EXCLUDED.image_alt,articles.image_alt),
       media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media ELSE articles.media END,
       featured_media=COALESCE(EXCLUDED.featured_media,articles.featured_media), tags=EXCLUDED.tags,
-      is_breaking=EXCLUDED.is_breaking, is_top_story=EXCLUDED.is_top_story,
+      is_breaking=EXCLUDED.is_breaking, is_top_story=EXCLUDED.is_top_story, content_status='newsroom_full_text',
       content_revision=articles.content_revision+1, updated_at=now()
       RETURNING *`,
     values: [slug, headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || null, body,

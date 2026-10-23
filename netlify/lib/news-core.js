@@ -439,7 +439,11 @@ async function fetchGNewsItems(cat, district) {
       sentiment: null,
       description,
       body: description,
-      aiSummary: description
+      aiSummary: description,
+      contentStatus: "brief",
+      sourceUrl: article.url || null,
+      publishedAt: article.publishedAt,
+      updatedAt: article.publishedAt
     };
   }));
 }
@@ -668,7 +672,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
     const result = await pool.query({
       text: `SELECT id, title, summary, body, category, state, district, image_url,
         thumbnail_url, featured_media, source_url, source_name, published_at,
-        source_published_at, views, content_revision FROM articles
+        source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id FROM articles
         WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}
           AND published_at >= now() - interval '3 days'
         ORDER BY published_at DESC LIMIT $${limitIndex}`,
@@ -679,6 +683,8 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       title: row.title,
       description: row.summary || "",
       body: row.body || row.summary || "",
+      fullArticle: row.content_status === "brief" ? "" : (row.body || ""),
+      contentStatus: row.content_status || "brief",
       category: row.category,
       state: row.state,
       district: row.district,
@@ -691,6 +697,11 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       link: row.source_url || `#article-${row.id}`,
       source: row.source_name || "NewsNeta",
       pubDate: row.source_published_at || row.published_at,
+      publishedAt: row.published_at,
+      updatedAt: row.updated_at,
+      sourceUrl: row.source_url || null,
+      imageAlt: row.image_alt || "",
+      authorId: row.author_id || null,
       views: row.views || 0,
       contentRevision: row.content_revision || 1,
       persisted: true
@@ -804,7 +815,11 @@ exports.handler = async function handler(event, getDatabase) {
         sentiment: null,
         description,
         body: description,
-        aiSummary: description
+        aiSummary: description,
+        contentStatus: "brief",
+        sourceUrl: item.link || null,
+        publishedAt: item.pubDate || item.isoDate,
+        updatedAt: item.pubDate || item.isoDate
       };
     });
 

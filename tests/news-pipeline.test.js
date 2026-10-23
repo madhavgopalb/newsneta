@@ -100,6 +100,13 @@ test("ingestion keeps stable identity and media on one canonical article", () =>
   assert.equal(first.featuredMedia.url, item.media.url);
 });
 
+test("fresh provider stories are explicitly classified as source-linked briefs", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../netlify/lib/news-core.js"), "utf8");
+  assert.match(source, /contentStatus: "brief"/);
+  assert.match(source, /sourceUrl: article\.url \|\| null/);
+  assert.match(source, /sourceUrl: item\.link \|\| null/);
+});
+
 test("service worker clones before cache write and keeps representation parameters", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const clone = source.indexOf("const responseForCache = networkResponse.clone()");

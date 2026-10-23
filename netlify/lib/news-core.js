@@ -775,9 +775,10 @@ exports.handler = async function handler(event, getDatabase) {
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
     }
-    const imageResults = ingestionMode
-      ? rawItems.map(item => feedAssociatedMedia(item, cat, district))
-      : await mapWithConcurrency(rawItems, 5, (item, index) => articleImage(item, cat, district, index));
+    // Google News RSS does not normally expose enclosures. Scheduled ingestion
+    // must therefore use the same rights-aware resolver as a live request;
+    // otherwise text-only rows become authoritative and suppress valid media.
+    const imageResults = await mapWithConcurrency(rawItems, ingestionMode ? 4 : 5, (item, index) => articleImage(item, cat, district, index));
     const items = rawItems.map((item, index) => {
       const title = publicTitle(item.title);
       const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);

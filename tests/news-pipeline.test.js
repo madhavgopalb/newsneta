@@ -125,6 +125,13 @@ test("ingestion preserves valid persisted media when a later source update has n
   assert.match(source, /image_url=COALESCE\(EXCLUDED\.image_url, articles\.image_url\)/);
   assert.match(source, /featured_media=COALESCE\(EXCLUDED\.featured_media, articles\.featured_media\)/);
 });
+
+test("scheduled ingestion uses the rights-aware resolver instead of enclosure-only media", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../netlify/lib/news-core.js"), "utf8");
+  const resolver = source.slice(source.indexOf("const imageResults ="), source.indexOf("const items = rawItems.map"));
+  assert.match(resolver, /articleImage\(item, cat, district, index\)/);
+  assert.doesNotMatch(resolver, /rawItems\.map\(item => feedAssociatedMedia/);
+});
 test("media validation falls back from rejected HEAD to a successful image GET", async () => {
   const originalFetch = global.fetch;
   const methods = [];

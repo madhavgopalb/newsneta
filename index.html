@@ -4158,7 +4158,7 @@ document.getElementById("mobileBreakingTab")?.addEventListener("click",()=>{
 document.getElementById("mobileLatestTab")?.addEventListener("click",async ()=>{
  document.getElementById("mobileLatestTab")?.classList.add("active");
  document.getElementById("mobileBreakingTab")?.classList.remove("active");
- await loadNews("latest");
+ await loadNews("latest", true);
  document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("active", a.dataset.cat === "latest"));
  document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
 });
@@ -5285,12 +5285,12 @@ if(localStorage.getItem("newsneta-theme")==="dark") document.documentElement.dat
 setupNav();
 setupDistricts();
 applyLanguage();
-refreshAllNews();
+refreshAllNews(true);
 window.setTimeout(()=>{
  if(!stories.length && !isRefreshingNews) refreshAllNews(true);
 }, newsRequestTimeoutMs + 1500);
 startHeroAutoplay();
-window.newsnetaRefreshTimer = setInterval(refreshAllNews, refreshIntervalMs);
+window.newsnetaRefreshTimer = setInterval(()=>refreshAllNews(true), refreshIntervalMs);
 window.newsnetaRefreshCountdown = setInterval(updateRefreshStatus, 1000);
 window.newsnetaWeatherTimer = setInterval(renderWeather, 10 * 60 * 1000);
 window.newsnetaLiveWidgetTimer = setInterval(renderLiveWidgets, 30 * 1000);

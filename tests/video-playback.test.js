@@ -35,3 +35,10 @@ test("frontend includes real native and HLS playback lifecycle", () => {
  const playBody=source.match(/function playShortNews[\s\S]*?(?=document\.addEventListener)/)?.[0] || "";
  assert.match(playBody,/video\.play\(\)/); assert.doesNotMatch(playBody,/speakTelugu/);
 });
+
+test("client refreshes publication state without accepting stale API memory", () => {
+ const source=fs.readFileSync(path.join(root,"index.html"),"utf8");
+ assert.match(source,/mobileLatestTab[\s\S]*?loadNews\("latest", true\)/);
+ assert.match(source,/setupDistricts\(\);\s*applyLanguage\(\);\s*refreshAllNews\(true\);/);
+ assert.match(source,/setInterval\(\(\)=>refreshAllNews\(true\), refreshIntervalMs\)/);
+});

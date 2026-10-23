@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "netlify dev",
-    "check": "node --check netlify/lib/news-core.js && node --check netlify/functions/news.mjs && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/refresh-news.mjs && node --check netlify/functions/news-health.mjs && node --check netlify/lib/cms-auth.js && node --check netlify/functions/cms.mjs && node --check netlify/functions/media.mjs",
+    "check": "node --check netlify/lib/news-core.js && node --check netlify/functions/news.mjs && node --check netlify/functions/image.mjs && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/refresh-news.mjs && node --check netlify/functions/news-health.mjs && node --check netlify/lib/cms-auth.js && node --check netlify/functions/cms.mjs && node --check netlify/functions/media.mjs",
     "check:playstore": "node scripts/verify-playstore-readiness.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",

@@ -132,6 +132,11 @@ test("scheduled ingestion uses the rights-aware resolver instead of enclosure-on
   assert.match(resolver, /articleImage\(item, cat, district, index\)/);
   assert.doesNotMatch(resolver, /rawItems\.map\(item => feedAssociatedMedia/);
 });
+
+test("licensed archive thumbnails are requested at a page-appropriate size", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../netlify/lib/news-core.js"), "utf8");
+  assert.match(source, /iiurlwidth: "800"/);
+});
 test("media validation falls back from rejected HEAD to a successful image GET", async () => {
   const originalFetch = global.fetch;
   const methods = [];

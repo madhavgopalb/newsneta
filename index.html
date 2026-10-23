@@ -3201,7 +3201,9 @@ async function loadHomepageFeeds(force=false){
 
 function render(){
  const sorted = [...stories].sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
- heroStories = sorted.slice(0,8);
+ const visualTopStories = sorted.filter(story=>extractSourceImage(story));
+ const textTopStories = sorted.filter(story=>!extractSourceImage(story));
+ heroStories = [...visualTopStories, ...textTopStories].slice(0,8);
  if(!Number.isInteger(heroIndex) || heroIndex < 0 || heroIndex >= heroStories.length) heroIndex = 0;
  renderHeroSlide();
  renderHomeDesk(sorted);

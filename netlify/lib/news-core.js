@@ -553,7 +553,7 @@ async function commonsImage(query, intent = {}) {
     gsrlimit: "8",
     prop: "imageinfo",
     iiprop: "url|mime|extmetadata",
-    iiurlwidth: "1200"
+    iiurlwidth: "800"
   });
 
   try {

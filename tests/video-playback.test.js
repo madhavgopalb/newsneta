@@ -42,3 +42,9 @@ test("client refreshes publication state without accepting stale API memory", ()
  assert.match(source,/setupDistricts\(\);\s*applyLanguage\(\);\s*refreshAllNews\(true\);/);
  assert.match(source,/setInterval\(\(\)=>refreshAllNews\(true\), refreshIntervalMs\)/);
 });
+
+test("top carousel prioritizes visual stories without discarding text stories", () => {
+  const source = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  assert.match(source, /const visualTopStories = sorted\.filter\(story=>extractSourceImage\(story\)\)/);
+  assert.match(source, /heroStories = \[\.\.\.visualTopStories, \.\.\.textTopStories\]\.slice\(0,8\)/);
+});

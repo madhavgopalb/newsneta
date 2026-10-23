@@ -17,6 +17,7 @@ test("manual newsroom refresh is token protected and POST only", async () => {
   const source = require("node:fs").readFileSync(path.join(root, "netlify/functions/refresh-news.mjs"), "utf8");
   assert.match(source, /request\.method !== "POST"/);
   assert.match(source, /ADMIN_HEALTH_TOKEN/);
+  assert.match(source, /cmsUser\?\.role === "admin"/);
   assert.match(source, /timingSafeEqual/);
   assert.match(source, /runIngestion\(getDatabase, categories\)/);
 });

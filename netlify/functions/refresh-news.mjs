@@ -3,6 +3,7 @@ import { getDatabase } from "@netlify/database";
 import "rss-parser";
 import ingestionCore from "../lib/ingest-news-core.js";
 import newsCore from "../lib/news-core.js";
+import cmsAuth from "../lib/cms-auth.js";
 
 const { handler: runIngestion } = ingestionCore;
 const ALLOWED_CATEGORIES = new Set([
@@ -38,7 +39,9 @@ export default async function handler(request) {
   if (request.method !== "POST") return json(405, { status: "method-not-allowed" });
   const expected = process.env.ADMIN_HEALTH_TOKEN;
   const supplied = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!expected || !safeEqual(supplied, expected)) return json(401, { status: "unauthorized" });
+  const cmsUser = cmsAuth.verifySession(supplied, process.env.CMS_SESSION_SECRET);
+  const authorized = (expected && safeEqual(supplied, expected)) || cmsUser?.role === "admin";
+  if (!authorized) return json(401, { status: "unauthorized" });
 
   let body;
   try {

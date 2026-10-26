@@ -14,7 +14,17 @@
   status = 200
 
 [[redirects]]
+  from = "/telangana/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
   from = "/andhra-pradesh"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/andhra-pradesh/*"
   to = "/index.html"
   status = 200
 

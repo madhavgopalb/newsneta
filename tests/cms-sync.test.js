@@ -45,7 +45,7 @@ test("public news API exposes canonical content revision and CMS media", () => {
   assert.match(source, /content_revision, content_status, image_alt, author_id FROM articles/);
   assert.match(source, /fullArticle: row\.content_status === "brief" \? "" : \(row\.body \|\| ""\)/);
   assert.match(source, /sourceUrl: row\.source_url \|\| null/);
-  assert.match(source, /featured_media\?\.url \|\| row\.image_url/);
+  assert.match(source, /approvedPersistedImage\(row\)/);
 });
 
 test("CMS articles are stored as complete newsroom content", () => {

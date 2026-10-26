@@ -36,7 +36,8 @@ const FEEDS = {
   business: googleNewsUrl("Business Telugu news"),
   education: googleNewsUrl("Education jobs exams Telugu news Telangana Andhra Pradesh"),
   jobs: googleNewsUrl("Government jobs recruitment Telugu Telangana Andhra Pradesh"),
-  viral: googleNewsUrl("Viral Telugu news")
+  viral: googleNewsUrl("Viral Telugu news"),
+  special: googleNewsUrl("Telugu special stories explainer ground report fact check public interest")
 };
 
 const CATEGORY_ALIASES = {
@@ -125,7 +126,8 @@ const CATEGORY_LABELS = {
   business: "Business",
   education: "Education",
   jobs: "Jobs",
-  viral: "Viral"
+  viral: "Viral",
+  special: "Special Stories"
 };
 
 function feedFor(cat, district) {
@@ -155,7 +157,8 @@ function queryFor(cat, district) {
     business: "Business Telugu news",
     education: "Education exams Telugu news Telangana Andhra Pradesh",
     jobs: "Government jobs recruitment Telugu Telangana Andhra Pradesh",
-    viral: "Viral Telugu news"
+    viral: "Viral Telugu news",
+    special: "Telugu special stories explainer ground report fact check public interest"
   };
   return queries[cat] || queries.telangana;
 }
@@ -645,8 +648,7 @@ async function articleImage(item, cat, district) {
 
   const title = publicTitle(item.title);
   const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
-  const query = imageSearchQuery(title, cat, district);
-  return commonsImage(query, intent);
+  return brandedFallbackDecision(intent, "The feed did not provide an image associated with this exact article");
 }
 
 function mergeCanonicalArticles(primary = [], secondary = []) {
@@ -657,6 +659,17 @@ function mergeCanonicalArticles(primary = [], secondary = []) {
     seen.add(identity);
     return true;
   });
+}
+
+function approvedPersistedImage(row = {}) {
+  const media = row.featured_media && typeof row.featured_media === "object" ? row.featured_media : null;
+  const imageType = String(media?.imageType || media?.image_type || "").toLowerCase();
+  const score = Number(media?.relevanceScore ?? media?.relevance_score ?? 0);
+  const newsroomOwned = !String(row.author_id || "").startsWith("feed:");
+  if (newsroomOwned) return media?.url || row.image_url || null;
+  if (!media || media.requiresReview === true || ["archive", "representative", "branded_fallback", "missing"].includes(imageType)) return null;
+  if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload"].includes(imageType)) return null;
+  return media.url || row.image_url || null;
 }
 
 async function persistedArticles(cat, district, limit = 24, getDatabase) {
@@ -688,8 +701,8 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       category: row.category,
       state: row.state,
       district: row.district,
-      image: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || row.image_url || null) : (row.featured_media?.url || row.image_url || null),
-      imageUrl: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || row.image_url || null) : (row.featured_media?.url || row.image_url || null),
+      image: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || null) : approvedPersistedImage(row),
+      imageUrl: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || null) : approvedPersistedImage(row),
       thumbnailUrl: row.featured_media?.thumbnailUrl || row.thumbnail_url || null,
       video: String(row.featured_media?.mimeType || "").startsWith("video/") ? { type: "uploaded", url: row.featured_media.url, mimeType: row.featured_media.mimeType, posterUrl: row.featured_media.thumbnailUrl || row.thumbnail_url || row.image_url || null } : null,
       media: row.featured_media || null,
@@ -868,4 +881,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, trustedImageUrl };

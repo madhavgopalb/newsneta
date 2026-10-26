@@ -17,9 +17,24 @@ test("article reader distinguishes complete content from syndicated briefs", () 
 
 test("article detail uses verified summary and a shareable direct URL", () => {
   const activeDetail = page.slice(page.lastIndexOf("function openStoryDetail(id)"), page.indexOf("function closeStoryModal()"));
-  assert.match(activeDetail, /story\.description \|\| story\.summary \|\| story\.aiSummary/);
+  assert.match(activeDetail, /storyDescription\(story\)/);
   assert.match(activeDetail, /searchParams\.set\("article"/);
   assert.doesNotMatch(activeDetail, /NewsNeta Desk:.*నిరంతరం అప్డేట్లు/);
+});
+
+test("article summaries reject generic publisher taglines", () => {
+  const selector = page.slice(page.indexOf("function isGenericStoryDescription"), page.indexOf("function heroStorySummary"));
+  assert.match(selector, /normalized === normalizedTitle/);
+  assert.match(selector, /normalized\.includes\(normalizedTitle\)/);
+  assert.match(selector, /breaking news/);
+  assert.match(selector, /storyDescription\(story\)/);
+});
+
+test("frontend hides unreviewed archive and representative images", () => {
+  const extractor = page.slice(page.indexOf("function extractSourceImage"), page.indexOf("function chooseRelevantImage"));
+  assert.match(extractor, /decision\.requiresReview !== true/);
+  assert.match(extractor, /decisionScore >= 80/);
+  assert.match(extractor, /event_candidate/);
 });
 
 test("scheduled feed ingestion labels snippets as briefs", () => {

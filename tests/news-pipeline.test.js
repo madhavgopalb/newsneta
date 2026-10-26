@@ -35,7 +35,7 @@ test("RSS media remains associated with the same article", () => {
   assert.equal(media.imageType, "event_candidate");
 });
 
-test("RSS stories without embedded media use a rights-aware relevant archive image", async () => {
+test("RSS stories without embedded media remain image-free instead of using a potentially unrelated archive photo", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => new Response(JSON.stringify({
     query: {
@@ -59,10 +59,9 @@ test("RSS stories without embedded media use a rights-aware relevant archive ima
   }), { status: 200, headers: { "Content-Type": "application/json" } });
   try {
     const media = await news.articleImage({ title: "Hyderabad traffic road update" }, "telangana", "Hyderabad");
-    assert.equal(media.url, "https://upload.wikimedia.org/hyderabad-traffic.jpg");
-    assert.equal(media.source, "Wikimedia Commons");
-    assert.equal(media.imageType, "archive");
-    assert.match(media.license, /CC/);
+    assert.equal(media.url, null);
+    assert.equal(media.imageType, "missing");
+    assert.equal(media.requiresReview, true);
   } finally {
     global.fetch = originalFetch;
   }
@@ -81,6 +80,21 @@ test("placeholder and logo image URLs are rejected", () => {
   assert.equal(news.trustedImageUrl("https://example.com/logo.png"), false);
   assert.equal(news.trustedImageUrl("https://example.com/placeholder.jpg"), false);
   assert.equal(news.trustedImageUrl("https://example.com/article.jpg"), true);
+});
+
+test("legacy feed archive images are not returned as current article media", () => {
+  const legacy = news.approvedPersistedImage({
+    author_id: "feed:legacy",
+    image_url: "https://upload.wikimedia.org/archive.jpg",
+    featured_media: null
+  });
+  assert.equal(legacy, null);
+  const approved = news.approvedPersistedImage({
+    author_id: "feed:licensed",
+    image_url: "https://publisher.example/story.jpg",
+    featured_media: { url: "https://publisher.example/story.jpg", imageType: "event_candidate", relevanceScore: 88, requiresReview: false }
+  });
+  assert.equal(approved, "https://publisher.example/story.jpg");
 });
 
 test("ingestion keeps stable identity and media on one canonical article", () => {
@@ -121,7 +135,7 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v85"/);
+  assert.match(source, /CACHE_VERSION = "v86"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);

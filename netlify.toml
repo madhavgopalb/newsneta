@@ -8,6 +8,16 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/telangana"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/andhra-pradesh"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/"
   [headers.values]

@@ -1469,8 +1469,8 @@ body{background:var(--bg)}
    <div class="quick-editions">
      <a class="quick-pill live" id="quickLatest" href="#latestGrid">Latest</a>
      <a class="quick-pill" id="quickVideos" href="#reels">Videos</a>
-     <a class="quick-pill" href="#andhraPradeshNews">Andhra Pradesh</a>
-     <a class="quick-pill" href="#telanganaNews">Telangana</a>
+     <a class="quick-pill" href="/andhra-pradesh" data-region-route="ap">Andhra Pradesh</a>
+     <a class="quick-pill" href="/telangana" data-region-route="telangana">Telangana</a>
      <a class="quick-pill" href="#districtNewsSection">Districts</a>
    </div>
    <div class="reader-tools">
@@ -1575,8 +1575,8 @@ body{background:var(--bg)}
   <section class="section newsroom-desk" id="publishingDesk" hidden>
    <div class="section-title"><h2 id="stateEditionsTitle">State Editions & Live Updates</h2><span class="chip" id="stateEditionsChip">News Desk</span></div>
    <div class="newsline">
-    <a class="newsline-card" href="#latestGrid"><small>Telangana</small><strong>District editions with local impact and civic updates</strong><span>Live</span></a>
-    <a class="newsline-card" href="#latestGrid"><small>Andhra Pradesh</small><strong>Constituency, development, weather and public services</strong><span>Live</span></a>
+    <a class="newsline-card" href="/telangana" data-region-route="telangana"><small>Telangana</small><strong>District editions with local impact and civic updates</strong><span>Live</span></a>
+    <a class="newsline-card" href="/andhra-pradesh" data-region-route="ap"><small>Andhra Pradesh</small><strong>Constituency, development, weather and public services</strong><span>Live</span></a>
     <a class="newsline-card" href="#reels"><small>Video Desk</small><strong>Short explainers, breaking alerts and quick briefings</strong><span>Watch</span></a>
     <a class="newsline-card" href="#epaper"><small>E-Paper</small><strong>Daily edition, archives and reader-friendly page view</strong><span>Read</span></a>
    </div>
@@ -1772,7 +1772,7 @@ body{background:var(--bg)}
     <img src="assets/newsneta-logo-transparent.png" alt="NewsNeta">
     <p>Andhra Pradesh, Telangana, district and national news with clear Telugu reporting and responsible editorial review.</p>
    </div>
-   <nav class="footer-col" aria-label="News sections"><strong>News</strong><a href="#latestGrid" data-cat="ap">Andhra Pradesh</a><a href="#latestGrid" data-cat="telangana">Telangana</a><a href="#latestGrid" data-cat="national">National</a><a href="#latestGrid" data-cat="international">International</a><a href="#latestGrid" data-cat="politics">Politics</a></nav>
+   <nav class="footer-col" aria-label="News sections"><strong>News</strong><a href="/andhra-pradesh" data-region-route="ap">Andhra Pradesh</a><a href="/telangana" data-region-route="telangana">Telangana</a><a href="#latestGrid" data-cat="national">National</a><a href="#latestGrid" data-cat="international">International</a><a href="#latestGrid" data-cat="politics">Politics</a></nav>
    <nav class="footer-col" aria-label="NewsNeta features"><strong>Features</strong><a href="#reels">Shorts & Videos</a><a href="#photoNews">Photo News</a><a href="#latestGrid">Fact Check</a><a href="#latestGrid">Explainers</a></nav>
    <nav class="footer-col" aria-label="Company"><strong>Company</strong><a href="#">About NewsNeta</a><a href="#">Contact</a><a href="#">Advertise</a><a href="#">Careers</a></nav>
    <nav class="footer-col" aria-label="Legal"><strong>Legal</strong><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Corrections</a><a href="#publishingDesk">Newsroom Login</a></nav>
@@ -1924,8 +1924,8 @@ const categories = [
  ["lifestyle","Lifestyle"],["viral","Viral"],["special","Special Stories"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v86";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v86";
+const APP_BUILD_VERSION = "newsneta-web-v87";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v87";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 2 * 60 * 1000;
 const categoryRefreshIntervalMs = 5 * 60 * 1000;
@@ -2171,6 +2171,7 @@ let newsSourceMode = "Static preview";
 let newsApiCacheMode = "starting";
 let newsApiServedAt = null;
 let activeDistrictFilter = null;
+let activeNewsCategory = "latest";
 const maxStoryAgeDays = 3;
 const latestPageSize = 9;
 const reporterPageSize = 6;
@@ -2312,6 +2313,70 @@ function districtSubmenuMarkup(state, label){
  </div>`;
 }
 
+function regionalPath(state){
+ return state === "telangana" ? "/telangana" : state === "ap" ? "/andhra-pradesh" : "/";
+}
+
+function regionalStateFromPath(pathname = location.pathname){
+ const normalized = String(pathname || "/").replace(/\/+$/, "") || "/";
+ if(normalized === "/telangana") return "telangana";
+ if(normalized === "/andhra-pradesh") return "ap";
+ return null;
+}
+
+function syncRegionalNav(state){
+ const nav = document.getElementById("categoryNav");
+ nav?.querySelectorAll("a,.nav-trigger").forEach(item=>item.classList.remove("active"));
+ if(state){
+  nav?.querySelector(`[data-state-trigger="${state}"]`)?.classList.add("active");
+ }else{
+  nav?.querySelector('[data-home="true"]')?.classList.add("active");
+ }
+}
+
+async function navigateToRegionalNews(state, {historyMode="push", district="", scroll=true} = {}){
+ if(!["telangana","ap"].includes(state)) return;
+ activeNewsCategory = state;
+ activeDistrictFilter = district ? {state,district} : null;
+ latestPage = 1;
+ syncRegionalNav(state);
+ const url = new URL(location.href);
+ url.pathname = regionalPath(state);
+ url.searchParams.delete("article");
+ if(district) url.searchParams.set("district", district);
+ else url.searchParams.delete("district");
+ if(historyMode === "push") history.pushState({category:state,district:district || null}, "", url);
+ else if(historyMode === "replace") history.replaceState({category:state,district:district || null}, "", url);
+ if(district) await loadDistrictNews(state, district, true);
+ else await loadNews(state, true);
+ if(scroll) document.getElementById("latestNewsSection")?.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function applyRegionalRoute({load=true, scroll=false} = {}){
+ const state = regionalStateFromPath();
+ if(!state){
+  activeNewsCategory = "latest";
+  activeDistrictFilter = null;
+  syncRegionalNav(null);
+  if(load) loadNews("latest", true);
+  return;
+ }
+ const district = new URL(location.href).searchParams.get("district") || "";
+ activeNewsCategory = state;
+ activeDistrictFilter = district ? {state,district} : null;
+ syncRegionalNav(state);
+ if(load) navigateToRegionalNews(state, {historyMode:"none",district,scroll});
+}
+
+function setupRegionalRouteLinks(){
+ document.addEventListener("click", event=>{
+  const link = event.target.closest("[data-region-route]");
+  if(!link) return;
+  event.preventDefault();
+  navigateToRegionalNews(link.dataset.regionRoute, {historyMode:"push"});
+ });
+}
+
 function positionDistrictSubmenu(item){
  if(!item) return;
  const trigger = item.querySelector("[data-state-trigger]");
@@ -2339,6 +2404,7 @@ function setupNav(){
   const trigger = event.target.closest("[data-state-trigger]");
   if(trigger){
    event.preventDefault();
+   navigateToRegionalNews(trigger.dataset.stateTrigger, {historyMode:"push"});
    const item = trigger.closest(".nav-item");
    const open = !item.classList.contains("open");
    nav.querySelectorAll(".nav-item.open").forEach(node=>{
@@ -2370,6 +2436,7 @@ function setupNav(){
    const state = districtLink.dataset.districtState;
    const district = districtLink.dataset.district;
    activeDistrictFilter = {state, district};
+   activeNewsCategory = state;
    nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
    districtLink.classList.add("active");
    districtLink.closest(".nav-item")?.querySelector(".nav-trigger")?.classList.add("active");
@@ -2382,8 +2449,7 @@ function setupNav(){
    if(telanganaMenuSelect) telanganaMenuSelect.value = state === "telangana" ? district : "";
    if(apMenuSelect) apMenuSelect.value = state === "ap" ? district : "";
    document.querySelector(".nav-districts")?.classList.remove("show");
-   loadDistrictNews(state, district);
-   document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
+   navigateToRegionalNews(state, {historyMode:"push",district});
    return;
   }
  if(link.dataset.home){
@@ -2391,10 +2457,12 @@ function setupNav(){
    nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
    link.classList.add("active");
    activeDistrictFilter = null;
+   activeNewsCategory = "latest";
    document.querySelector(".nav-districts")?.classList.remove("show");
    document.getElementById("telanganaMenuSelect").value = "";
    document.getElementById("apMenuSelect").value = "";
    window.scrollTo({top:0, behavior:"smooth"});
+   if(location.pathname !== "/") history.pushState({category:"latest"}, "", "/");
    return;
   }
   activeDistrictFilter = null;
@@ -2404,6 +2472,7 @@ function setupNav(){
   if(apMenuSelect) apMenuSelect.value = "";
   nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
   link.classList.add("active");
+  activeNewsCategory = link.dataset.cat || "latest";
   const districtMenu = document.querySelector(".nav-districts");
   if(districtMenu){
    const state = link.dataset.cat === "telangana" ? "telangana" : link.dataset.cat === "ap" ? "ap" : "";
@@ -2695,13 +2764,25 @@ async function fetchNewsPayload(url, context = {}){
 }
 
 function extractSourceImage(item){
- const mediaItems = Array.isArray(item.media) ? item.media : [];
- const primaryMedia = mediaItems.find(media=>media?.media_type === "image" && (media.status === "approved" || media.approved === true || media.public_url) && (media.public_url || media.url));
- const decision = item.mediaDecision || (!Array.isArray(item.media) ? item.media : null);
+ const mediaItems = [
+  ...(Array.isArray(item.media) ? item.media : []),
+  item.featuredMedia,
+  item.featured_media,
+  !Array.isArray(item.media) ? item.media : null
+ ].filter(Boolean);
+ const primaryMedia = mediaItems.find(media=>{
+  const mime = String(media?.mime_type || media?.mimeType || "").toLowerCase();
+  const type = String(media?.media_type || media?.type || media?.imageType || media?.image_type || "").toLowerCase();
+  const isImage = mime.startsWith("image/") || ["image","cms_approved","cms_upload","uploaded","event_candidate","event_photo"].includes(type);
+  const approved = media.status === "approved" || media.approved === true || ["cms_approved","event_candidate","event_photo"].includes(type);
+  return isImage && approved && (media.public_url || media.publicUrl || media.url);
+ });
+ const decision = item.mediaDecision || item.media_decision || primaryMedia || (!Array.isArray(item.media) ? item.media : null);
  const decisionType = String(decision?.imageType || decision?.image_type || "").toLowerCase();
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
- const hasApprovedCmsMedia = Boolean(primaryMedia?.public_url || primaryMedia?.approved === true || primaryMedia?.status === "approved");
- const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload"].includes(decisionType);
+ const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
+ const hasApprovedCmsMedia = Boolean(primaryMediaUrl && (primaryMedia?.approved === true || primaryMedia?.status === "approved" || ["cms_approved","cms_upload","uploaded"].includes(decisionType)));
+ const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload","cms_approved"].includes(decisionType);
  const approvedDecision = decision && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
  if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
  const candidates = [
@@ -2711,8 +2792,7 @@ function extractSourceImage(item){
   item.thumbnail,
   item.thumbnailUrl,
   item.heroImage,
-  primaryMedia?.public_url,
-  primaryMedia?.url,
+  primaryMediaUrl,
   item.enclosure?.url,
   item.enclosure?.link,
   item.media?.content?.url,
@@ -2811,13 +2891,14 @@ function normalizeItems(items){
   image:absoluteMediaUrl(extractSourceImage(item) || "") || null,
   video:normalizeArticleVideo(item),
   mediaDecision:(!Array.isArray(item.media) && item.media) || item.mediaDecision || null,
+  featuredMedia:item.featuredMedia || item.featured_media || null,
   imageLabel:item.imageLabel || (!Array.isArray(item.media) && item.media?.label) || "",
   imageRelevanceScore:Number(item.imageRelevanceScore ?? (!Array.isArray(item.media) ? item.media?.relevanceScore : 0) ?? 0),
   imageStatus:item.imageStatus || (!Array.isArray(item.media) && item.media?.visualStatus) || "",
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
    description:storyDescription(item),
-  body:item.body || item.fullArticle || "",
+  body:item.body || "",
   fullArticle:item.fullArticle || (item.contentStatus && item.contentStatus !== "brief" ? item.body : "") || "",
   contentStatus:item.contentStatus || item.content_status || (item.reporterUpload ? "newsroom_full_text" : "brief"),
   sourceUrl:item.sourceUrl || item.source_url || (/^https?:\/\//i.test(item.link || "") ? item.link : ""),
@@ -3446,6 +3527,7 @@ function animateCounters(){
 }
 
 async function loadNews(cat="telangana", force=false){
+ activeNewsCategory = cat;
  latestPage = 1;
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
@@ -3500,8 +3582,7 @@ function setupDistricts(){
   telanganaMenuSelect.value = state === "telangana" ? district : "";
   apMenuSelect.value = state === "ap" ? district : "";
   document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));
-  loadDistrictNews(state, district);
-  document.getElementById("latestGrid").scrollIntoView({behavior:"smooth", block:"start"});
+  navigateToRegionalNews(state, {historyMode:"push",district});
  }
 
  telanganaMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("telangana", event.target.value));
@@ -3580,7 +3661,7 @@ async function refreshAllNews(request){
   button.dataset.originalText = button.dataset.originalText || button.textContent;
   button.textContent = "Refreshing...";
  });
- const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "latest";
+ const activeCat = activeNewsCategory || "latest";
  try{
   await (activeDistrictFilter
    ? loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district, force)
@@ -5447,7 +5528,9 @@ if(localStorage.getItem("newsneta-theme")==="dark") document.documentElement.dat
 setupNav();
 setupResponsiveHeader();
 setupDistricts();
+setupRegionalRouteLinks();
 applyLanguage();
+applyRegionalRoute({load:false});
 refreshAllNews(true);
 window.setTimeout(()=>{
  if(!stories.length && !isRefreshingNews) refreshAllNews(true);
@@ -5492,6 +5575,7 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pageshow", event=>refreshMobileFreshness(Boolean(event.persisted)));
 window.addEventListener("focus", ()=>refreshMobileFreshness(false));
 window.addEventListener("online", refreshAllNews);
+window.addEventListener("popstate", ()=>applyRegionalRoute({load:true, scroll:true}));
 async function disableLocalPreviewServiceWorker(){
  if(!isLocalPreview || !("serviceWorker" in navigator)) return;
  const registrations = await navigator.serviceWorker.getRegistrations();

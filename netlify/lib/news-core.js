@@ -422,6 +422,7 @@ async function fetchGNewsItems(cat, district) {
     }
     return {
       id: article.url || `${cat}-gnews-${index}`,
+      headline: title,
       title,
       link: article.url || "#",
       pubDate: article.publishedAt,
@@ -441,7 +442,8 @@ async function fetchGNewsItems(cat, district) {
       trust: null,
       sentiment: null,
       description,
-      body: description,
+      summary: description,
+      body: "",
       aiSummary: description,
       contentStatus: "brief",
       sourceUrl: article.url || null,
@@ -666,10 +668,14 @@ function approvedPersistedImage(row = {}) {
   const imageType = String(media?.imageType || media?.image_type || "").toLowerCase();
   const score = Number(media?.relevanceScore ?? media?.relevance_score ?? 0);
   const newsroomOwned = !String(row.author_id || "").startsWith("feed:");
-  if (newsroomOwned) return media?.url || row.image_url || null;
+  const mediaUrl = media?.publicUrl || media?.public_url || media?.url || null;
+  if (newsroomOwned) {
+    if (media && !["cms_approved", "cms_upload", "uploaded"].includes(imageType)) return null;
+    return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
+  }
   if (!media || media.requiresReview === true || ["archive", "representative", "branded_fallback", "missing"].includes(imageType)) return null;
   if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload"].includes(imageType)) return null;
-  return media.url || row.image_url || null;
+  return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
 }
 
 async function persistedArticles(cat, district, limit = 24, getDatabase) {
@@ -693,9 +699,11 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
     });
     const articles = result.rows.map(row => ({
       id: row.id,
+      headline: row.title,
       title: row.title,
+      summary: row.summary || "",
       description: row.summary || "",
-      body: row.body || row.summary || "",
+      body: row.body || "",
       fullArticle: row.content_status === "brief" ? "" : (row.body || ""),
       contentStatus: row.content_status || "brief",
       category: row.category,
@@ -705,7 +713,8 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
       imageUrl: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || null) : approvedPersistedImage(row),
       thumbnailUrl: row.featured_media?.thumbnailUrl || row.thumbnail_url || null,
       video: String(row.featured_media?.mimeType || "").startsWith("video/") ? { type: "uploaded", url: row.featured_media.url, mimeType: row.featured_media.mimeType, posterUrl: row.featured_media.thumbnailUrl || row.thumbnail_url || row.image_url || null } : null,
-      media: row.featured_media || null,
+      media: row.featured_media ? [row.featured_media] : [],
+      mediaDecision: row.featured_media || null,
       featuredMedia: row.featured_media || null,
       link: row.source_url || `#article-${row.id}`,
       source: row.source_name || "NewsNeta",
@@ -744,7 +753,7 @@ exports.handler = async function handler(event, getDatabase) {
   }
 
   const persisted = await persistedArticles(cat, district, 24, getDatabase);
-  if (!ingestionMode && persisted.length) {
+  if (!ingestionMode && !forceRefresh && persisted.length) {
     const data = {
       status: "ok",
       provider: "newsneta-database",
@@ -808,6 +817,7 @@ exports.handler = async function handler(event, getDatabase) {
       const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);
       return {
         id: item.guid || item.link || `${cat}-${index}`,
+        headline: title,
         title,
         link: item.link,
         pubDate: item.pubDate || item.isoDate,
@@ -827,7 +837,8 @@ exports.handler = async function handler(event, getDatabase) {
         trust: null,
         sentiment: null,
         description,
-        body: description,
+        summary: description,
+        body: "",
         aiSummary: description,
         contentStatus: "brief",
         sourceUrl: item.link || null,

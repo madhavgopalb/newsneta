@@ -131,6 +131,8 @@ button{cursor:pointer}
 .voice-search-btn{border:0;background:rgba(215,25,32,.1);color:var(--brand);border-radius:999px;min-width:34px;height:34px;font-weight:900}
 .header-actions{display:flex;align-items:center;gap:8px}
 .menu-toggle{display:none}
+.mobile-nav-more{display:none}
+.mobile-nav-label{display:none}
 .language-select{
  min-height:44px;
  border:1px solid var(--line);
@@ -460,7 +462,7 @@ button{cursor:pointer}
 .topic-chips{display:flex;gap:8px;flex-wrap:wrap}
 .topic-chip{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:8px 12px;font-weight:900}
 .topic-chip.active{background:var(--ink);color:var(--bg)}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1.72fr) minmax(360px,.9fr);gap:32px;align-items:stretch;margin:36px 0 22px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.72fr) minmax(360px,.9fr);gap:32px;align-items:start;margin:36px 0 22px}
 .hero{
  width:100%;
  max-width:100%;
@@ -492,12 +494,12 @@ button{cursor:pointer}
  background-position:center;
  transition:opacity .35s ease;
 }
-.hero-content{height:auto;display:flex;flex-direction:column;justify-content:flex-start;padding:18px 12px 20px;max-width:none;color:var(--ink);background:var(--surface)}
+.hero-content{height:auto;display:flex;flex-direction:column;justify-content:flex-start;gap:8px;padding:18px 18px 20px;max-width:none;color:var(--ink);background:var(--surface)}
 .kicker{display:flex;align-items:center;gap:8px;font:800 12px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.08em}
 .tag{display:inline-flex;align-items:center;gap:6px;width:max-content;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:7px 10px;backdrop-filter:blur(12px);font-weight:800;font-size:12px}
-.hero .tag,.hero .hero-source,.hero .hero-actions{display:none}
-.hero h2{font-size:clamp(26px,2.6vw,36px);line-height:1.24;margin:0 0 8px;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.hero p{font-size:15px;max-width:72ch;color:var(--muted);margin:0;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.hero .tag,.hero .hero-actions{display:none}
+.hero h2{font-size:clamp(26px,2.6vw,36px);line-height:1.28;margin:0;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.hero p{font-size:16px;line-height:1.65;max-width:72ch;color:var(--muted);margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap}
 .hero-carousel-controls{
  position:absolute;
@@ -533,7 +535,7 @@ button{cursor:pointer}
  background:rgba(255,255,255,.42);
 }
 .hero-dot.active{width:28px;background:#fff}
-.hero-source{margin-top:8px;color:#d6dae3;font:800 12px/1 Inter,sans-serif}
+.hero-source{display:block;margin-top:2px;color:var(--muted);font:800 12px/1.4 Inter,"Noto Sans Telugu",sans-serif}
 .primary-btn,.ghost-btn{
  min-height:44px;
  border-radius:999px;
@@ -1160,10 +1162,17 @@ button{cursor:pointer}
  .mobile-search-toggle::before{content:"⌕";font-size:21px;line-height:1}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .pill-btn.menu-toggle{display:none}
- .nav-menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:0 6px;background:#159bd8;border-top:0;border-bottom:0}
- .nav-scroll-shell{grid-template-columns:auto minmax(0,1fr) auto;min-width:0;width:100%;max-width:none;margin:0;background:#159bd8}
- .nav-scroll-btn{width:30px;height:30px;font-size:18px}
- .nav{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;max-height:none;border:0;border-radius:0;padding:0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-height:48px;background:#159bd8}
+ .header{grid-template-columns:minmax(0,1fr) auto}
+ .header>.main-socials{grid-column:1/-1;justify-self:end;min-height:34px;padding:0;background:transparent}
+ .nav-menu-row{display:block;padding:0;background:#159bd8;border-top:0;border-bottom:0}
+ .nav-scroll-shell{display:block;min-width:0;width:100%;max-width:none;margin:0;background:#159bd8}
+ .nav-scroll-btn{display:none}
+ .nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;overflow:visible;max-height:none;border:0;border-radius:0;padding:0;min-height:48px;background:#159bd8}
+ .nav>a:not([data-home]):not([data-mobile-primary]),.nav>.nav-item:not([data-mobile-primary]){display:none}
+ .nav.show-all{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .nav.show-all>a,.nav.show-all>.nav-item{display:flex}
+ .nav.show-all>.nav-item{position:static}
+ .mobile-nav-more{display:flex;align-items:center;justify-content:center;min-height:48px;border:0;background:transparent;color:#fff;font-weight:900;font-size:13px;padding:8px}
  .nav a{scroll-snap-align:start}
  .nav-districts{display:none!important}
  .nav-item{position:static}
@@ -1184,11 +1193,13 @@ button{cursor:pointer}
  .nav-item.open>.district-submenu{display:grid}
  .district-submenu strong{position:sticky;top:0;background:#fff;z-index:2}
  .district-submenu a{font-size:14px;padding:10px 16px}
- .main-socials{position:static;min-height:48px;gap:3px;padding-right:0;background:#159bd8;z-index:95}
+ .main-socials{position:static;min-height:34px;gap:6px;padding-right:0;background:transparent;z-index:95}
  .main-socials .share-icon{width:28px;height:28px;display:inline-flex!important}
  .main-socials .share-icon svg,.share-icon svg{width:16px;height:16px}
  .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:18px;height:18px}
- .nav a{font-size:14px;padding:13px 12px;color:#fff;background:transparent;border:0;min-height:48px;display:inline-flex;align-items:center}
+ .nav a,.nav-trigger{font-size:13px;padding:12px 5px;color:#fff;background:transparent;border:0;min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+ .nav [data-mobile-primary] .desktop-nav-label{display:none}
+ .nav [data-mobile-primary] .mobile-nav-label{display:inline}
  .chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
  .menu-refresh{min-width:100%}
@@ -1202,9 +1213,10 @@ button{cursor:pointer}
  .hero{min-height:0;aspect-ratio:auto;max-height:none;border-radius:0;margin-left:0;margin-right:0;box-shadow:none;border:0;background:var(--surface)}
  .hero::before{min-height:232px;background:linear-gradient(0deg,rgba(0,0,0,.28),transparent 54%),var(--hero-image,linear-gradient(135deg,#111,#333))}
  .hero-content{padding:12px 14px 14px;background:var(--surface);color:var(--ink)}
- .hero .tag,.hero .hero-source,.hero .hero-actions{display:none}
- .hero h2{font-size:clamp(23px,7vw,32px);line-height:1.14;-webkit-line-clamp:3;margin:10px 0 8px}
- .hero p{font-size:14px;-webkit-line-clamp:2;margin-bottom:0;color:var(--muted)}
+ .hero .tag,.hero .hero-actions{display:none}
+ .hero h2{font-size:clamp(23px,7vw,32px);line-height:1.22;-webkit-line-clamp:3;margin:0}
+ .hero p{font-size:14px;line-height:1.65;-webkit-line-clamp:3;margin:0;color:var(--muted)}
+ .hero-source{display:block;font-size:11px;margin-top:2px}
  .hero .tag{padding:6px 9px;font-size:11px}
  .hero-actions{display:none}
  .hero-carousel-controls{left:10px;right:10px;bottom:118px}
@@ -1296,8 +1308,8 @@ button{cursor:pointer}
 /* Production editorial homepage */
 body{background:var(--bg)}
 .page{max-width:1280px;display:flex;flex-direction:column}
-.hero-grid{order:1}.home-desk{order:2}#latestNewsSection{order:4}#todaysEditionFull{order:5}#editorialHomepageSections{order:6}#reels{order:13}.page>.wide-grid:not([hidden]){order:20}
-.hero-grid{grid-template-columns:minmax(0,1.75fr) minmax(320px,.75fr);align-items:stretch}
+.hero-grid{order:1}.home-desk{order:2}#reels{order:3}#latestNewsSection{order:4}#todaysEditionFull{order:5}#editorialHomepageSections{order:6}.page>.wide-grid:not([hidden]){order:20}
+.hero-grid{grid-template-columns:minmax(0,1.75fr) minmax(320px,.75fr);align-items:start}
 .hero{aspect-ratio:auto;min-height:0;overflow:hidden}
 .hero.branded-placeholder::before{background-size:contain;background-repeat:no-repeat;background-color:#fff}
 .hero.branded-placeholder::before{display:none}
@@ -1536,9 +1548,9 @@ body{background:var(--bg)}
    </div>
   </section>
 
-  <section class="section" id="reels" style="order:13">
+  <section class="section" id="reels" style="order:3">
    <div class="section-title">
-    <h2 id="reelsTitle">Short News Reels</h2>
+     <h2 id="reelsTitle">Reels | షార్ట్ వీడియోలు</h2>
     <span class="chip active">Swipe</span>
    </div>
    <div class="reels" id="reelsFeed"></div>
@@ -1619,6 +1631,7 @@ body{background:var(--bg)}
     </div>
    </section>
    <section class="editorial-section" id="politicsNews" data-home-feed="politics"></section>
+   <section class="editorial-section" id="specialNews" data-home-feed="special"></section>
    <div class="regional-pair">
     <section class="editorial-section" id="cinemaNews" data-home-feed="cinema"></section>
     <section class="editorial-section" id="sportsNews" data-home-feed="sports"></section>
@@ -1908,11 +1921,11 @@ const categories = [
  ["district","District News"],["national","National"],["international","International"],["business","Business"],
  ["sports","Sports"],["cricket","Cricket"],["entertainment","Entertainment"],["cinema","Cinema"],["technology","Technology"],
  ["education","Education"],["health","Health"],["crime","Crime"],["weather","Weather"],["jobs","Jobs"],
- ["lifestyle","Lifestyle"],["viral","Viral"]
+ ["lifestyle","Lifestyle"],["viral","Viral"],["special","Special Stories"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v85";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v84";
+const APP_BUILD_VERSION = "newsneta-web-v86";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v86";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 2 * 60 * 1000;
 const categoryRefreshIntervalMs = 5 * 60 * 1000;
@@ -2149,7 +2162,7 @@ let isRefreshingNews = false;
 let lastRefreshError = "";
 let districtStories = [];
 const homepageFeeds = {};
-const homepageFeedCategories = ["ap","telangana","politics","cinema","sports","national","international","business","technology","jobs"];
+const homepageFeedCategories = ["ap","telangana","politics","special","cinema","sports","national","international","business","technology","jobs"];
 let lastRefreshAt = null;
 let lastHomepageRefreshAt = null;
 let refreshCount = 0;
@@ -2258,10 +2271,10 @@ function t(key){
 }
 
 Object.assign(categoryTranslations.en, {
- latest:"Latest", district:"District News", cricket:"Cricket", entertainment:"Entertainment", education:"Education", health:"Health", crime:"Crime", weather:"Weather", jobs:"Jobs", lifestyle:"Lifestyle"
+ latest:"Latest", district:"District News", cricket:"Cricket", entertainment:"Entertainment", education:"Education", health:"Health", crime:"Crime", weather:"Weather", jobs:"Jobs", lifestyle:"Lifestyle", special:"Special Stories"
 });
 Object.assign(categoryTranslations.te, {
- latest:"తాజా వార్తలు", politics:"రాజకీయాలు", telangana:"తెలంగాణ", ap:"ఆంధ్రప్రదేశ్", district:"జిల్లా వార్తలు", national:"జాతీయం", international:"అంతర్జాతీయం", business:"బిజినెస్", sports:"క్రీడలు", cricket:"క్రికెట్", entertainment:"వినోదం", cinema:"సినిమా", technology:"టెక్నాలజీ", education:"విద్య", health:"ఆరోగ్యం", crime:"క్రైమ్", weather:"వాతావరణం", jobs:"ఉద్యోగాలు", lifestyle:"లైఫ్ స్టైల్", viral:"వైరల్"
+ latest:"తాజా వార్తలు", politics:"రాజకీయాలు", telangana:"తెలంగాణ", ap:"ఆంధ్రప్రదేశ్", district:"జిల్లా వార్తలు", national:"జాతీయం", international:"అంతర్జాతీయం", business:"బిజినెస్", sports:"క్రీడలు", cricket:"క్రికెట్", entertainment:"వినోదం", cinema:"సినిమా", technology:"టెక్నాలజీ", education:"విద్య", health:"ఆరోగ్యం", crime:"క్రైమ్", weather:"వాతావరణం", jobs:"ఉద్యోగాలు", lifestyle:"లైఫ్ స్టైల్", viral:"వైరల్", special:"ప్రత్యేక కథనాలు"
 });
 Object.assign(categoryTranslations.hi, {
  latest:"ताजा खबरें", district:"जिला समाचार", cricket:"क्रिकेट", entertainment:"मनोरंजन", education:"शिक्षा", health:"स्वास्थ्य", crime:"क्राइम", weather:"मौसम", jobs:"नौकरियां", lifestyle:"लाइफस्टाइल"
@@ -2290,8 +2303,8 @@ function icon(name){
 
 function districtSubmenuMarkup(state, label){
  const heading = state === "telangana" ? "Telangana Districts" : "Andhra Pradesh Districts";
- return `<div class="nav-item" data-state-menu="${state}">
-  <button class="nav-trigger" type="button" data-state-trigger="${state}" aria-expanded="false">${label}</button>
+ return `<div class="nav-item" data-state-menu="${state}" data-mobile-primary>
+  <button class="nav-trigger" type="button" data-state-trigger="${state}" aria-expanded="false" aria-label="${escapeAttr(label)}"><span class="desktop-nav-label">${label}</span><span class="mobile-nav-label">${state === "ap" ? "AP" : "TG"}</span></button>
   <div class="district-submenu" role="menu" aria-label="${heading}">
    <strong>${heading}</strong>
    ${districts[state].map(district=>`<a href="#latestGrid" role="menuitem" data-district-state="${state}" data-district="${escapeAttr(district)}">${district}</a>`).join("")}
@@ -2315,13 +2328,13 @@ function positionDistrictSubmenu(item){
 
 function setupNav(){
  const nav = document.getElementById("categoryNav");
- nav.innerHTML = `<a href="#home" data-home="true" class="active" aria-label="Home">${t("home")}</a>` + categories
+ nav.innerHTML = `<a href="#home" data-home="true" data-mobile-primary class="active" aria-label="Home">${t("home")}</a>` + categories
   .filter(([id])=>id !== "district")
   .map(([id,label])=>{
    const translated = categoryLabel(id,label);
    if(id === "telangana" || id === "ap") return districtSubmenuMarkup(id, translated);
-   return `<a href="#latestGrid" data-cat="${id}">${translated}</a>`;
- }).join("");
+    return `<a href="#latestGrid" data-cat="${id}" ${id === "special" ? `data-mobile-primary aria-label="${escapeAttr(translated)}"` : ""}>${id === "special" ? `<span class="desktop-nav-label">${translated}</span><span class="mobile-nav-label">Special</span>` : translated}</a>`;
+  }).join("") + `<a href="#reels" data-reels-link data-mobile-primary aria-label="${currentLanguage === "te" ? "రీల్స్" : "Reels"}"><span class="desktop-nav-label">${currentLanguage === "te" ? "రీల్స్" : "Reels"}</span><span class="mobile-nav-label">Reels</span></a><button class="mobile-nav-more" type="button" aria-expanded="false">More</button>`;
  nav.addEventListener("click", event=>{
   const trigger = event.target.closest("[data-state-trigger]");
   if(trigger){
@@ -2337,8 +2350,20 @@ function setupNav(){
    trigger.setAttribute("aria-expanded", String(open));
    return;
   }
+  const more = event.target.closest(".mobile-nav-more");
+  if(more){
+   const expanded = nav.classList.toggle("show-all");
+   more.setAttribute("aria-expanded", String(expanded));
+   more.textContent = expanded ? "Close" : "More";
+   return;
+  }
   const link = event.target.closest("a");
   if(!link) return;
+  if(link.dataset.reelsLink !== undefined){
+   event.preventDefault();
+   document.getElementById("reels")?.scrollIntoView({behavior:"smooth",block:"start"});
+   return;
+  }
   const districtLink = link.closest("[data-district]");
   if(districtLink){
    event.preventDefault();
@@ -2427,6 +2452,23 @@ function setupNav(){
  setTimeout(updateNavButtons, 0);
 }
 
+function setupResponsiveHeader(){
+ const socials = document.querySelector(".main-socials");
+ const header = document.querySelector(".header");
+ const navRow = document.querySelector(".nav-menu-row");
+ if(!socials || !header || !navRow) return;
+ const media = window.matchMedia("(max-width: 640px)");
+ const place = ()=>{
+  if(media.matches){
+   if(socials.parentElement !== header) header.appendChild(socials);
+  }else if(socials.parentElement !== navRow){
+   navRow.insertBefore(socials, navRow.querySelector(".nav-districts"));
+  }
+ };
+ place();
+ media.addEventListener?.("change", place);
+}
+
 function makeSummary(title){
  if(currentLanguage === "en"){
   return `NewsNeta summarizes the key points of "${title}" with background, current impact, and what readers should watch next.`;
@@ -2438,9 +2480,38 @@ function makeSummary(title){
 }
 
 function storySummary(story){
- const direct = cleanText(story?.description || story?.summary || story?.aiSummary || story?.contentSnippet || "");
+ const direct = storyDescription(story);
  if(direct) return direct.length > 320 ? `${direct.slice(0, 317)}...` : direct;
  return "";
+}
+
+function isGenericStoryDescription(value, title = ""){
+ const text = cleanText(value);
+ if(!text) return true;
+ const normalized = text.toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+ const normalizedTitle = cleanText(title).toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+ if(normalized === normalizedTitle || (normalizedTitle && normalized.startsWith(normalizedTitle) && normalized.length < normalizedTitle.length + 30)) return true;
+ if(normalizedTitle && normalized.includes(normalizedTitle)){
+  const remainder = normalized.replace(normalizedTitle, "").trim();
+  if(remainder.length < 60) return true;
+ }
+ return /^(newsneta|telugu news|latest news|breaking news|వార్తలు|తాజా వార్తలు)\b/iu.test(text)
+  || /(?:fastest|latest|breaking).*news.*(?:updates|headlines)/iu.test(text)
+  || /(?:తెలుగు|తాజా|బ్రేకింగ్).*వార్త.*(?:అప్‌డేట్లు|ముఖ్యాంశాలు)/u.test(text);
+}
+
+function storyDescription(story){
+ const candidates = [story?.description,story?.summary,story?.aiSummary,story?.contentSnippet,story?.excerpt];
+ return candidates.map(cleanText).find(value=>!isGenericStoryDescription(value,story?.title)) || "";
+}
+
+function heroStorySummary(story){
+ const summary = storySummary(story);
+ if(summary) return summary;
+ const title = cleanText(story?.title || "");
+ if(currentLanguage === "en") return `Read the complete report for verified details, context and updates about ${title}.`;
+ if(currentLanguage === "hi") return `${title} से जुड़ी पुष्टि की गई जानकारी, संदर्भ और ताज़ा अपडेट के लिए पूरी खबर पढ़ें।`;
+ return `${title} అంశానికి సంబంధించిన ధృవీకరించిన వివరాలు, నేపథ్యం మరియు తాజా అప్‌డేట్ల కోసం పూర్తి కథనాన్ని చదవండి.`;
 }
 
 function escapeAttr(value){
@@ -2625,7 +2696,14 @@ async function fetchNewsPayload(url, context = {}){
 
 function extractSourceImage(item){
  const mediaItems = Array.isArray(item.media) ? item.media : [];
- const primaryMedia = mediaItems.find(media=>media?.media_type === "image" && (media.public_url || media.url));
+ const primaryMedia = mediaItems.find(media=>media?.media_type === "image" && (media.status === "approved" || media.approved === true || media.public_url) && (media.public_url || media.url));
+ const decision = item.mediaDecision || (!Array.isArray(item.media) ? item.media : null);
+ const decisionType = String(decision?.imageType || decision?.image_type || "").toLowerCase();
+ const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
+ const hasApprovedCmsMedia = Boolean(primaryMedia?.public_url || primaryMedia?.approved === true || primaryMedia?.status === "approved");
+ const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload"].includes(decisionType);
+ const approvedDecision = decision && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
+ if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
  const candidates = [
   item.featuredImage,
   item.image,
@@ -2640,7 +2718,9 @@ function extractSourceImage(item){
   item.media?.content?.url,
   item.media?.thumbnail?.url
  ].filter(Boolean).map(absoluteMediaUrl);
- return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url) && !/avatar|icon|sprite|1x1|pixel|newsneta-logo|branded_fallback/i.test(url)) || null;
+ return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url)
+  && !/avatar|icon|sprite|1x1|pixel|newsneta-logo|branded_fallback/i.test(url)
+  && (hasApprovedCmsMedia || decision || !/wikimedia|unsplash/i.test(url))) || null;
 }
 
 function chooseRelevantImage(story,index=0){
@@ -2736,13 +2816,14 @@ function normalizeItems(items){
   imageStatus:item.imageStatus || (!Array.isArray(item.media) && item.media?.visualStatus) || "",
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
-  description:item.description || item.aiSummary || item.summary || item.contentSnippet || item.content || "",
+   description:storyDescription(item),
   body:item.body || item.fullArticle || "",
   fullArticle:item.fullArticle || (item.contentStatus && item.contentStatus !== "brief" ? item.body : "") || "",
   contentStatus:item.contentStatus || item.content_status || (item.reporterUpload ? "newsroom_full_text" : "brief"),
   sourceUrl:item.sourceUrl || item.source_url || (/^https?:\/\//i.test(item.link || "") ? item.link : ""),
   updatedAt:item.updatedAt || item.updated_at || item.pubDate || "",
-  imageAlt:item.imageAlt || item.image_alt || ""
+   imageAlt:item.imageAlt || item.image_alt || "",
+   media:Array.isArray(item.media) ? item.media : []
  })).filter(story=>{
   if(!story.title){
    console.warn(JSON.stringify({code:"NEWS_ARTICLE_INVALID",articleId:story.id,reason:"missing title",timestamp:new Date().toISOString()}));
@@ -3145,9 +3226,9 @@ function relativeStoryTime(value){
 }
 
 function editorialSectionMarkup(category, items){
- const labels = currentLanguage === "te"
-  ? {ap:"ఆంధ్రప్రదేశ్",telangana:"తెలంగాణ",politics:"రాజకీయాలు",cinema:"సినిమా",sports:"క్రీడలు",national:"జాతీయం",international:"అంతర్జాతీయం",business:"బిజినెస్",technology:"టెక్నాలజీ",jobs:"విద్య మరియు ఉద్యోగాలు"}
-  : {ap:"Andhra Pradesh",telangana:"Telangana",politics:"Politics",cinema:"Cinema",sports:"Sports",national:"National",international:"International",business:"Business",technology:"Technology",jobs:"Jobs & Education"};
+  const labels = currentLanguage === "te"
+   ? {ap:"ఆంధ్రప్రదేశ్",telangana:"తెలంగాణ",politics:"రాజకీయాలు",special:"ప్రత్యేక కథనాలు",cinema:"సినిమా",sports:"క్రీడలు",national:"జాతీయం",international:"అంతర్జాతీయం",business:"బిజినెస్",technology:"టెక్నాలజీ",jobs:"విద్య మరియు ఉద్యోగాలు"}
+   : {ap:"Andhra Pradesh",telangana:"Telangana",politics:"Politics",special:"Special Stories",cinema:"Cinema",sports:"Sports",national:"National",international:"International",business:"Business",technology:"Technology",jobs:"Jobs & Education"};
  if(!items.length) return `<div class="editorial-section-head"><h2>${labels[category] || category}</h2></div><div class="editorial-empty">No recent stories are available in this section.</div>`;
  const [lead,...supporting] = items;
  const storyId = story => escapeAttr(story.id || story.link || story.title);
@@ -3257,7 +3338,7 @@ function renderHeroSlide(){
  else document.getElementById("hero").style.removeProperty("--hero-image");
  document.getElementById("hero").dataset.storyId = heroStory.id || heroStory.link || heroStory.title;
  document.getElementById("heroTitle").textContent = heroStory.title;
- document.getElementById("heroSummary").textContent = storySummary(heroStory);
+ document.getElementById("heroSummary").textContent = heroStorySummary(heroStory);
  document.getElementById("heroSource").textContent = `${heroStory.source ? `${heroStory.source} • ` : ""}${heroStory.category || t("topStory")} • ${relativeStoryTime(heroStory.pubDate)}`;
  document.getElementById("heroDots").innerHTML = heroStories.map((_,index)=>`<button class="hero-dot ${index === heroIndex ? "active" : ""}" type="button" data-hero-index="${index}" aria-label="Top story ${index + 1}"></button>`).join("");
 }
@@ -3314,11 +3395,22 @@ function applyLanguage(){
  setText("storyContinue", t("continue"));
  document.querySelectorAll("#categoryNav [data-cat]").forEach(link=>{
   const found = categories.find(([id])=>id === link.dataset.cat);
-  if(found) link.textContent = categoryLabel(found[0], found[1]);
+  if(found){
+   const label = categoryLabel(found[0], found[1]);
+   const desktop = link.querySelector(".desktop-nav-label");
+   if(desktop) desktop.textContent = label;
+   else link.textContent = label;
+  }
  });
  document.querySelectorAll("#categoryNav [data-state-trigger]").forEach(trigger=>{
   const found = categories.find(([id])=>id === trigger.dataset.stateTrigger);
-  if(found) trigger.textContent = categoryLabel(found[0], found[1]);
+  if(found){
+   const label = categoryLabel(found[0], found[1]);
+   trigger.setAttribute("aria-label", label);
+   const desktop = trigger.querySelector(".desktop-nav-label");
+   if(desktop) desktop.textContent = label;
+   else trigger.textContent = label;
+  }
  });
  const homeLink = document.querySelector("#categoryNav [data-home]");
  if(homeLink) homeLink.textContent = t("home");
@@ -3639,7 +3731,7 @@ function legacyBuildDetailedArticle(story){
 
 function legacyBuildExpandedArticle(story){
  const fullArticle = cleanText(story.fullArticle || story.body);
- const summary = cleanText(story.description || story.summary || story.aiSummary || "");
+ const summary = storyDescription(story);
  const category = story.category || "News";
  const trust = story.trust || 91;
  const location = story.district || story.state || "NewsNeta coverage area";
@@ -3811,7 +3903,7 @@ function initializeVideoPlayers(root=document){
 function renderStorySummaryMode(story, mode){
  const copy = document.getElementById("storyModalCopy");
  if(!copy) return;
- const verifiedSummary = cleanText(story.description || story.summary || story.aiSummary || story.fullArticle || story.body || "");
+ const verifiedSummary = storyDescription(story) || cleanText(story.fullArticle || story.body || "");
  if(mode === "quick"){
   copy.innerHTML = `<h3>Quick Summary</h3>${verifiedSummary ? `<p>${escapeHtml(verifiedSummary)}</p>` : `<p>Additional verified details are not yet available.</p>`}<p>${escapeHtml(story.source || "")} ${formatStoryDate(story.pubDate || lastRefreshAt)}</p>`;
   return;
@@ -4134,7 +4226,7 @@ function openStoryDetail(id){
  const updatedLabel = story.updatedAt && new Date(story.updatedAt).getTime() !== new Date(story.publishedAt || story.pubDate).getTime()
   ? ` • Updated ${formatStoryDate(story.updatedAt)}` : "";
  document.getElementById("storyModalMeta").textContent = `${storyPublisher} • ${publishedLabel}${updatedLabel} • ${readMinutes(story)} min read`;
- const verifiedSummary = cleanText(story.description || story.summary || story.aiSummary || "");
+ const verifiedSummary = storyDescription(story);
  document.getElementById("storyModalSummary").textContent = verifiedSummary;
  document.getElementById("storyModalSummary").hidden = !verifiedSummary;
  document.getElementById("storyModalCopy").classList.remove("reader-large");
@@ -5353,6 +5445,7 @@ document.getElementById("skipNotify").addEventListener("click",()=>document.getE
 
 if(localStorage.getItem("newsneta-theme")==="dark") document.documentElement.dataset.theme = "dark";
 setupNav();
+setupResponsiveHeader();
 setupDistricts();
 applyLanguage();
 refreshAllNews(true);

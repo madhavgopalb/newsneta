@@ -88,7 +88,7 @@ export default async function handler(request) {
   const headers = {
     "Content-Type": type,
     "Accept-Ranges": "bytes",
-    "Cache-Control": "private, no-store, max-age=0",
+    "Cache-Control": "public, max-age=60, must-revalidate",
     "Content-Disposition": `inline; filename="${String(asset.file_name || "media").replace(/["\r\n]/g, "")}"`,
     "X-Content-Type-Options": "nosniff"
   };

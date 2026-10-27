@@ -95,6 +95,17 @@ test("legacy feed archive images are not returned as current article media", () 
     featured_media: { url: "https://publisher.example/story.jpg", imageType: "event_candidate", relevanceScore: 88, requiresReview: false }
   });
   assert.equal(approved, "https://publisher.example/story.jpg");
+  const cmsApproved = news.approvedPersistedImage({
+    author_id: "reporter-123",
+    image_url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg",
+    featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg", imageType: "cms_approved", relevanceScore: 100 }
+  });
+  assert.equal(cmsApproved, "https://newsneta.com/.netlify/functions/media?key=approved.jpg");
+  assert.equal(news.approvedPersistedImage({
+    author_id: "reporter-123",
+    image_url: "https://newsneta.com/.netlify/functions/media?key=pending.jpg",
+    featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=pending.jpg", imageType: "pending" }
+  }), null);
 });
 
 test("ingestion keeps stable identity and media on one canonical article", () => {
@@ -135,10 +146,18 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v86"/);
+  assert.match(source, /CACHE_VERSION = "v89"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);
+  assert.match(mediaHandler, /response\.status >= 400 && response\.status < 500/);
+  assert.match(mediaHandler, /cache\.delete\(request\)/);
+});
+
+test("ingestion preserves regional classification when latest feed sees the same article", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
+  assert.match(source, /state=COALESCE\(EXCLUDED\.state, articles\.state\)/);
+  assert.match(source, /district=COALESCE\(EXCLUDED\.district, articles\.district\)/);
 });
 
 test("ingestion preserves valid persisted media when a later source update has none", () => {

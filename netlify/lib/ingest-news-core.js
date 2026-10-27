@@ -7,6 +7,14 @@ const MAX_RETRIES = 2;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const safeText = value => String(value || "").replace(/\s+/g, " ").trim();
+const safeBody = value => String(value || "")
+  .replace(/\0/g, "")
+  .replace(/\r\n?/g, "\n")
+  .split(/\n{2,}/)
+  .map(paragraph => paragraph.replace(/[ \t]+/g, " ").trim())
+  .filter(Boolean)
+  .join("\n\n")
+  .trim();
 const stableHash = value => crypto.createHash("sha256").update(String(value)).digest("hex");
 const slugFor = (title, identity) => {
   const base = safeText(title).toLowerCase().replace(/[^a-z0-9\u0c00-\u0c7f]+/gu, "-").replace(/^-|-$/g, "").slice(0, 150) || "news";
@@ -32,13 +40,14 @@ function canonicalArticle(item, category, provider) {
   const sourceArticleId = safeText(item.id || item.guid || sourceUrl).slice(0, 320);
   if (!sourceArticleId || !safeText(item.title) || !item.pubDate) return null;
   const media = item.media && item.media.url ? item.media : null;
+  const contentStatus = item.contentStatus === "licensed_full_text" ? "licensed_full_text" : "brief";
   return {
     identity: sourceArticleId,
     slug: slugFor(item.title, `${provider}:${sourceArticleId}`),
     title: safeText(item.title),
     summary: safeText(item.description || item.summary || item.aiSummary),
-    body: safeText(item.body || item.description || item.summary || item.title),
-    contentStatus: item.contentStatus === "licensed_full_text" ? "licensed_full_text" : "brief",
+    body: contentStatus === "licensed_full_text" ? safeBody(item.body || item.fullArticle) : "",
+    contentStatus,
     category,
     state: item.state || (category === "ap" ? "Andhra Pradesh" : category === "telangana" ? "Telangana" : null),
     district: item.district || null,
@@ -127,7 +136,8 @@ async function ingestCategory(client, category, getDatabase) {
         WHERE source_provider IS NOT NULL AND source_article_id IS NOT NULL
       DO UPDATE SET
         title=EXCLUDED.title, summary=EXCLUDED.summary, body=EXCLUDED.body, content_status=EXCLUDED.content_status,
-        category=CASE WHEN articles.category='latest' THEN EXCLUDED.category WHEN EXCLUDED.category='latest' THEN articles.category ELSE EXCLUDED.category END, state=EXCLUDED.state, district=EXCLUDED.district,
+        category=CASE WHEN articles.category='latest' THEN EXCLUDED.category WHEN EXCLUDED.category='latest' THEN articles.category ELSE EXCLUDED.category END,
+        state=COALESCE(EXCLUDED.state, articles.state), district=COALESCE(EXCLUDED.district, articles.district),
         source_url=EXCLUDED.source_url, source_name=EXCLUDED.source_name,
         source_published_at=EXCLUDED.source_published_at, published_at=EXCLUDED.published_at,
         image_url=COALESCE(EXCLUDED.image_url, articles.image_url),

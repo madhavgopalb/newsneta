@@ -87,16 +87,19 @@ button{cursor:pointer}
  border-bottom:1px solid var(--line);
  padding-top:env(safe-area-inset-top);
 }
+html{scroll-padding-top:156px}
+[id]{scroll-margin-top:156px}
 .header{
  display:grid;
- grid-template-columns:minmax(300px,410px) minmax(240px,1fr) auto;
+ grid-template-columns:minmax(320px,430px) minmax(240px,1fr) auto;
  align-items:center;
  gap:14px;
  max-width:1240px;
  margin:0 auto;
  padding:8px 16px;
 }
-.brand{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;height:78px}
+.brand-cluster{display:flex;align-items:center;gap:8px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;height:78px;flex:1}
 .brand-logo{
  width:100%;
  height:100%;
@@ -130,7 +133,7 @@ button{cursor:pointer}
 .search-icon{left:15px}.spark-icon{right:10px;color:var(--brand)}
 .voice-search-btn{border:0;background:rgba(215,25,32,.1);color:var(--brand);border-radius:999px;min-width:34px;height:34px;font-weight:900}
 .header-actions{display:flex;align-items:center;gap:8px}
-.menu-toggle{display:none}
+.menu-toggle{display:inline-flex!important;flex:0 0 auto;font-size:20px;padding:0;width:44px}
 .mobile-nav-more{display:none}
 .mobile-nav-label{display:none}
 .language-select{
@@ -166,7 +169,7 @@ button{cursor:pointer}
  max-width:none;
  margin:0;
  display:grid;
- grid-template-columns:minmax(0,1fr) auto;
+ grid-template-columns:minmax(0,1fr);
  gap:6px;
  align-items:center;
  background:#159bd8;
@@ -247,7 +250,8 @@ button{cursor:pointer}
  align-items:center;
  gap:6px;
 }
-.nav-trigger::after{content:"⌄";font-size:14px;line-height:1}
+.nav-trigger::after{content:"+";font-size:17px;line-height:1}
+.nav-item.open>.nav-trigger::after{content:"−"}
 .nav-trigger.active,.nav-item.open>.nav-trigger,.nav-item:hover>.nav-trigger{background:rgba(255,255,255,.16)}
 .district-submenu{
  position:fixed;
@@ -288,22 +292,31 @@ button{cursor:pointer}
 }
 .district-submenu a:hover,.district-submenu a.active{background:#f1f5f9;color:#0f172a}
 .district-submenu a:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
-.main-socials{
- display:flex;
- align-items:center;
- justify-content:flex-end;
- gap:9px;
- min-height:58px;
- flex:0 0 auto;
-}
-.main-socials .share-icon{width:34px;height:34px;border:0;box-shadow:none;background:#fff;color:#111827}
-.main-socials .share-icon.facebook{background:#fff;color:#1877f2}
-.main-socials .share-icon.whatsapp{color:#25d366}
-.main-socials .share-icon.twitter{color:#111827}
-.main-socials .share-icon.instagram{color:#e1306c}
-.main-socials .share-icon svg,.share-icon svg{width:19px;height:19px;display:block}
-.main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:21px;height:21px}
-.main-socials .share-icon:focus-visible,.share-icon:focus-visible{outline:3px solid rgba(255,255,255,.64);outline-offset:2px}
+.share-icon svg{width:19px;height:19px;display:block}
+.share-icon.whatsapp svg{width:21px;height:21px}
+.share-icon:focus-visible{outline:3px solid rgba(215,25,32,.35);outline-offset:2px}
+.menu-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:300;visibility:hidden;opacity:0;transition:opacity .2s ease,visibility .2s ease}
+.menu-backdrop.open{visibility:visible;opacity:1}
+.menu-drawer{position:absolute;inset:0 auto 0 0;width:min(390px,92vw);background:var(--surface);color:var(--ink);padding:18px;overflow:auto;overscroll-behavior:contain;box-shadow:20px 0 50px rgba(15,23,42,.25);transform:translateX(-100%);transition:transform .24s ease}
+.menu-backdrop.open .menu-drawer{transform:translateX(0)}
+.menu-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.drawer-actions{display:flex;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.drawer-actions button{flex:1}
+.menu-drawer-nav{display:grid;gap:4px;padding:12px 0}
+.menu-drawer-nav>a,.drawer-state-trigger{width:100%;min-height:46px;display:flex;align-items:center;justify-content:space-between;border:0;background:transparent;color:var(--ink);padding:10px 12px;text-align:left;font-weight:900;border-radius:6px}
+.drawer-state-row{display:grid;grid-template-columns:minmax(0,1fr) 46px;align-items:center}
+.drawer-state-row>a{min-height:46px;display:flex;align-items:center;padding:10px 12px;font-weight:900;border-radius:6px}
+.drawer-state-trigger{padding:0;justify-content:center;font-size:18px}
+.menu-drawer-nav>a:hover,.menu-drawer-nav>a.active,.drawer-state-trigger:hover,.drawer-state-trigger.active{background:var(--soft);color:var(--brand)}
+.drawer-districts{display:none;grid-template-columns:1fr 1fr;gap:3px;padding:4px 8px 12px}
+.drawer-state.open .drawer-districts{display:grid}
+.drawer-districts a{color:var(--ink);padding:9px 8px;border-radius:5px;font-size:13px;font-weight:800}
+.drawer-districts a:hover,.drawer-districts a.active{background:var(--soft);color:var(--brand)}
+.notification-panel,.follow-panel{position:fixed;top:86px;right:max(12px,calc((100vw - 1240px)/2 + 16px));z-index:290;width:min(360px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--line);box-shadow:0 18px 44px rgba(15,23,42,.18);padding:16px;border-radius:8px;display:none}
+.notification-panel.open,.follow-panel.open{display:block}
+.notification-panel strong,.follow-panel strong{display:block;margin-bottom:8px}
+.notification-panel p,.follow-panel p{margin:0;color:var(--muted);line-height:1.5}
+.follow-btn{min-height:40px}
 .chip{
  flex:0 0 auto;
  border:1px solid var(--line);
@@ -345,7 +358,7 @@ button{cursor:pointer}
  color:var(--muted);
  font-size:12px;
  font-weight:800;
- display:flex;
+ display:none;
  align-items:center;
  gap:8px;
 }
@@ -1143,16 +1156,22 @@ button{cursor:pointer}
  .menu-refresh{grid-column:auto}
 }
 @media (max-width:640px){
+ html{scroll-padding-top:118px}
+ [id]{scroll-margin-top:118px}
  .app-shell{overflow-x:hidden}
  .page{padding:12px 12px calc(90px + env(safe-area-inset-bottom))}
  .topbar{position:sticky}
- .header{grid-template-columns:1fr auto;padding:7px 12px 4px;gap:8px}
- .brand{max-width:calc(100vw - 136px);height:62px}
+ .header{display:flex;padding:6px 10px;gap:6px;min-height:62px}
+ .brand-cluster{display:contents}
+ .brand{order:1;flex:1;max-width:none;height:54px}
  .brand-logo{width:100%;height:62px;max-width:292px;max-height:62px;object-fit:contain;transform:none;transform-origin:center}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
- .header-actions{gap:6px}
- .header-actions #liveBtn,.header-actions #themeBtn{display:none}
+ .header-actions{order:2;gap:4px;flex:0 0 auto}
+ .header-actions #liveBtn,.header-actions #themeBtn,.header-actions #adminLoginBtn,.header-actions #notificationBtn{display:none}
+ .header-actions .language-select{display:block;min-width:76px;max-width:86px}
+ .menu-toggle{order:3}
+ .menu-drawer{inset:0 0 0 auto;transform:translateX(100%);padding-top:calc(18px + env(safe-area-inset-top))}
  .language-select{min-height:40px;max-width:112px;padding:0 8px;font-size:12px}
  .icon-btn,.pill-btn{min-width:40px;height:40px}
  .pill-btn .label{display:none}
@@ -1161,18 +1180,13 @@ button{cursor:pointer}
  .mobile-search-toggle{display:flex;align-items:center;justify-content:center;margin:0 12px 8px;width:44px;min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--brand);color:#fff;font-weight:900;font-size:0}
  .mobile-search-toggle::before{content:"⌕";font-size:21px;line-height:1}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
- .pill-btn.menu-toggle{display:none}
  .header{grid-template-columns:minmax(0,1fr) auto}
- .header>.main-socials{grid-column:1/-1;justify-self:end;min-height:34px;padding:0;background:transparent}
  .nav-menu-row{display:block;padding:0;background:#159bd8;border-top:0;border-bottom:0}
  .nav-scroll-shell{display:block;min-width:0;width:100%;max-width:none;margin:0;background:#159bd8}
  .nav-scroll-btn{display:none}
- .nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;overflow:visible;max-height:none;border:0;border-radius:0;padding:0;min-height:48px;background:#159bd8}
- .nav>a:not([data-home]):not([data-mobile-primary]),.nav>.nav-item:not([data-mobile-primary]){display:none}
- .nav.show-all{grid-template-columns:repeat(3,minmax(0,1fr))}
- .nav.show-all>a,.nav.show-all>.nav-item{display:flex}
- .nav.show-all>.nav-item{position:static}
- .mobile-nav-more{display:flex;align-items:center;justify-content:center;min-height:48px;border:0;background:transparent;color:#fff;font-weight:900;font-size:13px;padding:8px}
+ .nav{display:flex;gap:0;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0;min-height:48px;background:#159bd8;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+ .nav>a,.nav>.nav-item{display:flex!important;flex:0 0 auto;position:relative}
+ .mobile-nav-more{display:none!important}
  .nav a{scroll-snap-align:start}
  .nav-districts{display:none!important}
  .nav-item{position:static}
@@ -1193,17 +1207,15 @@ button{cursor:pointer}
  .nav-item.open>.district-submenu{display:grid}
  .district-submenu strong{position:sticky;top:0;background:#fff;z-index:2}
  .district-submenu a{font-size:14px;padding:10px 16px}
- .main-socials{position:static;min-height:34px;gap:6px;padding-right:0;background:transparent;z-index:95}
- .main-socials .share-icon{width:28px;height:28px;display:inline-flex!important}
- .main-socials .share-icon svg,.share-icon svg{width:16px;height:16px}
- .main-socials .share-icon.whatsapp svg,.share-icon.whatsapp svg{width:18px;height:18px}
- .nav a,.nav-trigger{font-size:13px;padding:12px 5px;color:#fff;background:transparent;border:0;min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
- .nav [data-mobile-primary] .desktop-nav-label{display:none}
- .nav [data-mobile-primary] .mobile-nav-label{display:inline}
+ .share-icon svg{width:16px;height:16px}
+ .share-icon.whatsapp svg{width:18px;height:18px}
+ .nav a,.nav-trigger{font-size:13px;padding:12px 14px;color:#fff;background:transparent;border:0;min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+ .nav [data-mobile-primary] .desktop-nav-label{display:inline}
+ .nav [data-mobile-primary] .mobile-nav-label{display:none}
  .chip{font-size:13px;padding:8px 11px}
  .menu-select{min-height:40px;font-size:14px}
  .menu-refresh{min-width:100%}
- .refresh-inline{padding:0 12px 8px;font-size:11px;line-height:1.35}
+ .refresh-inline{display:none}
  .ticker{position:relative;top:auto}
  .ticker-inner{padding:8px 12px}
  .ticker-track{font-size:13px}
@@ -1282,8 +1294,8 @@ button{cursor:pointer}
  .notify{bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px}
 }
 @media (max-width:430px){
- .brand{max-width:calc(100vw - 108px);height:58px}
- .brand-logo{width:100%;height:58px;max-width:260px;max-height:58px}
+ .brand{height:50px}
+ .brand-logo{width:100%;height:50px;max-width:190px;max-height:50px}
  .header-actions .admin-login-btn{padding:0 10px;font-size:12px}
  .header-actions .admin-login-btn .label{display:inline}
  .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
@@ -1292,18 +1304,17 @@ button{cursor:pointer}
  .summary{font-size:13px}
 }
 @media (max-width:360px){
- .brand-logo{width:100%;height:54px;max-width:230px;max-height:54px}
+ .brand-logo{width:100%;height:48px;max-width:154px;max-height:48px}
  .header-actions{gap:4px}
+ .header-actions .admin-login-btn{min-width:46px;padding:0 7px}
+ .header-actions .language-select{min-width:70px;max-width:72px;padding:0 5px}
  .icon-btn,.pill-btn{min-width:38px;height:38px}
  .mobile-search-toggle{width:40px;min-height:38px;margin-left:8px;margin-right:8px}
- .main-socials{gap:2px}
- .main-socials .share-icon{width:26px;height:26px}
- .main-socials .share-icon svg{width:15px;height:15px}
- .main-socials .share-icon.whatsapp svg{width:17px;height:17px}
  .nav a,.chip{font-size:12px;padding:8px 10px}
  .hero{min-height:420px}
  .hero h2{font-size:25px}
 }
+@media (prefers-reduced-motion:reduce){.menu-backdrop,.menu-drawer{transition:none!important}}
 
 /* Production editorial homepage */
 body{background:var(--bg)}
@@ -1389,32 +1400,31 @@ body{background:var(--bg)}
 <div class="app-shell">
  <div class="topbar">
   <header class="header" aria-label="NewsNeta header">
-   <a class="brand" href="#">
-    <img class="brand-logo" src="assets/newsneta-logo-header.png" alt="NewsNeta logo"/>
-    <div>
-     <h1>NewsNeta</h1>
-     <small>తెలుగు ప్రజల వార్తా వేదిక</small>
-    </div>
-   </a>
+   <div class="brand-cluster">
+    <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="menuDrawer">☰</button>
+    <a class="brand" href="/" data-home-link>
+     <img class="brand-logo" src="assets/newsneta-logo-header.png" alt="NewsNeta logo"/>
+     <div><h1>NewsNeta</h1><small>తెలుగు ప్రజల వార్తా వేదిక</small></div>
+    </a>
+   </div>
    <label class="search-wrap">
    <span class="search-icon">⌕</span>
     <input id="searchInput" type="search" placeholder="తెలుగులో వార్తలు వెతకండి..." autocomplete="off"/>
     <button class="spark-icon voice-search-btn" id="voiceSearchBtn" type="button" aria-label="Voice search">Mic</button>
    </label>
    <div class="header-actions">
-   <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open login"><span class="label">Login</span></button>
+    <button class="pill-btn admin-login-btn" id="adminLoginBtn" type="button" aria-label="Open login"><span class="label">Login</span></button>
+    <button class="icon-btn" id="headerSearchBtn" type="button" aria-label="Search news">⌕</button>
+    <button class="icon-btn" id="notificationBtn" type="button" aria-label="Open notifications" aria-expanded="false" aria-controls="notificationPanel">&#128276;</button>
     <select class="language-select" id="languageSelect" aria-label="Translate language">
      <option value="te">తెలుగు</option>
      <option value="en">English</option>
-     <option value="hi">हिन्दी</option>
     </select>
     <button class="pill-btn" id="liveBtn" type="button"><span class="live-dot"></span><span class="label">LIVE</span></button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">◐</button>
    </div>
   </header>
-  <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-expanded="false" aria-controls="searchInput">Search News</button>
   <div class="nav-menu-row" aria-label="Main menu">
-   <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="categoryNav">☰</button>
    <div class="nav-scroll-shell">
     <button class="nav-scroll-btn" id="navScrollPrev" type="button" aria-label="Previous menu items">‹</button>
     <nav class="nav" aria-label="News categories" id="categoryNav">
@@ -1429,27 +1439,21 @@ body{background:var(--bg)}
     </nav>
     <button class="nav-scroll-btn" id="navScrollNext" type="button" aria-label="Next menu items">›</button>
    </div>
-   <div class="main-socials" aria-label="NewsNeta social links">
-    <a class="share-icon facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="NewsNeta on Facebook">
-     <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.2 8.4V6.7c0-.8.2-1.2 1.3-1.2H17V2.3c-.7-.1-1.5-.2-2.3-.2-2.8 0-4.7 1.7-4.7 4.8v1.5H7v3.6h3v9.9h4.2V12H17l.5-3.6h-3.3z"/></svg>
-    </a>
-    <a class="share-icon whatsapp" href="https://api.whatsapp.com/send?text=NewsNeta%20https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="Share NewsNeta on WhatsApp">
-     <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3.2A12.7 12.7 0 0 0 5 22.3L3.4 28.8l6.7-1.6A12.7 12.7 0 1 0 16 3.2zm0 22.9c-2 0-3.9-.6-5.6-1.7l-.4-.2-4 .9 1-3.8-.3-.4A10.2 10.2 0 1 1 16 26.1zm5.7-7.6c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.2-.3.2-.6.1a8.4 8.4 0 0 1-2.5-1.5 9.2 9.2 0 0 1-1.7-2.1c-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.6c.2.2 2.4 3.7 5.9 5.2.8.4 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 1.8-.7 2.1-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4z"/></svg>
-    </a>
-    <a class="share-icon twitter" href="https://twitter.com/intent/tweet?text=NewsNeta&url=https%3A%2F%2Fnewsneta.com%2F" target="_blank" rel="noopener" aria-label="Share NewsNeta on X">
-     <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.9 10.5 21.3 2h-1.8l-6.4 7.3L8 2H2l7.8 11.2L2 22h1.8l6.8-7.7 5.4 7.7h6l-8.1-11.5zm-2.4 2.7-.8-1.1L4.4 3.3h2.7l5 7 .8 1.1 6.6 9.3h-2.7l-5.3-7.5z"/></svg>
-    </a>
-    <a class="share-icon instagram" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="NewsNeta on Instagram">
-     <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M7.5 2.8h9A4.7 4.7 0 0 1 21.2 7.5v9a4.7 4.7 0 0 1-4.7 4.7h-9a4.7 4.7 0 0 1-4.7-4.7v-9a4.7 4.7 0 0 1 4.7-4.7z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M8.4 12a3.6 3.6 0 1 0 7.2 0 3.6 3.6 0 0 0-7.2 0z"/><path fill="currentColor" d="M17.4 6.4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
-    </a>
-   </div>
-   <div class="nav-districts" aria-label="District news menu">
-    <select class="menu-select" id="telanganaMenuSelect" aria-label="Telangana district news"></select>
-    <select class="menu-select" id="apMenuSelect" aria-label="Andhra Pradesh district news"></select>
-    <button class="pill-btn menu-refresh" id="menuRefreshNow" type="button">Refresh news</button>
-   </div>
   </div>
-  <div class="refresh-inline"><span class="live-dot"></span><span id="menuRefreshStatus">Connecting to the live newsroom...</span></div>
+ </div>
+
+ <div class="menu-backdrop" id="menuBackdrop" aria-hidden="true">
+  <aside class="menu-drawer" id="menuDrawer" aria-label="News menu" tabindex="-1">
+   <div class="menu-drawer-head"><strong>NewsNeta Menu</strong><button class="icon-btn" id="closeMenu" type="button" aria-label="Close news menu">×</button></div>
+   <div class="drawer-actions" aria-label="Account and notification actions">
+    <button class="pill-btn admin-login-btn" type="button" data-drawer-action="login">Login</button>
+    <button class="pill-btn" type="button" data-drawer-action="notifications">Notifications</button>
+   </div>
+   <nav class="menu-drawer-nav" id="drawerNav" aria-label="All news categories"></nav>
+  </aside>
+ </div>
+ <div class="notification-panel" id="notificationPanel" role="dialog" aria-label="News notifications">
+  <strong>News alerts</strong><p id="notificationPanelText">There are no new notifications.</p>
  </div>
 
  <div class="ticker" aria-label="Breaking news ticker">
@@ -1469,8 +1473,8 @@ body{background:var(--bg)}
    <div class="quick-editions">
      <a class="quick-pill live" id="quickLatest" href="#latestGrid">Latest</a>
      <a class="quick-pill" id="quickVideos" href="#reels">Videos</a>
-     <a class="quick-pill" href="#andhraPradeshNews">Andhra Pradesh</a>
-     <a class="quick-pill" href="#telanganaNews">Telangana</a>
+     <a class="quick-pill" href="/andhra-pradesh" data-region-route="ap">Andhra Pradesh</a>
+     <a class="quick-pill" href="/telangana" data-region-route="telangana">Telangana</a>
      <a class="quick-pill" href="#districtNewsSection">Districts</a>
    </div>
    <div class="reader-tools">
@@ -1575,8 +1579,8 @@ body{background:var(--bg)}
   <section class="section newsroom-desk" id="publishingDesk" hidden>
    <div class="section-title"><h2 id="stateEditionsTitle">State Editions & Live Updates</h2><span class="chip" id="stateEditionsChip">News Desk</span></div>
    <div class="newsline">
-    <a class="newsline-card" href="#latestGrid"><small>Telangana</small><strong>District editions with local impact and civic updates</strong><span>Live</span></a>
-    <a class="newsline-card" href="#latestGrid"><small>Andhra Pradesh</small><strong>Constituency, development, weather and public services</strong><span>Live</span></a>
+    <a class="newsline-card" href="/telangana" data-region-route="telangana"><small>Telangana</small><strong>District editions with local impact and civic updates</strong><span>Live</span></a>
+    <a class="newsline-card" href="/andhra-pradesh" data-region-route="ap"><small>Andhra Pradesh</small><strong>Constituency, development, weather and public services</strong><span>Live</span></a>
     <a class="newsline-card" href="#reels"><small>Video Desk</small><strong>Short explainers, breaking alerts and quick briefings</strong><span>Watch</span></a>
     <a class="newsline-card" href="#epaper"><small>E-Paper</small><strong>Daily edition, archives and reader-friendly page view</strong><span>Read</span></a>
    </div>
@@ -1772,7 +1776,7 @@ body{background:var(--bg)}
     <img src="assets/newsneta-logo-transparent.png" alt="NewsNeta">
     <p>Andhra Pradesh, Telangana, district and national news with clear Telugu reporting and responsible editorial review.</p>
    </div>
-   <nav class="footer-col" aria-label="News sections"><strong>News</strong><a href="#latestGrid" data-cat="ap">Andhra Pradesh</a><a href="#latestGrid" data-cat="telangana">Telangana</a><a href="#latestGrid" data-cat="national">National</a><a href="#latestGrid" data-cat="international">International</a><a href="#latestGrid" data-cat="politics">Politics</a></nav>
+   <nav class="footer-col" aria-label="News sections"><strong>News</strong><a href="/andhra-pradesh" data-region-route="ap">Andhra Pradesh</a><a href="/telangana" data-region-route="telangana">Telangana</a><a href="#latestGrid" data-cat="national">National</a><a href="#latestGrid" data-cat="international">International</a><a href="#latestGrid" data-cat="politics">Politics</a></nav>
    <nav class="footer-col" aria-label="NewsNeta features"><strong>Features</strong><a href="#reels">Shorts & Videos</a><a href="#photoNews">Photo News</a><a href="#latestGrid">Fact Check</a><a href="#latestGrid">Explainers</a></nav>
    <nav class="footer-col" aria-label="Company"><strong>Company</strong><a href="#">About NewsNeta</a><a href="#">Contact</a><a href="#">Advertise</a><a href="#">Careers</a></nav>
    <nav class="footer-col" aria-label="Legal"><strong>Legal</strong><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Corrections</a><a href="#publishingDesk">Newsroom Login</a></nav>
@@ -1879,9 +1883,9 @@ body{background:var(--bg)}
       <button class="share-icon twitter" data-social-share="twitter" type="button" aria-label="Share on X">
        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.9 10.5 21.3 2h-1.8l-6.4 7.3L8 2H2l7.8 11.2L2 22h1.8l6.8-7.7 5.4 7.7h6l-8.1-11.5zm-2.4 2.7-.8-1.1L4.4 3.3h2.7l5 7 .8 1.1 6.6 9.3h-2.7l-5.3-7.5z"/></svg>
       </button>
-      <button class="share-icon instagram" data-social-share="instagram" type="button" aria-label="Copy link for Instagram">
-       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M7.5 2.8h9A4.7 4.7 0 0 1 21.2 7.5v9a4.7 4.7 0 0 1-4.7 4.7h-9a4.7 4.7 0 0 1-4.7-4.7v-9a4.7 4.7 0 0 1 4.7-4.7z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M8.4 12a3.6 3.6 0 1 0 7.2 0 3.6 3.6 0 0 0-7.2 0z"/><path fill="currentColor" d="M17.4 6.4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
-      </button>
+      <button class="pill-btn" data-social-share="copy" type="button" aria-label="Copy article link">Copy Link</button>
+      <button class="pill-btn" data-social-share="native" type="button" aria-label="Share using device">Share</button>
+      <button class="pill-btn follow-btn" id="storyFollowBtn" type="button" aria-expanded="false" aria-controls="followPanel">For More, Follow Us</button>
      </div>
     </div>
     <div class="summary-modes" aria-label="Summary modes">
@@ -1904,6 +1908,10 @@ body{background:var(--bg)}
    </div>
   </article>
  </div>
+ <div class="follow-panel" id="followPanel" role="dialog" aria-label="Official NewsNeta social profiles">
+  <strong>For More, Follow Us</strong>
+  <p id="followPanelContent">Official NewsNeta social profiles will appear here once they are configured and verified.</p>
+ </div>
 
  <nav class="bottom-nav" aria-label="Mobile navigation">
   <a href="#"><span>⌂</span>Home</a>
@@ -1917,15 +1925,14 @@ body{background:var(--bg)}
 <script src="/assets/vendor/hls.min.js"></script>
 <script>
 const categories = [
- ["latest","Latest News"],["politics","Politics"],["ap","Andhra Pradesh"],["telangana","Telangana"],
- ["district","District News"],["national","National"],["international","International"],["business","Business"],
- ["sports","Sports"],["cricket","Cricket"],["entertainment","Entertainment"],["cinema","Cinema"],["technology","Technology"],
- ["education","Education"],["health","Health"],["crime","Crime"],["weather","Weather"],["jobs","Jobs"],
- ["lifestyle","Lifestyle"],["viral","Viral"],["special","Special Stories"]
+ ["latest","Latest News"],["international","World"],["telangana","Telangana"],["ap","Andhra Pradesh"],
+ ["politics","Politics"],["crime","Crime"],["lifestyle","Lifestyle"],["cinema","Cinema"],
+ ["business","Business"],["sports","Sports"],["health","Health"],["education","Education"],
+ ["special","Special Stories"],["advertisements","Advertisements"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v86";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v86";
+const APP_BUILD_VERSION = "newsneta-web-v89";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v89";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 2 * 60 * 1000;
 const categoryRefreshIntervalMs = 5 * 60 * 1000;
@@ -1935,16 +1942,16 @@ const productionNewsOrigin = "https://newsneta.com";
 
 const districts = {
  telangana: [
-  "Adilabad","Bhadradri Kothagudem","Hanamkonda","Hyderabad","Jagtial","Jangaon","Jayashankar Bhupalpally",
-  "Jogulamba Gadwal","Kamareddy","Karimnagar","Khammam","Komaram Bheem Asifabad","Mahabubabad","Mahabubnagar",
-  "Mancherial","Medak","Medchal Malkajgiri","Mulugu","Nagarkurnool","Nalgonda","Narayanpet","Nirmal",
+  "Adilabad","Bhadradri Kothagudem","Hanumakonda","Hyderabad","Jagtial","Jangaon","Jayashankar Bhupalpally",
+  "Jogulamba Gadwal","Kamareddy","Karimnagar","Khammam","Kumuram Bheem","Mahabubabad","Mahabubnagar",
+  "Mancherial","Medak","Medchal-Malkajgiri","Mulugu","Nagarkurnool","Nalgonda","Narayanpet","Nirmal",
   "Nizamabad","Peddapalli","Rajanna Sircilla","Rangareddy","Sangareddy","Siddipet","Suryapet","Vikarabad",
   "Wanaparthy","Warangal","Yadadri Bhuvanagiri"
  ],
  ap: [
   "Alluri Sitharama Raju","Anakapalli","Ananthapuramu","Annamayya","Bapatla","Chittoor","Dr. B.R. Ambedkar Konaseema",
   "East Godavari","Eluru","Guntur","Kakinada","Krishna","Kurnool","Nandyal","NTR","Palnadu","Parvathipuram Manyam",
-  "Prakasam","Sri Potti Sriramulu Nellore","Sri Sathya Sai","Srikakulam","Tirupati","Visakhapatnam","Vizianagaram",
+  "Markapuram","Polavaram","Prakasam","Sri Potti Sriramulu Nellore","Sri Sathya Sai","Srikakulam","Tirupati","Visakhapatnam","Vizianagaram",
   "West Godavari","YSR Kadapa"
  ]
 };
@@ -2171,6 +2178,7 @@ let newsSourceMode = "Static preview";
 let newsApiCacheMode = "starting";
 let newsApiServedAt = null;
 let activeDistrictFilter = null;
+let activeNewsCategory = "latest";
 const maxStoryAgeDays = 3;
 const latestPageSize = 9;
 const reporterPageSize = 6;
@@ -2184,7 +2192,7 @@ let heroIndex = 0;
 let cricketWidgetLoading = false;
 let cricketWidgetLastAt = 0;
 let activeEditionTopic = "Top";
-let currentLanguage = localStorage.getItem("newsneta-language") || "te";
+let currentLanguage = ["te","en"].includes(localStorage.getItem("newsneta-language")) ? localStorage.getItem("newsneta-language") : "te";
 let speechState = {speaking:false, paused:false, targetId:null, utterance:null};
 const preferenceOptions = ["Telangana","Andhra Pradesh","Hyderabad","Vijayawada","Visakhapatnam","Tirupati","Sports","Politics","Cinema","Technology"];
 let readerPreferences = loadReaderPreferences();
@@ -2223,7 +2231,7 @@ const categoryTranslationsBase = {
 
 const uiText = {
  te:{
-  home:"⌂ Home", latest:"తాజా వార్తలు", videos:"వీడియోలు", photo:"ఫోటో కథనాలు", epaper:"ఈ-పేపర్", editorial:"ఎడిటోరియల్",
+  home:"⌂ హోమ్", latest:"తాజా వార్తలు", videos:"వీడియోలు", photo:"ఫోటో కథనాలు", epaper:"ఈ-పేపర్", editorial:"ఎడిటోరియల్",
   newsroom:"న్యూస్‌రూమ్ డెస్క్", liveTv:"లైవ్ టీవీ", today:"ఈరోజు ఎడిషన్", refreshNews:"వార్తలు రిఫ్రెష్", refreshNow:"ఇప్పుడే రిఫ్రెష్",
   openEdition:"ఎడిషన్ తెరవండి", listenBrief:"బ్రీఫ్ వినండి", search:"తెలుగులో వార్తలు వెతకండి...", readFull:"పూర్తి కథనం చదవండి",
   listen:"ప్లే ఆర్టికల్", playArticle:"ప్లే ఆర్టికల్", pauseAudio:"ఆడియో పాజ్", resumeAudio:"ఆడియో కొనసాగించు", share:"షేర్", save:"సేవ్", continue:"చదవడం కొనసాగించండి", topStory:"టాప్ స్టోరీ",
@@ -2271,10 +2279,10 @@ function t(key){
 }
 
 Object.assign(categoryTranslations.en, {
- latest:"Latest", district:"District News", cricket:"Cricket", entertainment:"Entertainment", education:"Education", health:"Health", crime:"Crime", weather:"Weather", jobs:"Jobs", lifestyle:"Lifestyle", special:"Special Stories"
+ latest:"Latest News", international:"World", education:"Education", health:"Health", crime:"Crime", lifestyle:"Lifestyle", special:"Special Stories", advertisements:"Advertisements"
 });
 Object.assign(categoryTranslations.te, {
- latest:"తాజా వార్తలు", politics:"రాజకీయాలు", telangana:"తెలంగాణ", ap:"ఆంధ్రప్రదేశ్", district:"జిల్లా వార్తలు", national:"జాతీయం", international:"అంతర్జాతీయం", business:"బిజినెస్", sports:"క్రీడలు", cricket:"క్రికెట్", entertainment:"వినోదం", cinema:"సినిమా", technology:"టెక్నాలజీ", education:"విద్య", health:"ఆరోగ్యం", crime:"క్రైమ్", weather:"వాతావరణం", jobs:"ఉద్యోగాలు", lifestyle:"లైఫ్ స్టైల్", viral:"వైరల్", special:"ప్రత్యేక కథనాలు"
+ latest:"తాజా వార్తలు", politics:"రాజకీయాలు", telangana:"తెలంగాణ", ap:"ఆంధ్రప్రదేశ్", international:"ప్రపంచం", business:"బిజినెస్", sports:"క్రీడలు", cinema:"సినిమా", education:"విద్య", health:"ఆరోగ్యం", crime:"క్రైమ్", lifestyle:"జీవనశైలి", special:"ప్రత్యేక కథనాలు", advertisements:"ప్రకటనలు"
 });
 Object.assign(categoryTranslations.hi, {
  latest:"ताजा खबरें", district:"जिला समाचार", cricket:"क्रिकेट", entertainment:"मनोरंजन", education:"शिक्षा", health:"स्वास्थ्य", crime:"क्राइम", weather:"मौसम", jobs:"नौकरियां", lifestyle:"लाइफस्टाइल"
@@ -2306,10 +2314,93 @@ function districtSubmenuMarkup(state, label){
  return `<div class="nav-item" data-state-menu="${state}" data-mobile-primary>
   <button class="nav-trigger" type="button" data-state-trigger="${state}" aria-expanded="false" aria-label="${escapeAttr(label)}"><span class="desktop-nav-label">${label}</span><span class="mobile-nav-label">${state === "ap" ? "AP" : "TG"}</span></button>
   <div class="district-submenu" role="menu" aria-label="${heading}">
-   <strong>${heading}</strong>
-   ${districts[state].map(district=>`<a href="#latestGrid" role="menuitem" data-district-state="${state}" data-district="${escapeAttr(district)}">${district}</a>`).join("")}
+   <strong><a href="${regionalPath(state)}" data-region-route="${state}">${heading}</a></strong>
+   ${districts[state].map(district=>`<a href="${regionalUrl(state,district)}" role="menuitem" data-district-state="${state}" data-district="${escapeAttr(district)}">${district}</a>`).join("")}
   </div>
  </div>`;
+}
+
+function regionalPath(state){
+ return state === "telangana" ? "/telangana" : state === "ap" ? "/andhra-pradesh" : "/";
+}
+
+function districtSlug(value){
+ return String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function districtForSlug(state, slug){
+ return (districts[state] || []).find(district=>districtSlug(district) === String(slug || "").toLowerCase()) || "";
+}
+
+function regionalUrl(state, district=""){
+ const base = regionalPath(state);
+ return district ? `${base}/${districtSlug(district)}` : base;
+}
+
+function regionalStateFromPath(pathname = location.pathname){
+ const normalized = String(pathname || "/").replace(/\/+$/, "") || "/";
+ if(normalized === "/telangana" || normalized.startsWith("/telangana/")) return "telangana";
+ if(normalized === "/andhra-pradesh" || normalized.startsWith("/andhra-pradesh/")) return "ap";
+ return null;
+}
+
+function districtFromRegionalPath(state, pathname = location.pathname){
+ const parts = String(pathname || "/").split("/").filter(Boolean);
+ return parts.length > 1 ? districtForSlug(state, parts.slice(1).join("-")) : "";
+}
+
+function syncRegionalNav(state){
+ const nav = document.getElementById("categoryNav");
+ nav?.querySelectorAll("a,.nav-trigger").forEach(item=>item.classList.remove("active"));
+ if(state){
+  nav?.querySelector(`[data-state-trigger="${state}"]`)?.classList.add("active");
+ }else{
+  nav?.querySelector('[data-home="true"]')?.classList.add("active");
+ }
+ const active = nav?.querySelector(".active");
+ active?.scrollIntoView?.({behavior:"smooth",block:"nearest",inline:"center"});
+}
+
+async function navigateToRegionalNews(state, {historyMode="push", district="", scroll=true} = {}){
+ if(!["telangana","ap"].includes(state)) return;
+ activeNewsCategory = state;
+ activeDistrictFilter = district ? {state,district} : null;
+ latestPage = 1;
+ syncRegionalNav(state);
+ const url = new URL(location.href);
+ url.pathname = regionalUrl(state, district);
+ url.searchParams.delete("article");
+ url.searchParams.delete("district");
+ if(historyMode === "push") history.pushState({category:state,district:district || null}, "", url);
+ else if(historyMode === "replace") history.replaceState({category:state,district:district || null}, "", url);
+ if(district) await loadDistrictNews(state, district, true);
+ else await loadNews(state, true);
+ if(scroll) document.getElementById("latestNewsSection")?.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function applyRegionalRoute({load=true, scroll=false} = {}){
+ const state = regionalStateFromPath();
+ if(!state){
+  activeNewsCategory = "latest";
+  activeDistrictFilter = null;
+  syncRegionalNav(null);
+  if(load) loadNews("latest", true);
+  return;
+ }
+ const district = districtFromRegionalPath(state) || new URL(location.href).searchParams.get("district") || "";
+ activeNewsCategory = state;
+ activeDistrictFilter = district ? {state,district} : null;
+ syncRegionalNav(state);
+ if(load) navigateToRegionalNews(state, {historyMode:"none",district,scroll});
+}
+
+function setupRegionalRouteLinks(){
+ document.addEventListener("click", event=>{
+  const link = event.target.closest("[data-region-route]");
+  if(!link) return;
+  event.preventDefault();
+  navigateToRegionalNews(link.dataset.regionRoute, {historyMode:"push"});
+ });
 }
 
 function positionDistrictSubmenu(item){
@@ -2329,12 +2420,11 @@ function positionDistrictSubmenu(item){
 function setupNav(){
  const nav = document.getElementById("categoryNav");
  nav.innerHTML = `<a href="#home" data-home="true" data-mobile-primary class="active" aria-label="Home">${t("home")}</a>` + categories
-  .filter(([id])=>id !== "district")
   .map(([id,label])=>{
    const translated = categoryLabel(id,label);
    if(id === "telangana" || id === "ap") return districtSubmenuMarkup(id, translated);
     return `<a href="#latestGrid" data-cat="${id}" ${id === "special" ? `data-mobile-primary aria-label="${escapeAttr(translated)}"` : ""}>${id === "special" ? `<span class="desktop-nav-label">${translated}</span><span class="mobile-nav-label">Special</span>` : translated}</a>`;
-  }).join("") + `<a href="#reels" data-reels-link data-mobile-primary aria-label="${currentLanguage === "te" ? "రీల్స్" : "Reels"}"><span class="desktop-nav-label">${currentLanguage === "te" ? "రీల్స్" : "Reels"}</span><span class="mobile-nav-label">Reels</span></a><button class="mobile-nav-more" type="button" aria-expanded="false">More</button>`;
+  }).join("");
  nav.addEventListener("click", event=>{
   const trigger = event.target.closest("[data-state-trigger]");
   if(trigger){
@@ -2359,6 +2449,7 @@ function setupNav(){
   }
   const link = event.target.closest("a");
   if(!link) return;
+  if(link.dataset.regionRoute) return;
   if(link.dataset.reelsLink !== undefined){
    event.preventDefault();
    document.getElementById("reels")?.scrollIntoView({behavior:"smooth",block:"start"});
@@ -2370,6 +2461,7 @@ function setupNav(){
    const state = districtLink.dataset.districtState;
    const district = districtLink.dataset.district;
    activeDistrictFilter = {state, district};
+   activeNewsCategory = state;
    nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
    districtLink.classList.add("active");
    districtLink.closest(".nav-item")?.querySelector(".nav-trigger")?.classList.add("active");
@@ -2382,8 +2474,7 @@ function setupNav(){
    if(telanganaMenuSelect) telanganaMenuSelect.value = state === "telangana" ? district : "";
    if(apMenuSelect) apMenuSelect.value = state === "ap" ? district : "";
    document.querySelector(".nav-districts")?.classList.remove("show");
-   loadDistrictNews(state, district);
-   document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
+   navigateToRegionalNews(state, {historyMode:"push",district});
    return;
   }
  if(link.dataset.home){
@@ -2391,10 +2482,12 @@ function setupNav(){
    nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
    link.classList.add("active");
    activeDistrictFilter = null;
+   activeNewsCategory = "latest";
    document.querySelector(".nav-districts")?.classList.remove("show");
-   document.getElementById("telanganaMenuSelect").value = "";
-   document.getElementById("apMenuSelect").value = "";
+   if(document.getElementById("telanganaMenuSelect")) document.getElementById("telanganaMenuSelect").value = "";
+   if(document.getElementById("apMenuSelect")) document.getElementById("apMenuSelect").value = "";
    window.scrollTo({top:0, behavior:"smooth"});
+   if(location.pathname !== "/") history.pushState({category:"latest"}, "", "/");
    return;
   }
   activeDistrictFilter = null;
@@ -2404,6 +2497,17 @@ function setupNav(){
   if(apMenuSelect) apMenuSelect.value = "";
   nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
   link.classList.add("active");
+  link.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});
+  activeNewsCategory = link.dataset.cat || "latest";
+  if(activeNewsCategory === "advertisements"){
+   latestPage = 1;
+   const latestTitle = document.getElementById("latestTitle");
+   const latestGrid = document.getElementById("latestGrid");
+   if(latestTitle) latestTitle.textContent = categoryLabel("advertisements","Advertisements");
+   if(latestGrid) latestGrid.innerHTML = `<article class="mini-card"><h3>${escapeHtml(categoryLabel("advertisements","Advertisements"))}</h3><p class="summary">${currentLanguage === "te" ? "ప్రస్తుతం ప్రకటనలు అందుబాటులో లేవు." : "There are no advertisements available right now."}</p></article>`;
+   document.getElementById("latestNewsSection")?.scrollIntoView({behavior:"smooth",block:"start"});
+   return;
+  }
   const districtMenu = document.querySelector(".nav-districts");
   if(districtMenu){
    const state = link.dataset.cat === "telangana" ? "telangana" : link.dataset.cat === "ap" ? "ap" : "";
@@ -2452,21 +2556,103 @@ function setupNav(){
  setTimeout(updateNavButtons, 0);
 }
 
-function setupResponsiveHeader(){
- const socials = document.querySelector(".main-socials");
- const header = document.querySelector(".header");
- const navRow = document.querySelector(".nav-menu-row");
- if(!socials || !header || !navRow) return;
- const media = window.matchMedia("(max-width: 640px)");
- const place = ()=>{
-  if(media.matches){
-   if(socials.parentElement !== header) header.appendChild(socials);
-  }else if(socials.parentElement !== navRow){
-   navRow.insertBefore(socials, navRow.querySelector(".nav-districts"));
+function drawerNavMarkup(){
+ return `<a href="/" data-drawer-home class="${location.pathname === "/" && activeNewsCategory === "latest" ? "active" : ""}">${t("home")}</a>` + categories.map(([id,label])=>{
+  const translated = categoryLabel(id,label);
+  if(id === "telangana" || id === "ap"){
+   const controlsId = `drawer-${id}-districts`;
+   const allLabel = id === "telangana" ? (currentLanguage === "te" ? "తెలంగాణ వార్తలన్నీ" : "View All Telangana News") : (currentLanguage === "te" ? "ఆంధ్రప్రదేశ్ వార్తలన్నీ" : "View All Andhra Pradesh News");
+   const stateActive = activeNewsCategory === id;
+   return `<div class="drawer-state ${stateActive ? "open" : ""}" data-drawer-state="${id}"><div class="drawer-state-row"><a class="${stateActive && !activeDistrictFilter ? "active" : ""}" href="${regionalPath(id)}" data-drawer-region-all="${id}">${translated}</a><button class="drawer-state-trigger ${stateActive ? "active" : ""}" type="button" aria-expanded="${stateActive}" aria-controls="${controlsId}" aria-label="Expand ${escapeAttr(translated)} districts"><span aria-hidden="true">${stateActive ? "−" : "+"}</span></button></div><div class="drawer-districts" id="${controlsId}" role="menu"><a href="${regionalPath(id)}" data-drawer-region-all="${id}">${allLabel}</a>${[...districts[id]].sort((a,b)=>a.localeCompare(b,"en")).map(district=>`<a class="${activeDistrictFilter?.state === id && activeDistrictFilter?.district === district ? "active" : ""}" href="${regionalUrl(id,district)}" role="menuitem" data-drawer-district="${escapeAttr(district)}" data-drawer-region="${id}">${district}</a>`).join("")}</div></div>`;
   }
+  return `<a class="${activeNewsCategory === id ? "active" : ""}" href="#latestGrid" data-drawer-category="${id}">${translated}</a>`;
+ }).join("");
+}
+
+function setupHeaderNavigation(){
+ const backdrop = document.getElementById("menuBackdrop");
+ const drawer = document.getElementById("menuDrawer");
+ const toggle = document.getElementById("menuToggle");
+ const drawerNav = document.getElementById("drawerNav");
+ const close = ()=>{
+  backdrop?.classList.remove("open");
+  backdrop?.setAttribute("aria-hidden","true");
+  toggle?.setAttribute("aria-expanded","false");
+  document.body.classList.remove("lock");
+  toggle?.focus();
  };
- place();
- media.addEventListener?.("change", place);
+ if(drawerNav) drawerNav.innerHTML = drawerNavMarkup();
+ toggle?.addEventListener("click",()=>{
+  if(drawerNav) drawerNav.innerHTML = drawerNavMarkup();
+  backdrop?.classList.add("open");
+  backdrop?.setAttribute("aria-hidden","false");
+  toggle.setAttribute("aria-expanded","true");
+  document.body.classList.add("lock");
+  drawer?.focus();
+ });
+ document.getElementById("closeMenu")?.addEventListener("click",close);
+ backdrop?.addEventListener("click",event=>{ if(event.target === backdrop) close(); });
+ drawerNav?.addEventListener("click",event=>{
+  const stateButton = event.target.closest(".drawer-state-trigger");
+  if(stateButton){
+   const state = stateButton.closest(".drawer-state");
+   drawerNav.querySelectorAll(".drawer-state.open").forEach(item=>{
+    if(item !== state){ item.classList.remove("open"); item.querySelector(".drawer-state-trigger")?.setAttribute("aria-expanded","false"); item.querySelector(".drawer-state-trigger span").textContent = "+"; }
+   });
+   const open = state.classList.toggle("open");
+   stateButton.setAttribute("aria-expanded",String(open));
+   stateButton.querySelector("span").textContent = open ? "−" : "+";
+   return;
+  }
+  const regionLink = event.target.closest("[data-drawer-region-all]");
+  if(regionLink){ event.preventDefault(); close(); navigateToRegionalNews(regionLink.dataset.drawerRegionAll,{historyMode:"push"}); return; }
+  const districtLink = event.target.closest("[data-drawer-district]");
+  if(districtLink){
+   event.preventDefault(); close();
+   navigateToRegionalNews(districtLink.dataset.drawerRegion,{historyMode:"push",district:districtLink.dataset.drawerDistrict});
+   return;
+  }
+  const categoryLink = event.target.closest("[data-drawer-category]");
+  if(categoryLink){
+   event.preventDefault(); close(); activeDistrictFilter=null; activeNewsCategory=categoryLink.dataset.drawerCategory;
+   if(activeNewsCategory === "advertisements"){
+    document.querySelector(`[data-cat="advertisements"]`)?.click();
+    return;
+   }
+   loadNews(activeNewsCategory,true);
+   document.getElementById("latestNewsSection")?.scrollIntoView({behavior:"smooth",block:"start"});
+   return;
+  }
+  if(event.target.closest("[data-drawer-home]")){ event.preventDefault(); close(); history.pushState({category:"latest"},"","/"); applyRegionalRoute({load:true,scroll:true}); }
+ });
+ drawerNav?.parentElement?.addEventListener("keydown",event=>{
+  if(event.key !== "Tab" || !backdrop?.classList.contains("open")) return;
+  const focusable = [...drawer.querySelectorAll('a[href],button:not([disabled]),select,input')].filter(item=>item.offsetParent !== null);
+  if(!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length-1];
+  if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
+  else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+ });
+ document.addEventListener("keydown",event=>{ if(event.key === "Escape"){ if(backdrop?.classList.contains("open")) close(); document.getElementById("notificationPanel")?.classList.remove("open"); document.getElementById("followPanel")?.classList.remove("open"); } });
+ document.querySelector('[data-drawer-action="login"]')?.addEventListener("click",()=>{ close(); document.getElementById("adminLoginBtn")?.click(); });
+ document.querySelector('[data-drawer-action="notifications"]')?.addEventListener("click",()=>{ close(); document.getElementById("notificationBtn")?.click(); });
+
+ const openSearch = ()=>{
+  document.querySelector(".topbar")?.classList.add("search-open");
+  document.getElementById("searchInput")?.focus();
+ };
+ document.getElementById("headerSearchBtn")?.addEventListener("click",openSearch);
+ const notificationButton = document.getElementById("notificationBtn");
+ notificationButton?.addEventListener("click",()=>{
+  const panel = document.getElementById("notificationPanel");
+  const open = panel?.classList.toggle("open");
+  notificationButton.setAttribute("aria-expanded",String(Boolean(open)));
+ });
+ document.getElementById("storyFollowBtn")?.addEventListener("click",event=>{
+  const panel = document.getElementById("followPanel");
+  const open = panel?.classList.toggle("open");
+  event.currentTarget.setAttribute("aria-expanded",String(Boolean(open)));
+ });
 }
 
 function makeSummary(title){
@@ -2695,13 +2881,25 @@ async function fetchNewsPayload(url, context = {}){
 }
 
 function extractSourceImage(item){
- const mediaItems = Array.isArray(item.media) ? item.media : [];
- const primaryMedia = mediaItems.find(media=>media?.media_type === "image" && (media.status === "approved" || media.approved === true || media.public_url) && (media.public_url || media.url));
- const decision = item.mediaDecision || (!Array.isArray(item.media) ? item.media : null);
+ const mediaItems = [
+  ...(Array.isArray(item.media) ? item.media : []),
+  item.featuredMedia,
+  item.featured_media,
+  !Array.isArray(item.media) ? item.media : null
+ ].filter(Boolean);
+ const primaryMedia = mediaItems.find(media=>{
+  const mime = String(media?.mime_type || media?.mimeType || "").toLowerCase();
+  const type = String(media?.media_type || media?.type || media?.imageType || media?.image_type || "").toLowerCase();
+  const isImage = mime.startsWith("image/") || ["image","cms_approved","cms_upload","uploaded","event_candidate","event_photo"].includes(type);
+  const approved = media.status === "approved" || media.approved === true || ["cms_approved","event_candidate","event_photo"].includes(type);
+  return isImage && approved && (media.public_url || media.publicUrl || media.url);
+ });
+ const decision = item.mediaDecision || item.media_decision || primaryMedia || (!Array.isArray(item.media) ? item.media : null);
  const decisionType = String(decision?.imageType || decision?.image_type || "").toLowerCase();
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
- const hasApprovedCmsMedia = Boolean(primaryMedia?.public_url || primaryMedia?.approved === true || primaryMedia?.status === "approved");
- const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload"].includes(decisionType);
+ const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
+ const hasApprovedCmsMedia = Boolean(primaryMediaUrl && (primaryMedia?.approved === true || primaryMedia?.status === "approved" || ["cms_approved","cms_upload","uploaded"].includes(decisionType)));
+ const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload","cms_approved"].includes(decisionType);
  const approvedDecision = decision && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
  if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
  const candidates = [
@@ -2711,8 +2909,7 @@ function extractSourceImage(item){
   item.thumbnail,
   item.thumbnailUrl,
   item.heroImage,
-  primaryMedia?.public_url,
-  primaryMedia?.url,
+  primaryMediaUrl,
   item.enclosure?.url,
   item.enclosure?.link,
   item.media?.content?.url,
@@ -2811,13 +3008,14 @@ function normalizeItems(items){
   image:absoluteMediaUrl(extractSourceImage(item) || "") || null,
   video:normalizeArticleVideo(item),
   mediaDecision:(!Array.isArray(item.media) && item.media) || item.mediaDecision || null,
+  featuredMedia:item.featuredMedia || item.featured_media || null,
   imageLabel:item.imageLabel || (!Array.isArray(item.media) && item.media?.label) || "",
   imageRelevanceScore:Number(item.imageRelevanceScore ?? (!Array.isArray(item.media) ? item.media?.relevanceScore : 0) ?? 0),
   imageStatus:item.imageStatus || (!Array.isArray(item.media) && item.media?.visualStatus) || "",
   link:item.link || "#",
   pubDate:item.pubDate || new Date().toISOString(),
    description:storyDescription(item),
-  body:item.body || item.fullArticle || "",
+  body:item.body || "",
   fullArticle:item.fullArticle || (item.contentStatus && item.contentStatus !== "brief" ? item.body : "") || "",
   contentStatus:item.contentStatus || item.content_status || (item.reporterUpload ? "newsroom_full_text" : "brief"),
   sourceUrl:item.sourceUrl || item.source_url || (/^https?:\/\//i.test(item.link || "") ? item.link : ""),
@@ -3414,6 +3612,12 @@ function applyLanguage(){
  });
  const homeLink = document.querySelector("#categoryNav [data-home]");
  if(homeLink) homeLink.textContent = t("home");
+ const drawerLogin = document.querySelector('[data-drawer-action="login"]');
+ const drawerNotifications = document.querySelector('[data-drawer-action="notifications"]');
+ if(drawerLogin) drawerLogin.textContent = currentLanguage === "te" ? "లాగిన్" : "Login";
+ if(drawerNotifications) drawerNotifications.textContent = currentLanguage === "te" ? "నోటిఫికేషన్లు" : "Notifications";
+ const drawerNav = document.getElementById("drawerNav");
+ if(drawerNav) drawerNav.innerHTML = drawerNavMarkup();
  render();
 }
 
@@ -3446,6 +3650,7 @@ function animateCounters(){
 }
 
 async function loadNews(cat="telangana", force=false){
+ activeNewsCategory = cat;
  latestPage = 1;
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
@@ -3484,8 +3689,8 @@ function setupDistricts(){
  const homeDistrictSelect = document.getElementById("homeDistrictSelect");
 
  function populate(){
-  telanganaMenuSelect.innerHTML = `<option value="">Telangana districts</option>` + districts.telangana.map(district=>`<option value="${district}">${district}</option>`).join("");
-  apMenuSelect.innerHTML = `<option value="">Andhra Pradesh districts</option>` + districts.ap.map(district=>`<option value="${district}">${district}</option>`).join("");
+  if(telanganaMenuSelect) telanganaMenuSelect.innerHTML = `<option value="">Telangana districts</option>` + districts.telangana.map(district=>`<option value="${district}">${district}</option>`).join("");
+  if(apMenuSelect) apMenuSelect.innerHTML = `<option value="">Andhra Pradesh districts</option>` + districts.ap.map(district=>`<option value="${district}">${district}</option>`).join("");
   if(homeStateSelect && homeDistrictSelect){
    const state = homeStateSelect.value || "telangana";
    homeDistrictSelect.innerHTML = `<option value="">Select district</option>` + districts[state].map(district=>`<option value="${district}">${district}</option>`).join("");
@@ -3496,16 +3701,16 @@ function setupDistricts(){
   if(!district) return;
  activeDistrictFilter = {state, district};
   document.querySelector(".nav-districts")?.classList.add("show");
-  document.querySelector(".nav-districts").dataset.activeState = state;
-  telanganaMenuSelect.value = state === "telangana" ? district : "";
-  apMenuSelect.value = state === "ap" ? district : "";
+  const districtStrip = document.querySelector(".nav-districts");
+  if(districtStrip) districtStrip.dataset.activeState = state;
+  if(telanganaMenuSelect) telanganaMenuSelect.value = state === "telangana" ? district : "";
+  if(apMenuSelect) apMenuSelect.value = state === "ap" ? district : "";
   document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));
-  loadDistrictNews(state, district);
-  document.getElementById("latestGrid").scrollIntoView({behavior:"smooth", block:"start"});
+  navigateToRegionalNews(state, {historyMode:"push",district});
  }
 
- telanganaMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("telangana", event.target.value));
- apMenuSelect.addEventListener("change",event=>selectDistrictFromMenu("ap", event.target.value));
+ telanganaMenuSelect?.addEventListener("change",event=>selectDistrictFromMenu("telangana", event.target.value));
+ apMenuSelect?.addEventListener("change",event=>selectDistrictFromMenu("ap", event.target.value));
  homeStateSelect?.addEventListener("change",()=>{
   homeDistrictSelect.innerHTML = `<option value="">Select district</option>` + districts[homeStateSelect.value].map(district=>`<option value="${district}">${district}</option>`).join("");
   document.getElementById("homeDistrictStories").innerHTML = `<div class="editorial-empty">Select a district to view local news.</div>`;
@@ -3523,7 +3728,7 @@ function setupDistricts(){
    host.innerHTML = `<div class="editorial-empty">District news is temporarily unavailable.</div>`;
   }
  });
- document.getElementById("menuRefreshNow").addEventListener("click",refreshAllNews);
+ document.getElementById("menuRefreshNow")?.addEventListener("click",refreshAllNews);
  document.getElementById("homeRefreshNow")?.addEventListener("click",refreshAllNews);
  document.getElementById("weatherRefreshNow")?.addEventListener("click",renderWeather);
  populate();
@@ -3580,7 +3785,7 @@ async function refreshAllNews(request){
   button.dataset.originalText = button.dataset.originalText || button.textContent;
   button.textContent = "Refreshing...";
  });
- const activeCat = document.querySelector(".nav a.active")?.dataset.cat || "latest";
+ const activeCat = activeNewsCategory || "latest";
  try{
   await (activeDistrictFilter
    ? loadDistrictNews(activeDistrictFilter.state, activeDistrictFilter.district, force)
@@ -4068,7 +4273,7 @@ function searchAliases(query){
 }
 
 function storySearchText(story){
- return [story.title, story.description, story.category, story.district, story.state, story.tags?.join(" ")].filter(Boolean).join(" ").toLowerCase();
+ return [story.title, story.headline, story.description, story.summary, story.body, story.category, story.district, story.state, story.tags?.join(" ")].filter(Boolean).join(" ").toLowerCase();
 }
 
 function runVoiceSearch(){
@@ -4094,7 +4299,8 @@ function runVoiceSearch(){
 
 function shareStoryTo(platform, story){
  const url = new URL(location.href);
- url.hash = `story-${encodeURIComponent(story.id || story.title || "news")}`;
+ url.searchParams.set("article", story.id || story.link || story.title || "news");
+ url.hash = "";
  const shareUrl = encodeURIComponent(url.toString());
  const title = encodeURIComponent(story.title || "NewsNeta story");
  const text = encodeURIComponent(`${story.title || "NewsNeta story"} - ${makeSummary(story.title || "")}`);
@@ -4103,9 +4309,13 @@ function shareStoryTo(platform, story){
   facebook:`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
   twitter:`https://twitter.com/intent/tweet?text=${title}&url=${shareUrl}`
  };
- if(platform === "instagram"){
-  navigator.clipboard?.writeText(`${story.title} - ${url.toString()}`);
-  window.open("https://www.instagram.com/", "_blank", "noopener");
+ if(platform === "copy"){
+  navigator.clipboard?.writeText(url.toString());
+  return;
+ }
+ if(platform === "native"){
+  if(navigator.share) navigator.share({title:story.title || "NewsNeta story",text:storyDescription(story),url:url.toString()}).catch(()=>{});
+  else navigator.clipboard?.writeText(url.toString());
   return;
  }
  window.open(targets[platform] || url.toString(), "_blank", "noopener,noreferrer");
@@ -4366,12 +4576,6 @@ document.getElementById("themeBtn").addEventListener("click",()=>{
  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
  document.documentElement.dataset.theme = next;
  localStorage.setItem("newsneta-theme", next);
-});
-document.getElementById("menuToggle")?.addEventListener("click",()=>{
- const row = document.querySelector(".nav-menu-row");
- const open = !row.classList.contains("menu-open");
- row.classList.toggle("menu-open", open);
- document.getElementById("menuToggle").setAttribute("aria-expanded", String(open));
 });
 document.getElementById("languageSelect").addEventListener("change",event=>{
  currentLanguage = event.target.value;
@@ -5445,9 +5649,11 @@ document.getElementById("skipNotify").addEventListener("click",()=>document.getE
 
 if(localStorage.getItem("newsneta-theme")==="dark") document.documentElement.dataset.theme = "dark";
 setupNav();
-setupResponsiveHeader();
+setupHeaderNavigation();
 setupDistricts();
+setupRegionalRouteLinks();
 applyLanguage();
+applyRegionalRoute({load:false});
 refreshAllNews(true);
 window.setTimeout(()=>{
  if(!stories.length && !isRefreshingNews) refreshAllNews(true);
@@ -5492,6 +5698,7 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pageshow", event=>refreshMobileFreshness(Boolean(event.persisted)));
 window.addEventListener("focus", ()=>refreshMobileFreshness(false));
 window.addEventListener("online", refreshAllNews);
+window.addEventListener("popstate", ()=>applyRegionalRoute({load:true, scroll:true}));
 async function disableLocalPreviewServiceWorker(){
  if(!isLocalPreview || !("serviceWorker" in navigator)) return;
  const registrations = await navigator.serviceWorker.getRegistrations();

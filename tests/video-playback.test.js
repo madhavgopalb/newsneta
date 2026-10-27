@@ -39,7 +39,7 @@ test("frontend includes real native and HLS playback lifecycle", () => {
 test("client refreshes publication state without accepting stale API memory", () => {
  const source=fs.readFileSync(path.join(root,"index.html"),"utf8");
  assert.match(source,/mobileLatestTab[\s\S]*?loadNews\("latest", true\)/);
- assert.match(source,/setupDistricts\(\);\s*applyLanguage\(\);\s*refreshAllNews\(true\);/);
+ assert.match(source,/setupDistricts\(\);[\s\S]*?applyRegionalRoute\(\{load:false\}\);\s*refreshAllNews\(true\);/);
  assert.match(source,/setInterval\(\(\)=>refreshAllNews\(true\), refreshIntervalMs\)/);
 });
 

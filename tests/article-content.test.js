@@ -35,10 +35,20 @@ test("frontend hides unreviewed archive and representative images", () => {
   assert.match(extractor, /decision\.requiresReview !== true/);
   assert.match(extractor, /decisionScore >= 80/);
   assert.match(extractor, /event_candidate/);
+  assert.match(extractor, /cms_approved/);
+  assert.match(extractor, /featuredMedia/);
 });
 
 test("scheduled feed ingestion labels snippets as briefs", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
-  assert.match(source, /contentStatus: item\.contentStatus === "licensed_full_text" \? "licensed_full_text" : "brief"/);
+  assert.match(source, /const contentStatus = item\.contentStatus === "licensed_full_text" \? "licensed_full_text" : "brief"/);
   assert.match(source, /content_status=EXCLUDED\.content_status/);
+  assert.match(source, /safeBody\(item\.body \|\| item\.fullArticle\)/);
+  assert.match(source, /contentStatus === "licensed_full_text"/);
+});
+
+test("brief ingestion never promotes a summary into the article body", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
+  assert.match(source, /body: contentStatus === "licensed_full_text" \? safeBody/);
+  assert.doesNotMatch(source, /body: safeText\(item\.body \|\| item\.description/);
 });

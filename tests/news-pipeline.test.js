@@ -146,7 +146,7 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v88"/);
+  assert.match(source, /CACHE_VERSION = "v89"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);

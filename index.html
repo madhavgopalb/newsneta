@@ -3032,6 +3032,8 @@ function normalizeItems(items, options={}){
   sourceUrl:item.sourceUrl || item.source_url || (/^https?:\/\//i.test(item.link || "") ? item.link : ""),
   updatedAt:item.updatedAt || item.updated_at || item.pubDate || "",
   contentRevision:Number(item.contentRevision || item.content_revision || 1),
+  fullContentReviewRequired:Boolean(item.fullContentReviewRequired ?? item.full_content_review_required),
+  fullContentReviewReason:item.fullContentReviewReason || item.full_content_review_reason || "",
   persisted:Boolean(item.persisted),
   imageAlt:item.imageAlt || item.image_alt || "",
   media:Array.isArray(item.media) ? item.media : []
@@ -4465,11 +4467,6 @@ async function fetchStoryDetail(id, force=false){
 
 async function openStoryDetail(id, options={}){
  const localStory = findStoryById(id);
- const shouldFetch = options.force || !localStory || localStory.persisted;
- if(!shouldFetch){
-  renderStoryDetail(localStory);
-  return;
- }
  const requestId = ++articleDetailRequest;
  showStoryDetailState(id, "loading", "Loading the latest approved article and media…");
  try{

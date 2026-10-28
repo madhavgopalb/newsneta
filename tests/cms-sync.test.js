@@ -42,7 +42,7 @@ test("service worker never stores authenticated CMS responses", () => {
 
 test("public news API exposes canonical content revision and CMS media", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "news-core.js"), "utf8");
-  assert.match(source, /content_revision, content_status, image_alt, author_id FROM articles/);
+  assert.match(source, /content_revision, content_status, image_alt, author_id,\s+full_content_review_required, full_content_review_reason FROM articles/);
   assert.match(source, /fullArticle: row\.content_status === "brief" \? "" : \(row\.body \|\| ""\)/);
   assert.match(source, /sourceUrl: row\.source_url \|\| null/);
   assert.match(source, /approvedPersistedImage\(row\)/);

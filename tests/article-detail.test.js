@@ -32,6 +32,8 @@ const fullRow = {
   views: 10,
   content_revision: 3,
   content_status: "newsroom_full_text",
+  full_content_review_required: false,
+  full_content_review_reason: null,
   image_alt: "Hyderabad newsroom test image"
 };
 
@@ -42,6 +44,7 @@ test("persisted article serialization keeps summary, full Telugu body and approv
   assert.equal(article.fullArticle, fullRow.body);
   assert.equal(article.contentStatus, "newsroom_full_text");
   assert.equal(article.image, fullRow.featured_media.url);
+  assert.equal(article.fullContentReviewRequired, false);
 });
 
 test("uploaded video metadata survives article serialization", () => {
@@ -95,6 +98,9 @@ test("frontend fetches canonical detail, preserves old approved stories, and pro
   assert.match(source, /normalizeItems\(\[payload\.item\], \{allowStale:true\}\)/);
   assert.match(source, /data-article-retry/);
   assert.match(source, /articleDetailCache/);
+  const opener = source.slice(source.indexOf("async function openStoryDetail"), source.indexOf("function renderStoryDetail"));
+  assert.doesNotMatch(opener, /localStory\.persisted/);
+  assert.match(opener, /fetchStoryDetail\(id/);
 });
 
 test("ingestion cannot downgrade an existing full article to a brief", () => {

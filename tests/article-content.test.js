@@ -16,7 +16,7 @@ test("article reader distinguishes complete content from syndicated briefs", () 
 });
 
 test("article detail uses verified summary and a shareable direct URL", () => {
-  const activeDetail = page.slice(page.lastIndexOf("function openStoryDetail(id)"), page.indexOf("function closeStoryModal()"));
+  const activeDetail = page.slice(page.indexOf("function renderStoryDetail(story)"), page.indexOf("function closeStoryModal()"));
   assert.match(activeDetail, /storyDescription\(story\)/);
   assert.match(activeDetail, /searchParams\.set\("article"/);
   assert.doesNotMatch(activeDetail, /NewsNeta Desk:.*నిరంతరం అప్డేట్లు/);
@@ -42,7 +42,8 @@ test("frontend hides unreviewed archive and representative images", () => {
 test("scheduled feed ingestion labels snippets as briefs", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
   assert.match(source, /const contentStatus = item\.contentStatus === "licensed_full_text" \? "licensed_full_text" : "brief"/);
-  assert.match(source, /content_status=EXCLUDED\.content_status/);
+  assert.match(source, /content_status=CASE/);
+  assert.match(source, /THEN articles\.content_status/);
   assert.match(source, /safeBody\(item\.body \|\| item\.fullArticle\)/);
   assert.match(source, /contentStatus === "licensed_full_text"/);
 });

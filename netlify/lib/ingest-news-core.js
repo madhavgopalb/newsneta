@@ -135,7 +135,16 @@ async function ingestCategory(client, category, getDatabase) {
       ) ON CONFLICT (source_provider, source_article_id)
         WHERE source_provider IS NOT NULL AND source_article_id IS NOT NULL
       DO UPDATE SET
-        title=EXCLUDED.title, summary=EXCLUDED.summary, body=EXCLUDED.body, content_status=EXCLUDED.content_status,
+        title=EXCLUDED.title,
+        summary=COALESCE(NULLIF(EXCLUDED.summary, ''), articles.summary),
+        body=CASE
+          WHEN articles.content_status IN ('licensed_full_text','newsroom_full_text') AND EXCLUDED.content_status='brief' THEN articles.body
+          ELSE EXCLUDED.body
+        END,
+        content_status=CASE
+          WHEN articles.content_status IN ('licensed_full_text','newsroom_full_text') AND EXCLUDED.content_status='brief' THEN articles.content_status
+          ELSE EXCLUDED.content_status
+        END,
         category=CASE WHEN articles.category='latest' THEN EXCLUDED.category WHEN EXCLUDED.category='latest' THEN articles.category ELSE EXCLUDED.category END,
         state=COALESCE(EXCLUDED.state, articles.state), district=COALESCE(EXCLUDED.district, articles.district),
         source_url=EXCLUDED.source_url, source_name=EXCLUDED.source_name,

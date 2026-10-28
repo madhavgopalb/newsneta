@@ -57,7 +57,9 @@ function canonicalArticle(item, category, provider) {
     publishedAt: new Date(item.pubDate),
     imageUrl: media?.url || null,
     thumbnailUrl: media?.thumbnailUrl || media?.url || null,
-    featuredMedia: media
+    featuredMedia: media,
+    fullContentReviewRequired: item.fullContentReviewRequired !== false && contentStatus === "brief",
+    fullContentReviewReason: contentStatus === "brief" ? safeText(item.fullContentReviewReason || "Source supplied metadata or an excerpt without full-text syndication authorization") : null
   };
 }
 
@@ -129,9 +131,10 @@ async function ingestCategory(client, category, getDatabase) {
         slug, title, summary, body, category, state, district, status, author_id,
         image_url, thumbnail_url, media, featured_media, source_provider,
         source_article_id, source_url, source_name, source_published_at,
-        published_at, ingested_at, last_seen_at, created_at, updated_at, content_status
+        published_at, ingested_at, last_seen_at, created_at, updated_at, content_status,
+        full_content_review_required, full_content_review_reason
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,'published',$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$17,now(),now(),now(),now(),$18
+        $1,$2,$3,$4,$5,$6,$7,'published',$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$17,now(),now(),now(),now(),$18,$19,$20
       ) ON CONFLICT (source_provider, source_article_id)
         WHERE source_provider IS NOT NULL AND source_article_id IS NOT NULL
       DO UPDATE SET
@@ -144,6 +147,14 @@ async function ingestCategory(client, category, getDatabase) {
         content_status=CASE
           WHEN articles.content_status IN ('licensed_full_text','newsroom_full_text') AND EXCLUDED.content_status='brief' THEN articles.content_status
           ELSE EXCLUDED.content_status
+        END,
+        full_content_review_required=CASE
+          WHEN articles.content_status IN ('licensed_full_text','newsroom_full_text') AND EXCLUDED.content_status='brief' THEN false
+          ELSE EXCLUDED.full_content_review_required
+        END,
+        full_content_review_reason=CASE
+          WHEN articles.content_status IN ('licensed_full_text','newsroom_full_text') AND EXCLUDED.content_status='brief' THEN NULL
+          ELSE EXCLUDED.full_content_review_reason
         END,
         category=CASE WHEN articles.category='latest' THEN EXCLUDED.category WHEN EXCLUDED.category='latest' THEN articles.category ELSE EXCLUDED.category END,
         state=COALESCE(EXCLUDED.state, articles.state), district=COALESCE(EXCLUDED.district, articles.district),
@@ -160,7 +171,8 @@ async function ingestCategory(client, category, getDatabase) {
         article.state, article.district, article.authorId, article.imageUrl,
         article.thumbnailUrl, JSON.stringify(article.featuredMedia ? [article.featuredMedia] : []),
         JSON.stringify(article.featuredMedia), provider, article.identity, article.sourceUrl,
-        article.sourceName, article.publishedAt, article.contentStatus
+        article.sourceName, article.publishedAt, article.contentStatus,
+        article.fullContentReviewRequired, article.fullContentReviewReason
       ]
     });
     if (query.rows[0]?.inserted) counts.inserted += 1;

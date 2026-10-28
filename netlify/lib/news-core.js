@@ -3,6 +3,9 @@ const Parser = require("rss-parser");
 const parser = new Parser({
   headers: {
     "User-Agent": "NewsNeta/1.0 (+https://newsneta.in)"
+  },
+  customFields: {
+    item: [["content:encoded", "contentEncoded"]]
   }
 });
 
@@ -229,6 +232,62 @@ function cleanText(value = "") {
   return String(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function licensedFullTextSources() {
+  return new Set(String(process.env.NEWS_LICENSED_FULLTEXT_SOURCES || "")
+    .split(",")
+    .map(value => cleanText(value).toLowerCase())
+    .filter(Boolean));
+}
+
+function decodeHtmlEntities(value = "") {
+  const entities = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+  return String(value).replace(/&(#x?[0-9a-f]+|amp|lt|gt|quot|apos|nbsp);/gi, (_match, token) => {
+    if (token[0] === "#") {
+      const hex = token[1]?.toLowerCase() === "x";
+      const code = Number.parseInt(token.slice(hex ? 2 : 1), hex ? 16 : 10);
+      return Number.isFinite(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : "";
+    }
+    return entities[token.toLowerCase()] || "";
+  });
+}
+
+function normalizeLicensedBody(value = "") {
+  return decodeHtmlEntities(String(value)
+    .replace(/<(?:br|\/p|\/div|\/h[1-6]|\/li)>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n")
+    .replace(/<[^>]*>/g, " "))
+    .replace(/\r\n?/g, "\n")
+    .split(/\n+/)
+    .map(line => line.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n")
+    .trim();
+}
+
+function classifyProviderContent({ sourceName = "", title = "", summary = "", body = "" } = {}) {
+  const normalizedBody = normalizeLicensedBody(body);
+  const sourceLicensed = licensedFullTextSources().has(cleanText(sourceName).toLowerCase());
+  const titleText = cleanText(title).toLowerCase();
+  const bodyText = cleanText(normalizedBody).toLowerCase();
+  const truncated = /\[\+\d+\s+chars?\]\s*$/i.test(normalizedBody) || /\.\.\.\s*$/i.test(normalizedBody);
+  const substantive = normalizedBody.length >= 280
+    && bodyText !== titleText
+    && !bodyText.startsWith(`${titleText} ${cleanText(sourceName).toLowerCase()}`)
+    && normalizedBody !== cleanText(summary)
+    && !truncated;
+  if (sourceLicensed && substantive) {
+    return { body: normalizedBody, contentStatus: "licensed_full_text", fullContentReviewRequired: false, fullContentReviewReason: null };
+  }
+  return {
+    body: "",
+    contentStatus: "brief",
+    fullContentReviewRequired: true,
+    fullContentReviewReason: sourceLicensed
+      ? "Licensed source payload did not contain a complete article body"
+      : "Source supplied metadata or an excerpt without full-text syndication authorization"
+  };
+}
+
 function extractImageIntent(title, cat, district, description = "") {
   const combined = cleanText(`${title} ${description}`);
   const englishEntities = combined.match(/\b[A-Z][A-Za-z.-]+(?:\s+[A-Z][A-Za-z.-]+){0,3}\b/g) || [];
@@ -403,6 +462,8 @@ async function fetchGNewsItems(cat, district) {
   return Promise.all(freshArticles.slice(0, 10).map(async (article, index) => {
     const title = publicTitle(article.title);
     const description = expandedNewsDescription(title, cat, district, article.description);
+    const sourceName = cleanText(article.source?.name || "");
+    const content = classifyProviderContent({ sourceName, title, summary: description, body: article.content || article.body || "" });
     const intent = extractImageIntent(title, cat, district, description);
     let media = trustedImageUrl(article.image)
       ? mediaDecision({
@@ -427,7 +488,7 @@ async function fetchGNewsItems(cat, district) {
       link: article.url || "#",
       pubDate: article.publishedAt,
       desk: "NewsNeta",
-      source: cleanText(article.source?.name || ""),
+      source: sourceName,
       category: district || CATEGORY_LABELS[cat] || "Telugu",
       district: district || null,
       state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
@@ -443,9 +504,12 @@ async function fetchGNewsItems(cat, district) {
       sentiment: null,
       description,
       summary: description,
-      body: "",
+      body: content.body,
+      fullArticle: content.body,
       aiSummary: description,
-      contentStatus: "brief",
+      contentStatus: content.contentStatus,
+      fullContentReviewRequired: content.fullContentReviewRequired,
+      fullContentReviewReason: content.fullContentReviewReason,
       sourceUrl: article.url || null,
       publishedAt: article.publishedAt,
       updatedAt: article.publishedAt
@@ -713,6 +777,8 @@ function persistedArticleFromRow(row = {}) {
     authorId: row.author_id || null,
     views: row.views || 0,
     contentRevision: row.content_revision || 1,
+    fullContentReviewRequired: Boolean(row.full_content_review_required),
+    fullContentReviewReason: row.full_content_review_reason || null,
     persisted: true
   };
 }
@@ -724,7 +790,8 @@ async function persistedArticleById(id, getDatabase) {
   const result = await pool.query({
     text: `SELECT id, title, summary, body, category, state, district, image_url,
       thumbnail_url, featured_media, source_url, source_name, published_at,
-      source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id FROM articles
+      source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
+      full_content_review_required, full_content_review_reason FROM articles
       WHERE status='published' AND (id::text=$1 OR source_article_id=$1)
       ORDER BY updated_at DESC LIMIT 1`,
     values: [identity]
@@ -745,7 +812,8 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
     const result = await pool.query({
       text: `SELECT id, title, summary, body, category, state, district, image_url,
         thumbnail_url, featured_media, source_url, source_name, published_at,
-        source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id FROM articles
+        source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
+        full_content_review_required, full_content_review_reason FROM articles
         WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}
           AND published_at >= now() - interval '3 days'
         ORDER BY published_at DESC LIMIT $${limitIndex}`,
@@ -850,6 +918,8 @@ exports.handler = async function handler(event, getDatabase) {
     const items = rawItems.map((item, index) => {
       const title = publicTitle(item.title);
       const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);
+      const sourceName = publisherFromItem(item);
+      const content = classifyProviderContent({ sourceName, title, summary: description, body: item.contentEncoded || "" });
       return {
         id: item.guid || item.link || `${cat}-${index}`,
         headline: title,
@@ -857,7 +927,7 @@ exports.handler = async function handler(event, getDatabase) {
         link: item.link,
         pubDate: item.pubDate || item.isoDate,
         desk: "NewsNeta",
-        source: publisherFromItem(item),
+        source: sourceName,
         category: district || CATEGORY_LABELS[cat] || "Telugu",
         district: district || null,
         state: cat === "ap" ? "Andhra Pradesh" : cat === "telangana" ? "Telangana" : null,
@@ -873,9 +943,12 @@ exports.handler = async function handler(event, getDatabase) {
         sentiment: null,
         description,
         summary: description,
-        body: "",
+        body: content.body,
+        fullArticle: content.body,
         aiSummary: description,
-        contentStatus: "brief",
+        contentStatus: content.contentStatus,
+        fullContentReviewRequired: content.fullContentReviewRequired,
+        fullContentReviewReason: content.fullContentReviewReason,
         sourceUrl: item.link || null,
         publishedAt: item.pubDate || item.isoDate,
         updatedAt: item.pubDate || item.isoDate
@@ -927,4 +1000,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, persistedArticleFromRow, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, trustedImageUrl };

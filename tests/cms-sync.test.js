@@ -53,3 +53,21 @@ test("CMS articles are stored as complete newsroom content", () => {
   assert.match(source, /'newsroom_full_text'/);
   assert.match(source, /content_status='newsroom_full_text'/);
 });
+
+test("CMS login accepts articles without optional media", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const start = source.indexOf("function cmsArticleDefaults");
+  const defaults = source.slice(start, source.indexOf("cmsArticles = cmsArticles.map(cmsArticleDefaults)", start));
+  assert.match(defaults, /imageUrl \? \[\{/);
+  assert.match(defaults, /\}\] : \[\]\)/);
+  assert.match(defaults, /media:normalizedMedia/);
+  assert.doesNotMatch(defaults, /imageUrl\.match/);
+});
+
+test("failed CMS initialization clears partial login state", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const login = source.slice(source.indexOf('document.getElementById("loginForm")'), source.indexOf('document.getElementById("summarizeBtn")'));
+  assert.match(login, /if\(!payload\.token \|\| !payload\.user\)/);
+  assert.match(login, /sessionStorage\.removeItem\("newsneta-cms-token"\)/);
+  assert.match(login, /currentCmsUser = null/);
+});

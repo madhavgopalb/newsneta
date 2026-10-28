@@ -2065,6 +2065,27 @@ function cmsArticleDefaults(article = {}){
  const headline = article.headline || article.title || "NewsNeta newsroom article";
  const categoryId = categoryIdForValue(article.category || "telangana");
  const imageUrl = article.image || article.thumbnail || null;
+ const existingMedia = Array.isArray(article.media) ? article.media.filter(Boolean) : [];
+ const normalizedMedia = existingMedia.length ? existingMedia : (imageUrl ? [{
+  id:`media-${article.id || Date.now()}`,
+  media_type:/\.(mp4|mov|webm)(\?|$)/i.test(imageUrl) ? "video" : "image",
+  file_name:(imageUrl.split("/").pop() || "newsneta-media").split("?")[0],
+  original_file_name:(imageUrl.split("/").pop() || "newsneta-media").split("?")[0],
+  storage_provider:"NewsNeta media storage",
+  storage_bucket:"reporter-uploads",
+  storage_path:`reporter-uploads/${slugify(headline)}`,
+  public_url:imageUrl,
+  thumbnail_url:article.thumbnail || imageUrl,
+  file_size:"metadata only",
+  mime_type:/\.(mp4|mov|webm)(\?|$)/i.test(imageUrl) ? "video/mp4" : "image/webp",
+  width:900,
+  height:600,
+  duration:article.duration || "",
+  caption:article.mediaCaption || headline,
+  alt_text:article.altText || headline,
+  uploaded_by:article.reporter || "District Reporter",
+  uploaded_at:article.uploadedAt || now
+ }] : []);
  return {
   id: article.id || `cms-${Date.now()}`,
   status: article.status || "draft",
@@ -2104,26 +2125,7 @@ function cmsArticleDefaults(article = {}){
   imageType: article.imageType || "event_photo",
   imageRelevanceScore: Number(article.imageRelevanceScore || 90),
   videoTranscript: article.videoTranscript || "",
-  media: Array.isArray(article.media) && article.media.length ? article.media : [{
-   id:`media-${article.id || Date.now()}`,
-   media_type:imageUrl.match(/\.(mp4|mov|webm)(\?|$)/i) ? "video" : "image",
-   file_name:(imageUrl.split("/").pop() || "newsneta-media").split("?")[0],
-   original_file_name:(imageUrl.split("/").pop() || "newsneta-media").split("?")[0],
-   storage_provider:"Supabase Storage",
-   storage_bucket:"reporter-uploads",
-   storage_path:`reporter-uploads/${slugify(headline)}`,
-   public_url:imageUrl,
-   thumbnail_url:article.thumbnail || imageUrl || null,
-   file_size:"metadata only",
-   mime_type:imageUrl.match(/\.(mp4|mov|webm)(\?|$)/i) ? "video/mp4" : "image/webp",
-   width:900,
-   height:600,
-   duration:article.duration || "",
-   caption:article.mediaCaption || headline,
-   alt_text:article.altText || headline,
-   uploaded_by:article.reporter || "District Reporter",
-   uploaded_at:article.uploadedAt || now
-  }],
+  media:normalizedMedia,
   reporter: article.reporter || "District Reporter",
   reviewer: article.reviewer || "",
   admin: article.admin || "",
@@ -5596,7 +5598,8 @@ document.getElementById("loginForm").addEventListener("submit",async event=>{
   const response = await fetch("/.netlify/functions/cms?action=login", {method:"POST",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password,role})});
   const payload = await response.json();
   if(!response.ok) throw new Error(payload.message || "Login failed");
-  cmsSessionToken = payload.token;
+   if(!payload.token || !payload.user) throw new Error("The login response is incomplete. Please retry.");
+   cmsSessionToken = payload.token;
   sessionStorage.setItem("newsneta-cms-token", cmsSessionToken);
   sessionStorage.setItem("newsneta-cms-user", email);
   const profile = cmsRoleProfiles[role] || cmsRoleProfiles.reporter;
@@ -5608,7 +5611,11 @@ document.getElementById("loginForm").addEventListener("submit",async event=>{
   document.getElementById("loginTitle").textContent = "Newsroom Dashboard";
   openRoleDashboard(role, currentCmsUser);
   renderWeather();
- }catch(error){
+  }catch(error){
+   cmsSessionToken = "";
+   currentCmsUser = null;
+   sessionStorage.removeItem("newsneta-cms-token");
+   sessionStorage.removeItem("newsneta-cms-user");
   if(errorBox){ errorBox.textContent=error.message || "Login failed."; errorBox.classList.add("show"); }
  }
 });

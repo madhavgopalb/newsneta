@@ -678,6 +678,60 @@ function approvedPersistedImage(row = {}) {
   return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
 }
 
+function persistedArticleFromRow(row = {}) {
+  const featuredIsVideo = String(row.featured_media?.mimeType || row.featured_media?.mime_type || "").startsWith("video/");
+  const featuredUrl = row.featured_media?.url || row.featured_media?.publicUrl || row.featured_media?.public_url || null;
+  const featuredThumbnail = row.featured_media?.thumbnailUrl || row.featured_media?.thumbnail_url || row.thumbnail_url || null;
+  const approvedImage = featuredIsVideo ? featuredThumbnail : approvedPersistedImage(row);
+  return {
+    id: row.id,
+    headline: row.title,
+    title: row.title,
+    summary: row.summary || "",
+    description: row.summary || "",
+    body: row.body || "",
+    fullArticle: row.content_status === "brief" ? "" : (row.body || ""),
+    contentStatus: row.content_status || "brief",
+    category: row.category,
+    state: row.state,
+    district: row.district,
+    image: approvedImage,
+    imageUrl: approvedImage,
+    thumbnailUrl: featuredThumbnail,
+    video: featuredIsVideo && featuredUrl ? { type: "uploaded", url: featuredUrl, mimeType: row.featured_media.mimeType || row.featured_media.mime_type, posterUrl: featuredThumbnail || row.image_url || null } : null,
+    media: row.featured_media ? [row.featured_media] : [],
+    mediaDecision: row.featured_media || null,
+    featuredMedia: row.featured_media || null,
+    link: row.source_url || `?article=${encodeURIComponent(row.id)}`,
+    source: row.source_name || "NewsNeta",
+    sourceName: row.source_name || "NewsNeta",
+    pubDate: row.source_published_at || row.published_at,
+    publishedAt: row.published_at,
+    updatedAt: row.updated_at,
+    sourceUrl: row.source_url || null,
+    imageAlt: row.image_alt || "",
+    authorId: row.author_id || null,
+    views: row.views || 0,
+    contentRevision: row.content_revision || 1,
+    persisted: true
+  };
+}
+
+async function persistedArticleById(id, getDatabase) {
+  const identity = cleanText(id).slice(0, 500);
+  if (!identity) return null;
+  const { pool } = getDatabase();
+  const result = await pool.query({
+    text: `SELECT id, title, summary, body, category, state, district, image_url,
+      thumbnail_url, featured_media, source_url, source_name, published_at,
+      source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id FROM articles
+      WHERE status='published' AND (id::text=$1 OR source_article_id=$1)
+      ORDER BY updated_at DESC LIMIT 1`,
+    values: [identity]
+  });
+  return result.rows[0] ? persistedArticleFromRow(result.rows[0]) : null;
+}
+
 async function persistedArticles(cat, district, limit = 24, getDatabase) {
   try {
     const { pool } = getDatabase();
@@ -697,37 +751,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
         ORDER BY published_at DESC LIMIT $${limitIndex}`,
       values
     });
-    const articles = result.rows.map(row => ({
-      id: row.id,
-      headline: row.title,
-      title: row.title,
-      summary: row.summary || "",
-      description: row.summary || "",
-      body: row.body || "",
-      fullArticle: row.content_status === "brief" ? "" : (row.body || ""),
-      contentStatus: row.content_status || "brief",
-      category: row.category,
-      state: row.state,
-      district: row.district,
-      image: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || null) : approvedPersistedImage(row),
-      imageUrl: String(row.featured_media?.mimeType || "").startsWith("video/") ? (row.featured_media?.thumbnailUrl || row.thumbnail_url || null) : approvedPersistedImage(row),
-      thumbnailUrl: row.featured_media?.thumbnailUrl || row.thumbnail_url || null,
-      video: String(row.featured_media?.mimeType || "").startsWith("video/") ? { type: "uploaded", url: row.featured_media.url, mimeType: row.featured_media.mimeType, posterUrl: row.featured_media.thumbnailUrl || row.thumbnail_url || row.image_url || null } : null,
-      media: row.featured_media ? [row.featured_media] : [],
-      mediaDecision: row.featured_media || null,
-      featuredMedia: row.featured_media || null,
-      link: row.source_url || `#article-${row.id}`,
-      source: row.source_name || "NewsNeta",
-      pubDate: row.source_published_at || row.published_at,
-      publishedAt: row.published_at,
-      updatedAt: row.updated_at,
-      sourceUrl: row.source_url || null,
-      imageAlt: row.image_alt || "",
-      authorId: row.author_id || null,
-      views: row.views || 0,
-      contentRevision: row.content_revision || 1,
-      persisted: true
-    }));
+    const articles = result.rows.map(persistedArticleFromRow);
     return freshSorted(articles, FRESH_NEWS_DAYS).slice(0, limit);
   } catch (error) {
     logEvent("NEWS_DATABASE_READ_FAILED", { category: cat, district: district || null, message: error.message });
@@ -737,6 +761,17 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
 
 exports.handler = async function handler(event, getDatabase) {
   const params = event.queryStringParameters || {};
+  const articleId = cleanText(params.article || params.id || "").slice(0, 500);
+  if (articleId) {
+    try {
+      const item = await persistedArticleById(articleId, getDatabase);
+      if (!item) return json(404, { status: "not-found", message: "The published article is unavailable." }, 0);
+      return json(200, { status: "ok", item, servedAt: new Date().toISOString() }, 0);
+    } catch (error) {
+      logEvent("NEWS_ARTICLE_READ_FAILED", { articleId, message: error.message });
+      return json(503, { status: "database-unavailable", message: "The article could not be loaded. Please retry." }, 0);
+    }
+  }
   const cat = normalizeCategory(params.cat || params.category || "telangana");
   const district = cleanText(params.district || "");
   const forceRefresh = Boolean(params.refresh || params.force);
@@ -892,4 +927,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, persistedArticleFromRow, trustedImageUrl };

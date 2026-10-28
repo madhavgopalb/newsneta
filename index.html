@@ -1019,6 +1019,10 @@ html{scroll-padding-top:156px}
 .article-content-full p{font-size:17px;line-height:1.85;color:var(--ink)}
 .article-content-brief{padding:18px;border-left:4px solid var(--accent);background:var(--soft);border-radius:4px}
 .article-content-brief h3{margin-top:0}
+.article-detail-state{display:grid;place-items:center;gap:12px;min-height:220px;padding:32px;text-align:center;color:var(--muted)}
+.article-detail-spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:article-spin .8s linear infinite}
+.article-detail-state button{min-height:42px;padding:0 18px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:900}
+@keyframes article-spin{to{transform:rotate(360deg)}}
 .article-source-link a{display:inline-flex;align-items:center;min-height:42px;padding:9px 14px;border:1px solid var(--accent);color:var(--accent);font-weight:800;text-decoration:none;border-radius:4px}
 .article-lead{font-size:17px;color:var(--ink)!important;font-weight:750}
 .article-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
@@ -1931,8 +1935,8 @@ const categories = [
  ["special","Special Stories"],["advertisements","Advertisements"]
 ];
 
-const APP_BUILD_VERSION = "newsneta-web-v89";
-const APP_ACTIVE_CACHE = "newsneta-pwa-v89";
+const APP_BUILD_VERSION = "newsneta-web-v90";
+const APP_ACTIVE_CACHE = "newsneta-pwa-v90";
 const APP_CACHE_PREFIX = "newsneta-pwa-";
 const refreshIntervalMs = 2 * 60 * 1000;
 const categoryRefreshIntervalMs = 5 * 60 * 1000;
@@ -2167,6 +2171,8 @@ const fallbackStories = [];
 const globalTopStories = [];
 
 let stories = [];
+const articleDetailCache = new Map();
+let articleDetailRequest = 0;
 let isRefreshingNews = false;
 let lastRefreshError = "";
 let districtStories = [];
@@ -2997,13 +3003,14 @@ function normalizeArticleVideo(item){
  if(mimeType.startsWith("video/") || /\.(?:mp4|webm|ogg)(?:$|\?)/i.test(url)) return {type:"uploaded",url,posterUrl,mimeType:mimeType || "video/mp4"};
  return null;
 }
-function normalizeItems(items){
+function normalizeItems(items, options={}){
  const freshCutoff = Date.now() - maxStoryAgeDays * 24 * 60 * 60 * 1000;
  return (Array.isArray(items) ? items : []).map((item,index)=>({
   id:item.id || item.guid || item.link || `${item.category || "story"}-${index}-${(item.title || "").slice(0,18)}`,
   title:String(item.title || item.headline || "").trim(),
   category:item.category || "Latest",
-  source:item.source || item.publisher || item.sourceName || "",
+  source:item.source || item.sourceName || item.source_name || item.publisher || "",
+  sourceName:item.sourceName || item.source_name || item.source || item.publisher || "",
   views:Number.isFinite(Number(item.views)) && Number(item.views) > 0 ? Number(item.views) : null,
   sentiment:item.sentiment || null,
   trust:Number.isFinite(Number(item.trust)) ? Number(item.trust) : null,
@@ -3015,22 +3022,26 @@ function normalizeItems(items){
   imageRelevanceScore:Number(item.imageRelevanceScore ?? (!Array.isArray(item.media) ? item.media?.relevanceScore : 0) ?? 0),
   imageStatus:item.imageStatus || (!Array.isArray(item.media) && item.media?.visualStatus) || "",
   link:item.link || "#",
-  pubDate:item.pubDate || new Date().toISOString(),
-   description:storyDescription(item),
-  body:item.body || "",
-  fullArticle:item.fullArticle || (item.contentStatus && item.contentStatus !== "brief" ? item.body : "") || "",
+  pubDate:item.pubDate || item.publishedAt || item.published_at || new Date().toISOString(),
+  publishedAt:item.publishedAt || item.published_at || item.pubDate || "",
+  summary:String(item.summary || item.description || item.aiSummary || item.contentSnippet || item.excerpt || ""),
+  description:storyDescription(item),
+  body:String(item.body || ""),
+  fullArticle:String(item.fullArticle || ((item.contentStatus || item.content_status) && (item.contentStatus || item.content_status) !== "brief" ? item.body : "") || ""),
   contentStatus:item.contentStatus || item.content_status || (item.reporterUpload ? "newsroom_full_text" : "brief"),
   sourceUrl:item.sourceUrl || item.source_url || (/^https?:\/\//i.test(item.link || "") ? item.link : ""),
   updatedAt:item.updatedAt || item.updated_at || item.pubDate || "",
-   imageAlt:item.imageAlt || item.image_alt || "",
-   media:Array.isArray(item.media) ? item.media : []
+  contentRevision:Number(item.contentRevision || item.content_revision || 1),
+  persisted:Boolean(item.persisted),
+  imageAlt:item.imageAlt || item.image_alt || "",
+  media:Array.isArray(item.media) ? item.media : []
  })).filter(story=>{
   if(!story.title){
    console.warn(JSON.stringify({code:"NEWS_ARTICLE_INVALID",articleId:story.id,reason:"missing title",timestamp:new Date().toISOString()}));
    return false;
   }
   const time = new Date(story.pubDate || Date.now()).getTime();
-  return Number.isNaN(time) || time >= freshCutoff;
+  return options.allowStale || Number.isNaN(time) || time >= freshCutoff;
  }).sort((a,b)=>new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
 }
 
@@ -4254,7 +4265,7 @@ document.addEventListener("click", event=>{
 });
 
 function findStoryById(id){
- return [...stories, ...districtStories, ...heroStories, ...globalTopStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
+ return articleDetailCache.get(String(id)) || [...stories, ...districtStories, ...heroStories, ...globalTopStories, ...fallbackStories].find(story=>String(story.id) === String(id) || String(story.link) === String(id) || String(story.title) === String(id));
 }
 
 function searchAliases(query){
@@ -4344,12 +4355,11 @@ function setStoryModalMedia(story){
  if(!url) image.insertAdjacentHTML("afterend", `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`);
 }
 
-function openDirectStoryIfReady(){
+async function openDirectStoryIfReady(){
  const requested = new URL(location.href).searchParams.get("article");
  const backdrop = document.getElementById("storyBackdrop");
  if(!requested || backdrop?.classList.contains("open")) return;
- const story = findStoryById(requested);
- if(story) openStoryDetail(requested);
+ await openStoryDetail(requested);
 }
 
 function legacyOpenStoryDetailV1(id){
@@ -4421,9 +4431,58 @@ function legacyOpenStoryDetailV2(id){
  document.body.classList.add("lock");
 }
 
-function openStoryDetail(id){
- const story = findStoryById(id);
- if(!story) return;
+function showStoryDetailState(id, state, message){
+ const backdrop = document.getElementById("storyBackdrop");
+ const copy = document.getElementById("storyModalCopy");
+ if(!backdrop || !copy) return;
+ document.querySelector(".story-modal")?.setAttribute("data-story-id", String(id));
+ document.getElementById("storyModalCategory").textContent = state === "loading" ? "Loading" : "Article unavailable";
+ document.getElementById("storyModalTitle").textContent = state === "loading" ? "Loading article…" : "This article could not be loaded";
+ document.getElementById("storyModalMeta").textContent = "";
+ document.getElementById("storyModalSummary").hidden = true;
+ copy.innerHTML = state === "loading"
+  ? `<div class="article-detail-state" role="status"><span class="article-detail-spinner"></span><p>${escapeHtml(message)}</p></div>`
+  : `<div class="article-detail-state" role="alert"><p>${escapeHtml(message)}</p><button type="button" data-article-retry="${escapeAttr(id)}">Retry</button></div>`;
+ setStoryModalMedia({title:"",image:null});
+ backdrop.classList.add("open");
+ document.body.classList.add("lock");
+ copy.querySelector("[data-article-retry]")?.addEventListener("click", event=>openStoryDetail(event.currentTarget.dataset.articleRetry, {force:true}));
+ scrollStoryModalToTop();
+}
+
+async function fetchStoryDetail(id, force=false){
+ const key = String(id);
+ if(!force && articleDetailCache.has(key)) return articleDetailCache.get(key);
+ const response = await fetch(`/.netlify/functions/news?article=${encodeURIComponent(key)}${force ? `&force=${Date.now()}` : ""}`, {cache:"no-store",headers:{"Cache-Control":"no-cache"}});
+ const payload = await response.json().catch(()=>({}));
+ if(!response.ok || !payload.item) throw Object.assign(new Error(payload.message || "The article could not be loaded."), {status:response.status});
+ const story = normalizeItems([payload.item], {allowStale:true})[0];
+ if(!story) throw new Error("The article response is incomplete.");
+ articleDetailCache.set(key, story);
+ articleDetailCache.set(String(story.id), story);
+ return story;
+}
+
+async function openStoryDetail(id, options={}){
+ const localStory = findStoryById(id);
+ const shouldFetch = options.force || !localStory || localStory.persisted;
+ if(!shouldFetch){
+  renderStoryDetail(localStory);
+  return;
+ }
+ const requestId = ++articleDetailRequest;
+ showStoryDetailState(id, "loading", "Loading the latest approved article and media…");
+ try{
+  const story = await fetchStoryDetail(id, options.force);
+  if(requestId === articleDetailRequest) renderStoryDetail(story);
+ }catch(error){
+  if(requestId !== articleDetailRequest) return;
+  if(localStory && error.status === 404) renderStoryDetail(localStory);
+  else showStoryDetailState(id, "error", error.message || "The article could not be loaded. Please retry.");
+ }
+}
+
+function renderStoryDetail(story){
  const modal = document.querySelector(".story-modal");
  if(modal) modal.dataset.storyId = story.id || story.link || story.title;
  const related = stories
@@ -4481,6 +4540,7 @@ function openStoryDetail(id){
 }
 
 function closeStoryModal(){
+ articleDetailRequest += 1;
  if("speechSynthesis" in window) speechSynthesis.cancel();
  speechState = {speaking:false, paused:false, targetId:null, utterance:null};
  document.getElementById("storyBackdrop")?.classList.remove("open");

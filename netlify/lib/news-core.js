@@ -232,6 +232,19 @@ function cleanText(value = "") {
   return String(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function normalizeDescription(value = "") {
+  return decodeHtmlEntities(String(value)
+    .replace(/<(?:br\s*\/?>|\/p|\/div|\/li|\/h[1-6])>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n")
+    .replace(/<[^>]*>/g, " "))
+    .replace(/\r\n?/g, "\n")
+    .split(/\n+/)
+    .map(line => line.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n")
+    .trim();
+}
+
 function licensedFullTextSources() {
   return new Set(String(process.env.NEWS_LICENSED_FULLTEXT_SOURCES || "")
     .split(",")
@@ -388,11 +401,10 @@ function representativeImageDecision(title, cat, district, index, intent, reason
 
 function expandedNewsDescription(title, cat, district, seedText = "") {
   const cleanTitle = publicTitle(title);
-  const sourceLine = cleanText(seedText)
+  const sourceLine = normalizeDescription(seedText)
     .replace(/^RTV\s+Digital\.\s*\.\s*/iu, "")
     .replace(/#[\p{L}\p{N}_-]+/gu, "")
     .replace(/\s+(facebook|instagram|youtube|x)\.com\s*$/i, "")
-    .replace(/\s+/g, " ")
     .trim();
   const normalizedTitle = cleanTitle.toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   const normalizedSource = sourceLine.toLocaleLowerCase("te-IN").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
@@ -1000,4 +1012,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeDescription, normalizeLicensedBody, persistedArticleFromRow, trustedImageUrl };

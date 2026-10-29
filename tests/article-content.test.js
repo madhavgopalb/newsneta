@@ -13,8 +13,24 @@ test("article reader distinguishes complete content from syndicated briefs", () 
   assert.match(renderer, /licensed_full_text/);
   assert.match(renderer, /Read original report/);
   assert.match(renderer, /articleBodyMarkup\(fullBody\)/);
+  assert.match(renderer, /articleBodyMarkup\(summary\)/);
+  assert.match(renderer, /Details are not available from the publisher/);
+  assert.doesNotMatch(renderer, /The full article is not currently available for this feed item/);
   assert.doesNotMatch(renderer, /slice\(0,\s*(?:8|12)\)/);
   assert.doesNotMatch(renderer, /trust score|public impact|next expected updates/i);
+});
+
+test("authorized feed descriptions preserve supplied paragraphs", () => {
+  const description = news.normalizeDescription("<p>మొదటి పేరా వివరాలు.</p><p>రెండో పేరా వివరాలు.</p>");
+  assert.equal(description, "మొదటి పేరా వివరాలు.\n\nరెండో పేరా వివరాలు.");
+});
+
+test("article detail uses approved media and renders its attribution", () => {
+  const mediaRenderer = page.slice(page.indexOf("function setStoryModalMedia(story)"), page.indexOf("async function openDirectStoryIfReady"));
+  assert.match(mediaRenderer, /extractSourceImage\(story\)/);
+  assert.match(mediaRenderer, /copyrightOwner/);
+  assert.match(mediaRenderer, /story-media-caption/);
+  assert.match(mediaRenderer, /Image unavailable/);
 });
 
 test("article detail uses verified summary and a shareable direct URL", () => {

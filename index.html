@@ -1019,6 +1019,8 @@ html{scroll-padding-top:156px}
 .article-content-full p{font-size:17px;line-height:1.85;color:var(--ink)}
 .article-content-brief{padding:18px;border-left:4px solid var(--accent);background:var(--soft);border-radius:4px}
 .article-content-brief h3{margin-top:0}
+.article-content-brief .brief-empty{color:var(--muted)}
+.story-media-caption{display:block;margin:7px 0 0;color:var(--muted);font:700 12px/1.45 Inter,sans-serif}
 .article-detail-state{display:grid;place-items:center;gap:12px;min-height:220px;padding:32px;text-align:center;color:var(--muted)}
 .article-detail-spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:article-spin .8s linear infinite}
 .article-detail-state button{min-height:42px;padding:0 18px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:900}
@@ -2696,7 +2698,19 @@ function isGenericStoryDescription(value, title = ""){
 
 function storyDescription(story){
  const candidates = [story?.description,story?.summary,story?.aiSummary,story?.contentSnippet,story?.excerpt];
- return candidates.map(cleanText).find(value=>!isGenericStoryDescription(value,story?.title)) || "";
+ return candidates.map(preserveDescription).find(value=>!isGenericStoryDescription(value,story?.title)) || "";
+}
+
+function preserveDescription(value){
+ const container = document.createElement("div");
+ container.innerHTML = String(value || "").replace(/<(?:br\s*\/?>|\/p|\/div|\/li|\/h[1-6])>/gi,"\n");
+ return String(container.textContent || "")
+  .replace(/\r\n?/g,"\n")
+  .split(/\n+/)
+  .map(line=>line.replace(/[ \t]+/g," ").trim())
+  .filter(Boolean)
+  .join("\n\n")
+  .trim();
 }
 
 function heroStorySummary(story){
@@ -4070,15 +4084,18 @@ function buildExpandedArticle(story){
  if(isFullArticle && cleanText(fullBody)){
   return `<div class="article-content article-content-full" data-content-status="${escapeAttr(status)}">${articleBodyMarkup(fullBody)}</div>`;
  }
- const labels = currentLanguage === "te"
-  ? { title:"వార్తా సంక్షిప్తం", unavailable:"ఈ వార్తకు పూర్తి కథనం ప్రస్తుతం అందుబాటులో లేదు.", original:"అసలు నివేదిక చదవండి" }
+  const labels = currentLanguage === "te"
+   ? { title:"వార్తా సంక్షిప్తం", unavailable:"ప్రచురణకర్త నుంచి వివరణ అందుబాటులో లేదు.", original:"అసలు నివేదిక చదవండి" }
   : currentLanguage === "hi"
-   ? { title:"समाचार संक्षेप", unavailable:"इस समाचार का पूरा लेख अभी उपलब्ध नहीं है.", original:"मूल रिपोर्ट पढ़ें" }
-   : { title:"News Brief", unavailable:"The full article is not currently available for this feed item.", original:"Read original report" };
+    ? { title:"समाचार संक्षेप", unavailable:"प्रकाशक से विवरण उपलब्ध नहीं है.", original:"मूल रिपोर्ट पढ़ें" }
+    : { title:"News Brief", unavailable:"Details are not available from the publisher.", original:"Read original report" };
  const sourceLink = story.sourceUrl
   ? `<p class="article-source-link"><a href="${escapeAttr(story.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.original)} →</a></p>`
   : "";
- return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3><p>${escapeHtml(summary || labels.unavailable)}</p>${sourceLink}</div>`;
+ const descriptionMarkup = summary
+  ? articleBodyMarkup(summary)
+  : `<p class="brief-empty">${escapeHtml(labels.unavailable)}</p>`;
+ return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3>${descriptionMarkup}${sourceLink}</div>`;
 }
 
 function storyMediaGallery(story){
@@ -4354,6 +4371,11 @@ function setStoryModalMedia(story){
  if(url) image.src = url;
  else image.removeAttribute("src");
  image.parentElement?.querySelectorAll(".media-state").forEach(item=>item.remove());
+ const media = story.featuredMedia || story.mediaDecision || (Array.isArray(story.media) ? story.media.find(item=>item?.url || item?.public_url) : null);
+ const caption = cleanText(media?.caption || story.imageCaption || "");
+ const attribution = cleanText(media?.copyrightOwner || media?.copyright_owner || media?.source || story.imageAttribution || "");
+ const label = [caption, attribution].filter(Boolean).join(caption && attribution ? " • " : "");
+ if(url && label) image.insertAdjacentHTML("afterend", `<small class="media-state story-media-caption">${escapeHtml(label)}</small>`);
  if(!url) image.insertAdjacentHTML("afterend", `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`);
 }
 

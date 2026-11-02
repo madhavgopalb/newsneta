@@ -51,3 +51,12 @@ NewsNeta will ship through focused pull requests. Production remains unchanged u
 - Direct state, district and article URLs survive refresh/back/forward.
 - Backup and rollback commands are documented and rehearsed.
 - Release approval is recorded before merging to `main`.
+
+## Confirmed preview infrastructure blocker
+
+- Netlify production has `CMS_SESSION_SECRET`, but the `deploy-preview` context currently does not.
+- The local/dev Netlify context does not expose `NETLIFY_DATABASE_URL`.
+- The connected Neon account contains projects named `SPAICC` and `ServicePortal`; neither is the Netlify-managed NewsNeta database, so they must not be reused for this preview.
+- The current GitHub workflow validates pull requests but intentionally skips the deploy job for pull-request events.
+
+Before CMS integration testing, link the actual NewsNeta database project to an isolated branch, add a separate preview-only CMS signing secret, expose the preview database URL only to the preview context, apply migrations there, and seed non-production editorial accounts/content. A static preview is not sufficient evidence for CMS publication or synchronization.

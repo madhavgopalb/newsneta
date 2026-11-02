@@ -67,6 +67,7 @@ test("uploaded video metadata survives article serialization", () => {
     posterUrl: row.featured_media.thumbnailUrl
   });
   assert.equal(article.image, row.featured_media.thumbnailUrl);
+  assert.equal(article.imageLabel, row.featured_media.label || "");
 });
 
 test("article detail endpoint returns only a published canonical record", async () => {

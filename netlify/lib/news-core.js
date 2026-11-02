@@ -813,7 +813,8 @@ function persistedArticleFromRow(row = {}) {
   const featuredThumbnail = row.featured_media?.thumbnailUrl || row.featured_media?.thumbnail_url || row.thumbnail_url || null;
   const feedAuthored = String(row.author_id || "").startsWith("feed:");
   const approvedImage = featuredIsVideo ? featuredThumbnail : approvedPersistedImage(row);
-  const representativeMedia = !approvedImage && feedAuthored
+  const persistedImageType = String(row.featured_media?.imageType || row.featured_media?.image_type || "").toLowerCase();
+  const representativeMedia = feedAuthored && (!approvedImage || persistedImageType === "representative")
     ? representativeImageDecision(
         row.title,
         row.category,
@@ -823,7 +824,7 @@ function persistedArticleFromRow(row = {}) {
         "Legacy feed record did not contain approved article media"
       )
     : null;
-  const resolvedImage = approvedImage || representativeMedia?.url || null;
+  const resolvedImage = representativeMedia?.url || approvedImage || null;
   const resolvedMedia = representativeMedia || row.featured_media || null;
   return {
     id: row.id,

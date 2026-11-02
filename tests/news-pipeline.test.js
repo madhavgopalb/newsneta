@@ -35,7 +35,7 @@ test("RSS media remains associated with the same article", () => {
   assert.equal(media.imageType, "event_candidate");
 });
 
-test("RSS stories without embedded media remain image-free instead of using a potentially unrelated archive photo", async () => {
+test("RSS stories without embedded media may use a strongly matched licensed file photo", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => new Response(JSON.stringify({
     query: {
@@ -59,9 +59,44 @@ test("RSS stories without embedded media remain image-free instead of using a po
   }), { status: 200, headers: { "Content-Type": "application/json" } });
   try {
     const media = await news.articleImage({ title: "Hyderabad traffic road update" }, "telangana", "Hyderabad");
-    assert.equal(media.url, null);
-    assert.equal(media.imageType, "missing");
-    assert.equal(media.requiresReview, true);
+    assert.equal(media.url, "https://upload.wikimedia.org/hyderabad-traffic.jpg");
+    assert.equal(media.imageType, "archive");
+    assert.equal(media.label, "FILE PHOTO");
+    assert.equal(media.requiresReview, false);
+    assert.ok(media.relevanceScore >= 80);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("licensed image matching uses a labelled topic fallback instead of a location-only result", async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({
+    query: {
+      pages: {
+        1: {
+          title: "File:Scaly-breasted Munia in Hyderabad city India.jpg",
+          imageinfo: [{
+            mime: "image/jpeg",
+            thumburl: "https://upload.wikimedia.org/hyderabad-bird.jpg",
+            url: "https://upload.wikimedia.org/hyderabad-bird-original.jpg",
+            descriptionurl: "https://commons.wikimedia.org/wiki/File:Hyderabad_bird.jpg",
+            extmetadata: {
+              LicenseShortName: { value: "CC BY-SA 4.0" },
+              Artist: { value: "Test photographer" },
+              ImageDescription: { value: "Wild bird in Hyderabad city India" }
+            }
+          }]
+        }
+      }
+    }
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  try {
+    const media = await news.articleImage({ title: "Hyderabad RTC bus route update" }, "telangana", "Hyderabad");
+    assert.match(media.url, /^https:\/\/images\.unsplash\.com\//);
+    assert.equal(media.imageType, "representative");
+    assert.equal(media.label, "REPRESENTATIVE IMAGE");
+    assert.equal(media.requiresReview, false);
   } finally {
     global.fetch = originalFetch;
   }
@@ -106,6 +141,29 @@ test("legacy feed archive images are not returned as current article media", () 
     image_url: "https://newsneta.com/.netlify/functions/media?key=pending.jpg",
     featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=pending.jpg", imageType: "pending" }
   }), null);
+  assert.equal(news.approvedPersistedImage({
+    author_id: "feed:licensed-archive",
+    image_url: "https://upload.wikimedia.org/article-file-photo.jpg",
+    featured_media: {
+      url: "https://upload.wikimedia.org/article-file-photo.jpg",
+      imageType: "archive",
+      relevanceScore: 84,
+      requiresReview: false,
+      license: "CC BY-SA 4.0"
+    }
+  }), "https://upload.wikimedia.org/article-file-photo.jpg");
+  assert.equal(news.approvedPersistedImage({
+    author_id: "feed:topic-photo",
+    image_url: "https://images.unsplash.com/topic.jpg",
+    featured_media: {
+      url: "https://images.unsplash.com/topic.jpg",
+      source: "Unsplash",
+      imageType: "representative",
+      relevanceScore: 82,
+      requiresReview: false,
+      license: "Unsplash License"
+    }
+  }), "https://images.unsplash.com/topic.jpg");
 });
 
 test("ingestion keeps stable identity and media on one canonical article", () => {
@@ -146,7 +204,7 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v90"/);
+  assert.match(source, /CACHE_VERSION = "v91"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);

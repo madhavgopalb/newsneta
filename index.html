@@ -2902,8 +2902,8 @@ function extractSourceImage(item){
  const primaryMedia = mediaItems.find(media=>{
   const mime = String(media?.mime_type || media?.mimeType || "").toLowerCase();
   const type = String(media?.media_type || media?.type || media?.imageType || media?.image_type || "").toLowerCase();
-  const isImage = mime.startsWith("image/") || ["image","cms_approved","cms_upload","uploaded","event_candidate","event_photo"].includes(type);
-  const approved = media.status === "approved" || media.approved === true || ["cms_approved","event_candidate","event_photo"].includes(type);
+  const isImage = mime.startsWith("image/") || ["image","cms_approved","cms_upload","uploaded","event_candidate","event_photo","archive","representative"].includes(type);
+  const approved = media.status === "approved" || media.approved === true || ["cms_approved","event_candidate","event_photo","archive","representative"].includes(type);
   return isImage && approved && (media.public_url || media.publicUrl || media.url);
  });
  const decision = item.mediaDecision || item.media_decision || primaryMedia || (!Array.isArray(item.media) ? item.media : null);
@@ -2911,7 +2911,7 @@ function extractSourceImage(item){
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
  const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
  const hasApprovedCmsMedia = Boolean(primaryMediaUrl && (primaryMedia?.approved === true || primaryMedia?.status === "approved" || ["cms_approved","cms_upload","uploaded"].includes(decisionType)));
- const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload","cms_approved"].includes(decisionType);
+ const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","archive","representative"].includes(decisionType);
  const approvedDecision = decision && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
  if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
  const candidates = [

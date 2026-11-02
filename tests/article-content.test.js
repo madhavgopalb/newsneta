@@ -37,6 +37,8 @@ test("frontend hides unreviewed archive and representative images", () => {
   assert.match(extractor, /decision\.requiresReview !== true/);
   assert.match(extractor, /decisionScore >= 80/);
   assert.match(extractor, /event_candidate/);
+  assert.match(extractor, /archive/);
+  assert.match(extractor, /representative/);
   assert.match(extractor, /cms_approved/);
   assert.match(extractor, /featuredMedia/);
 });

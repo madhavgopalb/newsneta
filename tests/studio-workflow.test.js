@@ -14,6 +14,14 @@ test("NewsNeta Studio exposes four primary newsroom actions", () => {
   assert.equal((modal.match(/<button class="cms-tab/g) || []).length, 4);
 });
 
+test("reporter creation screen documents direct device upload and the review path", () => {
+  assert.match(page, /Reporter publishing steps/);
+  assert.match(page, /Select one or more images, a thumbnail or video from this device/);
+  assert.match(page, /Choose files directly from desktop or mobile/);
+  assert.doesNotMatch(page, /data-cms-screen-jump="manage"/);
+  assert.doesNotMatch(page, /data-cms-screen-jump="article"/);
+});
+
 test("feed import uses the signed CMS session and bounded categories", () => {
   const binding = page.slice(page.indexOf("function bindCmsScreen(role)"), page.indexOf("function switchCmsScreen"));
   assert.match(binding, /\.netlify\/functions\/refresh-news/);

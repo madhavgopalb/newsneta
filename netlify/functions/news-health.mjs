@@ -1,4 +1,5 @@
 import { getDatabase } from "@netlify/database";
+import cmsAuth from "../lib/cms-auth.js";
 
 const json = (status, body) => Response.json(body, {
   status,
@@ -8,7 +9,9 @@ const json = (status, body) => Response.json(body, {
 export default async function handler(request) {
   const expected = process.env.ADMIN_HEALTH_TOKEN;
   const supplied = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!expected || supplied !== expected) return json(401, { status: "unauthorized" });
+  const cmsUser = cmsAuth.verifySession(supplied, process.env.CMS_SESSION_SECRET);
+  const authorized = (expected && supplied === expected) || cmsUser?.role === "admin";
+  if (!authorized) return json(401, { status: "unauthorized" });
 
   try {
     const { pool } = getDatabase();

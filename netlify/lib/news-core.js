@@ -756,6 +756,13 @@ function mergeCanonicalArticles(primary = [], secondary = []) {
   });
 }
 
+function stableImageIndex(value = "", length = 1) {
+  const size = Math.max(1, Number(length) || 1);
+  let hash = 0;
+  for (const character of String(value)) hash = ((hash * 31) + character.codePointAt(0)) >>> 0;
+  return hash % size;
+}
+
 function approvedPersistedImage(row = {}) {
   const media = row.featured_media && typeof row.featured_media === "object" ? row.featured_media : null;
   const imageType = String(media?.imageType || media?.image_type || "").toLowerCase();
@@ -776,7 +783,20 @@ function persistedArticleFromRow(row = {}) {
   const featuredIsVideo = String(row.featured_media?.mimeType || row.featured_media?.mime_type || "").startsWith("video/");
   const featuredUrl = row.featured_media?.url || row.featured_media?.publicUrl || row.featured_media?.public_url || null;
   const featuredThumbnail = row.featured_media?.thumbnailUrl || row.featured_media?.thumbnail_url || row.thumbnail_url || null;
+  const feedAuthored = String(row.author_id || "").startsWith("feed:");
   const approvedImage = featuredIsVideo ? featuredThumbnail : approvedPersistedImage(row);
+  const representativeMedia = !approvedImage && feedAuthored
+    ? representativeImageDecision(
+        row.title,
+        row.category,
+        row.district,
+        stableImageIndex(row.source_article_id || row.source_url || row.title, 24),
+        extractImageIntent(row.title, row.category, row.district, row.summary),
+        "Legacy feed record did not contain approved article media"
+      )
+    : null;
+  const resolvedImage = approvedImage || representativeMedia?.url || null;
+  const resolvedMedia = representativeMedia || row.featured_media || null;
   return {
     id: row.id,
     headline: row.title,
@@ -789,16 +809,16 @@ function persistedArticleFromRow(row = {}) {
     category: row.category,
     state: row.state,
     district: row.district,
-    image: approvedImage,
-    imageUrl: approvedImage,
-    thumbnailUrl: featuredThumbnail,
+    image: resolvedImage,
+    imageUrl: resolvedImage,
+    thumbnailUrl: featuredThumbnail || resolvedImage,
     video: featuredIsVideo && featuredUrl ? { type: "uploaded", url: featuredUrl, mimeType: row.featured_media.mimeType || row.featured_media.mime_type, posterUrl: featuredThumbnail || row.image_url || null } : null,
-    media: row.featured_media ? [row.featured_media] : [],
-    mediaDecision: row.featured_media || null,
-    featuredMedia: row.featured_media || null,
-    imageLabel: row.featured_media?.label || "",
-    imageRelevanceScore: row.featured_media?.relevanceScore ?? row.featured_media?.relevance_score ?? null,
-    imageStatus: row.featured_media?.visualStatus || row.featured_media?.visual_status || null,
+    media: resolvedMedia ? [resolvedMedia] : [],
+    mediaDecision: resolvedMedia,
+    featuredMedia: resolvedMedia,
+    imageLabel: resolvedMedia?.label || "",
+    imageRelevanceScore: resolvedMedia?.relevanceScore ?? resolvedMedia?.relevance_score ?? null,
+    imageStatus: resolvedMedia?.visualStatus || resolvedMedia?.visual_status || null,
     link: row.source_url || `?article=${encodeURIComponent(row.id)}`,
     source: row.source_name || "NewsNeta",
     sourceName: row.source_name || "NewsNeta",
@@ -1033,4 +1053,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, stableImageIndex, trustedImageUrl };

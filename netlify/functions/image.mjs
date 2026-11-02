@@ -1,4 +1,4 @@
-const ALLOWED_HOSTS = new Set(["thumb.wikimedia.org", "upload.wikimedia.org"]);
+const ALLOWED_HOSTS = new Set(["thumb.wikimedia.org", "upload.wikimedia.org", "images.unsplash.com"]);
 
 const json = (status, body) => Response.json(body, {
   status,
@@ -26,7 +26,10 @@ export default async function handler(request) {
       method: request.method,
       redirect: "follow",
       signal: controller.signal,
-      headers: { Accept: "image/avif,image/webp,image/*" }
+      headers: {
+        Accept: "image/avif,image/webp,image/*",
+        "User-Agent": "NewsNeta/1.0 (+https://newsneta.com)"
+      }
     });
     const contentType = String(upstream.headers.get("content-type") || "").toLowerCase();
     if (!upstream.ok || !contentType.startsWith("image/")) return json(502, { status: "image-unavailable" });

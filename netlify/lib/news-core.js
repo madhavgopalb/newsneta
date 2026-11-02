@@ -18,7 +18,7 @@ const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
 // Archive candidates are always labelled as file photos. A score of 60 still
 // requires multiple query/entity matches while allowing Telugu headlines whose
 // English location or event terms only appear in the image catalogue metadata.
-const AUTO_IMAGE_THRESHOLD = 60;
+const AUTO_IMAGE_THRESHOLD = 72;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -380,9 +380,9 @@ function representativeImageDecision(title, cat, district, index, intent, reason
     license: "Unsplash License",
     imageType: "representative",
     label: "REPRESENTATIVE IMAGE",
-    score: 62,
+    score: 82,
     intent,
-    reasons: [reason, "Selected from the matching NewsNeta topic photo collection"]
+    reasons: [reason, "Selected from the reviewed NewsNeta topic photo collection and labelled as representative"]
   });
 }
 
@@ -452,7 +452,16 @@ async function fetchGNewsItems(cat, district) {
   const response = await fetch(`https://gnews.io/api/v4/search?${params.toString()}`, {
     headers: { "User-Agent": "NewsNeta/1.0" }
   });
-  if (!response.ok) throw new Error(`GNews API failed: ${response.status}`);
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const payload = await response.json();
+      detail = cleanText(Array.isArray(payload?.errors) ? payload.errors.join("; ") : payload?.message).slice(0, 180);
+    } catch {
+      // Provider diagnostics are optional and must never block the RSS fallback.
+    }
+    throw new Error(`GNews API failed: ${response.status}${detail ? ` (${detail})` : ""}`);
+  }
   const payload = await response.json();
   if (!Array.isArray(payload.articles) || payload.articles.length === 0) return null;
 
@@ -535,14 +544,7 @@ function selectImage(title, cat, district, index) {
 }
 
 function imageSearchQuery(title, cat, district) {
-  if (district) {
-    const state = cat === "ap" ? "Andhra Pradesh" : "Telangana";
-    return `${district} ${state} city photo`;
-  }
-
   const text = `${title} ${cat}`.toLowerCase();
-  const asciiWords = String(title).match(/[a-z][a-z0-9-]{3,}/gi)?.slice(0, 4).join(" ");
-  if (asciiWords && !/telangana|andhra|pradesh|news|update|states/i.test(asciiWords)) return `${asciiWords} India`;
   if (/yoga|యోగ/.test(text)) return "yoga competition India";
   if (/bus|rtc|depot|బస్సు|డిపో|ఆర్టీసీ/.test(text)) return "public bus transport India";
   if (/forest|tribal|గిరిజన|అటవీ|ఫారెస్ట్/.test(text)) return "tribal forest India";
@@ -553,11 +555,18 @@ function imageSearchQuery(title, cat, district) {
   if (/cinema|movie|film|సినిమా|బాక్సాఫీస్/.test(text)) return "Telugu cinema";
   if (/school|education|results|గురుకుల|పాఠశాల|విద్య/.test(text)) return "school education India";
   if (/farmer|maize|procurement|రైతు|పంట|వ్యవసాయ/.test(text)) return "Indian farmers agriculture";
+  if (/pay commission|salary|pension|జీత|వేతన|ఉద్యోగుల/.test(text)) return "India government employees pay commission salary";
   if (/market|business|stock|economy|మార్కెట్|వ్యాపార/.test(text)) return "Indian stock market business";
   if (/tech|ai|mobile|technology|టెక్నాలజీ|మొబైల్/.test(text)) return "artificial intelligence technology India";
   if (/heatwave|weather|rain|cyclone|వాతావరణ|ఉష్ణోగ్రత|వర్ష|ఎండ/.test(text)) return "India heatwave weather";
   if (/traffic|metro|road|accident|ట్రాఫిక్|రోడ్డు|ప్రమాద/.test(text)) return "Hyderabad traffic metro";
   if (/scheme|ప్రణాళిక|పథకం|నిధులు|ప్రభుత్వ/.test(text)) return "Telangana government building";
+  const asciiWords = String(title).match(/[a-z][a-z0-9-]{3,}/gi)?.slice(0, 4).join(" ");
+  if (asciiWords && !/telangana|andhra|pradesh|news|update|states/i.test(asciiWords)) return `${asciiWords} India`;
+  if (district) {
+    const state = cat === "ap" ? "Andhra Pradesh" : "Telangana";
+    return `${district} ${state} city photo`;
+  }
   if (cat === "telangana") return "Hyderabad Telangana";
   if (cat === "ap") return "Amaravati Andhra Pradesh";
   if (cat === "politics" || cat === "national") return "Parliament of India";
@@ -599,15 +608,24 @@ function commonsMetadata(info = {}) {
 function candidateRelevance(page = {}, intent = {}, query = "") {
   const haystack = `${page.title || ""} ${page.imageinfo?.[0]?.extmetadata?.ImageDescription?.value || ""}`.toLowerCase();
   const queryTokens = String(query).toLowerCase().match(/[a-z]{4,}/g) || [];
+  const genericTokens = new Set(["india", "indian", "telangana", "andhra", "pradesh", "hyderabad", "amaravati", "city", "photo", "news", "update", "latest", "public"]);
+  const semanticQueryTokens = [...new Set(queryTokens)].filter(token => !genericTokens.has(token));
   const tokens = [...(intent.entities || []), ...(intent.event || []), intent.location, intent.category]
     .filter(Boolean)
     .map(value => String(value).toLowerCase());
   const matches = tokens.filter(token => haystack.includes(token)).length;
-  const entityMatch = (intent.entities || []).some(entity => haystack.includes(String(entity).toLowerCase()));
+  const entityMatch = (intent.entities || []).some(entity => {
+    const normalized = String(entity).toLowerCase();
+    return normalized !== String(intent.location || "").toLowerCase() && haystack.includes(normalized);
+  });
   const eventMatch = (intent.event || []).some(event => haystack.includes(String(event).toLowerCase()));
   const locationMatch = intent.location && haystack.includes(String(intent.location).toLowerCase());
-  const queryMatches = [...new Set(queryTokens)].filter(token => haystack.includes(token)).length;
-  return Math.min(88, 48 + matches * 8 + queryMatches * 5 + (entityMatch ? 10 : 0) + (eventMatch ? 8 : 0) + (locationMatch ? 8 : 0));
+  const queryMatches = semanticQueryTokens.filter(token => haystack.includes(token)).length;
+  const locationOnlyQuery = semanticQueryTokens.length === 0
+    && !(intent.entities || []).some(entity => String(entity).toLowerCase() !== String(intent.location || "").toLowerCase())
+    && !(intent.event || []).length;
+  if (!entityMatch && !eventMatch && queryMatches === 0 && !locationOnlyQuery) return 0;
+  return Math.min(88, 48 + matches * 8 + queryMatches * 5 + (entityMatch ? 10 : 0) + (eventMatch ? 8 : 0) + (locationMatch ? 8 : 0) + (locationMatch && queryMatches ? 5 : 0));
 }
 
 async function commonsImage(query, intent = {}) {
@@ -708,13 +726,22 @@ function feedAssociatedMedia(item, cat, district) {
   });
 }
 
-async function articleImage(item, cat, district) {
+async function articleImage(item, cat, district, index = 0) {
   const associated = feedAssociatedMedia(item, cat, district);
   if (associated.url) return associated;
 
   const title = publicTitle(item.title);
   const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
-  return brandedFallbackDecision(intent, "The feed did not provide an image associated with this exact article");
+  const archive = await commonsImage(imageSearchQuery(title, cat, district), intent);
+  if (archive.url && archive.relevanceScore >= AUTO_IMAGE_THRESHOLD) return archive;
+  return representativeImageDecision(
+    title,
+    cat,
+    district,
+    index,
+    intent,
+    "No exact provider or licensed archive photograph was available"
+  );
 }
 
 function mergeCanonicalArticles(primary = [], secondary = []) {
@@ -737,8 +764,9 @@ function approvedPersistedImage(row = {}) {
     if (media && !["cms_approved", "cms_upload", "uploaded"].includes(imageType)) return null;
     return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
   }
-  if (!media || media.requiresReview === true || ["archive", "representative", "branded_fallback", "missing"].includes(imageType)) return null;
-  if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload"].includes(imageType)) return null;
+  if (!media || media.requiresReview === true || ["branded_fallback", "missing"].includes(imageType)) return null;
+  if (imageType === "representative" && String(media.source || "").toLowerCase() !== "unsplash") return null;
+  if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload", "archive", "representative"].includes(imageType)) return null;
   return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
 }
 

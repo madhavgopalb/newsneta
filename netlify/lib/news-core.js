@@ -726,14 +726,16 @@ function feedAssociatedMedia(item, cat, district) {
   });
 }
 
-async function articleImage(item, cat, district, index = 0) {
+async function articleImage(item, cat, district, index = 0, options = {}) {
   const associated = feedAssociatedMedia(item, cat, district);
   if (associated.url) return associated;
 
   const title = publicTitle(item.title);
   const intent = extractImageIntent(title, cat, district, item.contentSnippet || item.content || item.summary);
-  const archive = await commonsImage(imageSearchQuery(title, cat, district), intent);
-  if (archive.url && archive.relevanceScore >= AUTO_IMAGE_THRESHOLD) return archive;
+  if (!options.skipArchive) {
+    const archive = await commonsImage(imageSearchQuery(title, cat, district), intent);
+    if (archive.url && archive.relevanceScore >= AUTO_IMAGE_THRESHOLD) return archive;
+  }
   return representativeImageDecision(
     title,
     cat,
@@ -942,7 +944,7 @@ exports.handler = async function handler(event, getDatabase) {
     // Google News RSS does not normally expose enclosures. Scheduled ingestion
     // must therefore use the same rights-aware resolver as a live request;
     // otherwise text-only rows become authoritative and suppress valid media.
-    const imageResults = await mapWithConcurrency(rawItems, ingestionMode ? 4 : 5, (item, index) => articleImage(item, cat, district, index));
+    const imageResults = await mapWithConcurrency(rawItems, ingestionMode ? 4 : 5, (item, index) => articleImage(item, cat, district, index, { skipArchive: ingestionMode }));
     const items = rawItems.map((item, index) => {
       const title = publicTitle(item.title);
       const description = expandedNewsDescription(title, cat, district, item.contentSnippet || item.content || item.summary);

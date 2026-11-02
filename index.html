@@ -876,6 +876,12 @@ html{scroll-padding-top:156px}
 .cms-screen-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
 .cms-screen-head strong{font-size:18px}
 .cms-screen-head small{display:block;color:var(--muted);font-weight:800;margin-top:2px}
+.cms-upload-guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;background:#fff;border:1px solid var(--line);padding:10px}
+.cms-upload-guide div{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;min-width:0}
+.cms-upload-guide span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:900}
+.cms-upload-guide strong{font-size:13px;line-height:1.25}
+.cms-upload-guide small{display:block;color:var(--muted);font-weight:700;line-height:1.35;margin-top:2px}
+@media(max-width:700px){.cms-upload-guide{grid-template-columns:1fr 1fr}.cms-upload-guide div{grid-template-columns:24px 1fr}.cms-upload-guide span{width:24px;height:24px}}
 .cms-feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .cms-feature-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:12px}
 .cms-feature-card strong{display:block;margin-bottom:5px}
@@ -4994,6 +5000,12 @@ function cmsWorkflowForm(role){
  if(role === "reporter"){
   return `<form class="cms-form two-column" id="storyUploadForm">
    <strong>Upload News Article</strong>
+   <div class="cms-upload-guide" aria-label="Reporter publishing steps">
+    <div><span>1</span><p><strong>Write</strong><small>Add headline, summary, full article, category and district.</small></p></div>
+    <div><span>2</span><p><strong>Upload</strong><small>Select one or more images, a thumbnail or video from this device.</small></p></div>
+    <div><span>3</span><p><strong>Verify</strong><small>Add source, caption, rights owner and usage permission.</small></p></div>
+    <div><span>4</span><p><strong>Submit</strong><small>Save a draft or send the completed article to the reviewer.</small></p></div>
+   </div>
    ${aiTools}
    <label>Telugu Headline *<textarea id="cmsHeadline" placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">${escapeHtml(article.headline)}</textarea></label>
    <label>English Headline<input id="cmsEnglishHeadline" value="${escapeAttr(article.englishHeadline)}" placeholder="English headline (optional)"></label>
@@ -5070,9 +5082,9 @@ function cmsWorkflowForm(role){
     <label><input id="cmsBreaking" type="checkbox" ${article.breaking ? "checked" : ""}> Breaking news flag</label>
     <label><input id="cmsFeaturedRequest" type="checkbox" ${article.featuredRequest ? "checked" : ""}> Request featured placement</label>
    </div>
-   <div class="storage-note">Media files use cloud storage metadata. Production upload should use signed URLs with Supabase Storage, S3, or Cloudflare R2; the database stores URLs and metadata only.</div>
+   <div class="storage-note">Choose files directly from desktop or mobile. NewsNeta uploads them to newsroom storage and keeps the article, caption and rights metadata together.</div>
    ${compliance}
-   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-save-draft="true">Save Draft</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Queue</button><button class="pill-btn admin-login-btn" type="submit">Submit for Review</button></div>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-save-draft="true">Save Draft</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="review">View Queue</button><button class="pill-btn admin-login-btn" type="submit">Submit for Review</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Reporter can save drafts, attach media metadata, and submit for review.</div>
   </form>`;
  }
@@ -5087,7 +5099,7 @@ function cmsWorkflowForm(role){
     <label>Status<select id="cmsReviewStatus"><option>Approve</option><option>Send back to reporter</option><option>Reject</option></select></label>
    </div>
    ${compliance}
-   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Review Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve for Publish Queue</button></div>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="review">Open Review Queue</button><button class="pill-btn admin-login-btn" type="submit">Approve for Publish Queue</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Story ready for reviewer decision. Current status: ${articleStatusLabel(article.status)}.</div>
   </form>`;
  }
@@ -5101,7 +5113,7 @@ function cmsWorkflowForm(role){
   </div>
   <label>Push alert copy<input id="cmsPushCopy" value="${escapeAttr(article.headline)}"></label>
   ${compliance}
-  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="unpublish" data-article-id="${escapeAttr(article.id)}">Unpublish</button><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="archive" data-article-id="${escapeAttr(article.id)}">Archive</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Final Decision</button></div>
+  <div class="cms-form-actions"><button class="pill-btn danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete Article</button><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="unpublish" data-article-id="${escapeAttr(article.id)}">Unpublish</button><button class="pill-btn cms-secondary-btn" type="button" data-queue-action="archive" data-article-id="${escapeAttr(article.id)}">Archive</button><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="review">Open Publish Queue</button><button class="pill-btn admin-login-btn" type="submit">Final Decision</button></div>
   <div class="workflow-note" id="cmsWorkflowNote">Admin can publish to home, ticker and today's edition. Current status: ${articleStatusLabel(article.status)}.</div>
  </form>`;
 }
@@ -5135,7 +5147,7 @@ function cmsVideoScreen(role){
    <label>Video URL / Upload Path<input placeholder="https://... or storage path"></label>
    <label>Thumbnail URL<input placeholder="https://..."></label>
    <label>Description<textarea>Short video summary, source notes, and publish instructions.</textarea></label>
-   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="manage">View Video Queue</button><button class="pill-btn admin-login-btn" type="submit">${role === "reviewer" ? "Approve Video" : role === "admin" ? "Publish Video" : "Submit Video"}</button></div>
+   <div class="cms-form-actions"><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="review">View Video Queue</button><button class="pill-btn admin-login-btn" type="submit">${role === "reviewer" ? "Approve Video" : role === "admin" ? "Publish Video" : "Submit Video"}</button></div>
    <div class="workflow-note" id="cmsWorkflowNote">Video workspace ready.</div>
  </form>
  </div>`;
@@ -5175,7 +5187,7 @@ function cmsManageScreen(role){
   const canApprove = role === "reviewer" && ["submitted","under_review","review"].includes(article.status);
   const canPublish = role === "admin" && ["reviewer_approved","admin_review","approved","scheduled"].includes(article.status);
   const canDelete = role === "admin";
-  return `<div class="queue-item"><span><strong>${escapeHtml(article.headline)}</strong><br><small>${escapeHtml(article.district)} • ${escapeHtml(article.category)} • <span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></small></span><div class="queue-actions">${canSubmit ? `<button type="button" data-queue-action="submit" data-article-id="${escapeAttr(article.id)}">Submit</button>` : ""}${canApprove ? `<button type="button" data-queue-action="approve" data-article-id="${escapeAttr(article.id)}">Approve</button>` : ""}${canPublish ? `<button type="button" data-queue-action="publish" data-article-id="${escapeAttr(article.id)}">Publish</button>` : ""}<button type="button" data-cms-screen-jump="article">Open</button>${canDelete ? `<button class="danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete</button>` : ""}</div></div>`;
+  return `<div class="queue-item"><span><strong>${escapeHtml(article.headline)}</strong><br><small>${escapeHtml(article.district)} • ${escapeHtml(article.category)} • <span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></small></span><div class="queue-actions">${canSubmit ? `<button type="button" data-queue-action="submit" data-article-id="${escapeAttr(article.id)}">Submit</button>` : ""}${canApprove ? `<button type="button" data-queue-action="approve" data-article-id="${escapeAttr(article.id)}">Approve</button>` : ""}${canPublish ? `<button type="button" data-queue-action="publish" data-article-id="${escapeAttr(article.id)}">Publish</button>` : ""}<button type="button" data-cms-screen-jump="create">Open</button>${canDelete ? `<button class="danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete</button>` : ""}</div></div>`;
  }).join("") : `<div class="queue-item"><span>No active CMS articles<br><small>Use Article Upload to recreate the sample story.</small></span><div class="queue-actions"><button type="button" data-reset-sample="true">Create Sample</button></div></div>`;
  return `<div class="cms-screen">
   <div class="cms-screen-head"><div><strong>Manage Content</strong><small>Working queue for reporter upload, reviewer approval, admin publish and delete rights.</small></div><span class="chip">Manage</span></div>

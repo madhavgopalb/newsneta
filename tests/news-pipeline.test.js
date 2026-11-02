@@ -102,6 +102,30 @@ test("licensed image matching uses a labelled topic fallback instead of a locati
   }
 });
 
+test("scheduled ingestion skips slow archive search and uses the reviewed topic tier", async () => {
+  const originalFetch = global.fetch;
+  let fetches = 0;
+  global.fetch = async () => {
+    fetches += 1;
+    throw new Error("Archive search should be skipped during scheduled ingestion");
+  };
+  try {
+    const media = await news.articleImage(
+      { title: "Hyderabad RTC bus route update" },
+      "telangana",
+      "Hyderabad",
+      0,
+      { skipArchive: true }
+    );
+    assert.equal(fetches, 0);
+    assert.equal(media.imageType, "representative");
+    assert.equal(media.requiresReview, false);
+    assert.match(media.url, /^https:\/\/images\.unsplash\.com\//);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test("fresh news deduplicates canonical headline variants", () => {
   const now = new Date().toISOString();
   const items = news.freshSorted([
@@ -227,7 +251,8 @@ test("ingestion preserves valid persisted media when a later source update has n
 test("scheduled ingestion uses the rights-aware resolver instead of enclosure-only media", () => {
   const source = fs.readFileSync(path.join(__dirname, "../netlify/lib/news-core.js"), "utf8");
   const resolver = source.slice(source.indexOf("const imageResults ="), source.indexOf("const items = rawItems.map"));
-  assert.match(resolver, /articleImage\(item, cat, district, index\)/);
+  assert.match(resolver, /articleImage\(item, cat, district, index,/);
+  assert.match(resolver, /skipArchive: ingestionMode/);
   assert.doesNotMatch(resolver, /rawItems\.map\(item => feedAssociatedMedia/);
 });
 

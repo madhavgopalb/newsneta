@@ -1820,11 +1820,11 @@ body{background:var(--bg)}
     </div>
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
-   <div class="cms-tabs" aria-label="CMS sections">
-    <button class="cms-tab active" type="button" data-cms-screen="article">Article</button>
-    <button class="cms-tab" type="button" data-cms-screen="video">Video</button>
-    <button class="cms-tab" type="button" data-cms-screen="manage">Manage</button>
-    <button class="cms-tab" type="button" data-cms-screen="analytics">Analytics</button>
+    <div class="cms-tabs" aria-label="NewsNeta Studio sections">
+     <button class="cms-tab active" type="button" data-cms-screen="create">Create Article</button>
+     <button class="cms-tab" type="button" data-cms-screen="feeds">Import Live Feeds</button>
+     <button class="cms-tab" type="button" data-cms-screen="media">Media Library</button>
+     <button class="cms-tab" type="button" data-cms-screen="review">Review &amp; Publish</button>
    </div>
    <div class="login-content">
     <div class="login-panel">
@@ -2008,11 +2008,15 @@ function saveCmsArticles(){
 
 let cmsSessionToken = sessionStorage.getItem("newsneta-cms-token") || "";
 
+function cmsHeaders(){
+ return {Authorization:`Bearer ${cmsSessionToken}`};
+}
+
 async function cmsApi(action, {method="POST", body=null, form=null} = {}){
  const response = await fetch(`/.netlify/functions/cms?action=${encodeURIComponent(action)}`, {
   method,
   cache:"no-store",
-  headers:form ? {Authorization:`Bearer ${cmsSessionToken}`} : {Authorization:`Bearer ${cmsSessionToken}`,"Content-Type":"application/json"},
+  headers:form ? cmsHeaders() : {...cmsHeaders(),"Content-Type":"application/json"},
   body:form || (body ? JSON.stringify(body) : null)
  });
  const payload = await response.json();
@@ -5207,12 +5211,50 @@ function cmsAnalyticsScreen(role){
  </div>`;
 }
 
+function cmsFeedScreen(role){
+ if(role !== "admin") return `<div class="cms-screen"><div class="cms-screen-head"><div><strong>Import Live Feeds</strong><small>Only administrators can run or inspect feed ingestion.</small></div><span class="chip">Restricted</span></div></div>`;
+ const feedCategories = ["latest","telangana","ap","politics","national","international","cinema","sports","technology","business"];
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Import Live Feeds</strong><small>Run approved RSS/API ingestion and monitor freshness, rejected records and media coverage.</small></div><span class="chip">Admin</span></div>
+  <div class="cms-feature-card">
+   <strong>Authorized feed import</strong>
+   <small>Select up to four desks. Imported items remain source-attributed briefs unless an authorized full-text source supplies complete content.</small>
+   <div class="compliance-checks" id="cmsFeedCategories">${feedCategories.map((category,index)=>`<label><input type="checkbox" value="${category}" ${index < 4 ? "checked" : ""}> ${categoryLabelForId(category)}</label>`).join("")}</div>
+   <div class="cms-form-actions"><button class="pill-btn admin-login-btn" id="cmsImportFeeds" type="button">Import selected feeds</button><button class="pill-btn cms-secondary-btn" id="cmsLoadHealth" type="button">Refresh feed health</button></div>
+   <div class="workflow-note" id="cmsFeedNote">Ready to check ingestion health.</div>
+  </div>
+  <pre id="cmsHealthOutput" class="storage-note">Feed health has not been loaded.</pre>
+ </div>`;
+}
+
+function cmsMediaLibraryScreen(role){
+ const media = cmsArticles
+  .filter(article=>article.status !== "deleted")
+  .flatMap(article=>(article.media || []).map(item=>({article,item})))
+  .filter(entry=>entry.item?.public_url || entry.item?.url);
+ const items = media.map(({article,item})=>{
+  const url = item.public_url || item.url;
+  const mime = item.mime_type || item.mimeType || "";
+  const preview = mime.startsWith("video/")
+   ? `<video src="${escapeAttr(url)}" controls playsinline preload="metadata"></video>`
+   : `<img src="${escapeAttr(url)}" alt="${escapeAttr(item.alt_text || article.headline)}" loading="lazy" onerror="imageFallback(event)">`;
+  return `<div class="media-item">${preview}<b>${escapeHtml(item.caption || item.original_file_name || article.headline)}</b><small>${escapeHtml(article.headline)} • ${escapeHtml(item.source || item.storage_provider || "NewsNeta")}</small><small>${escapeHtml(item.license || "Rights review required before publication")}</small></div>`;
+ }).join("");
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>Media Library</strong><small>Images and videos uploaded against newsroom articles, with source and rights metadata.</small></div><span class="chip">${media.length} files</span></div>
+  <div class="media-list">${items || `<div class="media-item"><b>No uploaded media yet.</b><small>Use Create Article to upload an image, thumbnail or video.</small></div>`}</div>
+  <div class="cms-form-actions"><button class="pill-btn admin-login-btn" type="button" data-cms-screen-jump="create">Upload with an article</button></div>
+ </div>`;
+}
+
 function cmsScreenMarkup(role, screen="article"){
+ if(screen === "feeds") return cmsFeedScreen(role);
+ if(screen === "media") return cmsMediaLibraryScreen(role);
+ if(screen === "review" || screen === "manage") return cmsManageScreen(role);
  if(screen === "video") return cmsVideoScreen(role);
- if(screen === "manage") return cmsManageScreen(role);
  if(screen === "analytics") return cmsAnalyticsScreen(role);
  return `<div class="cms-screen">
-  <div class="cms-screen-head"><div><strong>Article Upload</strong><small>Create, review, approve and publish Telugu news.</small></div><span class="chip">Article</span></div>
+   <div class="cms-screen-head"><div><strong>Create Article</strong><small>Write Telugu news, attach approved media, save a draft and submit it through the newsroom workflow.</small></div><span class="chip">Create</span></div>
  ${cmsWorkflowForm(role)}
  </div>`;
 }
@@ -5431,16 +5473,31 @@ function bindCmsScreen(role){
  bindCmsUploadInputs();
  document.getElementById("cmsLoadHealth")?.addEventListener("click", async()=>{
   const output = document.getElementById("cmsHealthOutput");
-  const token = document.getElementById("cmsHealthToken")?.value || "";
   if(!output || role !== "admin") return;
   output.textContent = "Loading production health...";
   try{
-   const response = await fetch("/.netlify/functions/news-health", {cache:"no-store", headers:{Authorization:`Bearer ${token}`}});
+    const response = await fetch("/.netlify/functions/news-health", {cache:"no-store", headers:cmsHeaders()});
    const payload = await response.json();
    if(!response.ok) throw new Error(payload.message || `Health API ${response.status}`);
    output.textContent = JSON.stringify(payload, null, 2);
   }catch(error){
    output.textContent = `Health data unavailable: ${error.message || error}`;
+  }
+ });
+ document.getElementById("cmsImportFeeds")?.addEventListener("click", async()=>{
+  const note = document.getElementById("cmsFeedNote");
+  const output = document.getElementById("cmsHealthOutput");
+  const categories = [...document.querySelectorAll("#cmsFeedCategories input:checked")].map(input=>input.value).slice(0,4);
+  if(role !== "admin" || !categories.length) return;
+  if(note) note.textContent = `Importing ${categories.join(", ")}...`;
+  try{
+   const response = await fetch("/.netlify/functions/refresh-news", {method:"POST",cache:"no-store",headers:{...cmsHeaders(),"Content-Type":"application/json"},body:JSON.stringify({categories})});
+   const payload = await response.json();
+   if(!response.ok) throw new Error(payload.message || `Feed import ${response.status}`);
+   if(note) note.textContent = `Feed import completed for ${categories.join(", ")}.`;
+   if(output) output.textContent = JSON.stringify(payload, null, 2);
+  }catch(error){
+   if(note) note.textContent = `Feed import failed: ${error.message || error}`;
   }
  });
  document.getElementById("storyUploadForm")?.addEventListener("submit",async event=>{
@@ -5489,7 +5546,7 @@ function bindCmsScreen(role){
    const targetStatus = article.status;
    await persistCmsArticle(article, targetStatus === "draft" ? null : targetStatus);
    saveCmsArticles();
-   switchCmsScreen("manage");
+    switchCmsScreen("review");
   }catch(error){
    const note=document.getElementById("cmsWorkflowNote");
    if(note) note.textContent=`Server sync failed: ${error.message || error}`;
@@ -5538,13 +5595,13 @@ function bindCmsScreen(role){
     addWorkflowEntry(article, "archived", "Admin archived", "Article moved to archive.");
     notifyArticle(article, "article_archived", "Article archived by admin.");
    }
-   try{ await persistCmsArticle(article, article.status === "draft" ? null : article.status); saveCmsArticles(); switchCmsScreen("manage"); }
+    try{ await persistCmsArticle(article, article.status === "draft" ? null : article.status); saveCmsArticles(); switchCmsScreen("review"); }
    catch(error){ const note=document.getElementById("cmsWorkflowNote"); if(note) note.textContent=`Server sync failed: ${error.message || error}`; }
   });
  });
  document.querySelectorAll("[data-delete-article]").forEach(button=>{
   button.addEventListener("click",async()=>{
-   try{ await cmsApi("delete", {body:{id:button.dataset.deleteArticle}}); deleteCmsArticle(button.dataset.deleteArticle); switchCmsScreen("manage"); }
+    try{ await cmsApi("delete", {body:{id:button.dataset.deleteArticle}}); deleteCmsArticle(button.dataset.deleteArticle); switchCmsScreen("review"); }
    catch(error){ const note=document.getElementById("cmsWorkflowNote"); if(note) note.textContent=`Delete failed: ${error.message || error}`; }
   });
  });
@@ -5552,7 +5609,7 @@ function bindCmsScreen(role){
   button.addEventListener("click",()=>{
    cmsArticles = [cmsArticleDefaults(cmsSessionToken ? {id:`draft-${Date.now()}`,status:"draft",headline:"",body:"",summary:"",category:"telangana",state:"Telangana",district:"Hyderabad",media:[]} : {...cmsSampleArticle})];
    saveCmsArticles();
-   switchCmsScreen("article");
+    switchCmsScreen("create");
   });
  });
  document.querySelectorAll("[data-cms-screen-jump]").forEach(button=>{
@@ -5592,19 +5649,19 @@ function openRoleDashboard(role, user = currentCmsUser){
  content.innerHTML = `
   <div class="cms-shell">
    <aside class="cms-sidebar">
-    <strong>NewsNeta CMS</strong>
+     <strong>NewsNeta Studio</strong>
     <small>${user ? `${user.name} • ${user.location.city}` : "Newsroom"} workspace</small>
-    <button class="cms-menu-btn active" type="button" data-cms-screen="article">Article Upload / Publish</button>
-    <button class="cms-menu-btn" type="button" data-cms-screen="video">Video Upload</button>
-    <button class="cms-menu-btn" type="button" data-cms-screen="manage">Manage Queue</button>
-    <button class="cms-menu-btn" type="button" data-cms-screen="analytics">Analytics</button>
+     <button class="cms-menu-btn active" type="button" data-cms-screen="create">Create Article</button>
+     <button class="cms-menu-btn" type="button" data-cms-screen="feeds">Import Live Feeds</button>
+     <button class="cms-menu-btn" type="button" data-cms-screen="media">Media Library</button>
+     <button class="cms-menu-btn" type="button" data-cms-screen="review">Review &amp; Publish</button>
    </aside>
    <div class="cms-workspace">
   <div class="dashboard-head">
    <div><h3>${data.title}</h3><p>${user ? `${user.name} • ${user.location.city} desk • ` : ""}${data.subtitle}</p></div>
    <div class="dashboard-head-actions">
-    <button class="pill-btn admin-login-btn" type="button" data-cms-screen-jump="article">${role === "admin" ? "Publish News" : role === "reviewer" ? "Review News" : "Upload News"}</button>
-    <button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="video">Upload Video</button>
+     <button class="pill-btn admin-login-btn" type="button" data-cms-screen-jump="create">${role === "admin" ? "Create News" : role === "reviewer" ? "Open Article" : "Create Article"}</button>
+     <button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="review">Review &amp; Publish</button>
     <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
    </div>
   </div>
@@ -5615,7 +5672,7 @@ function openRoleDashboard(role, user = currentCmsUser){
    ${data.actions.map(([title,desc])=>`<button class="dashboard-action" type="button"><strong>${title}</strong><small>${desc}</small></button>`).join("")}
   </div>
   ${cmsWorkflowLane(role)}
-  <div id="cmsScreenHost">${cmsScreenMarkup(role, "article")}</div>
+   <div id="cmsScreenHost">${cmsScreenMarkup(role, "create")}</div>
    </div>
   </div>
  `;
@@ -5627,7 +5684,7 @@ function openRoleDashboard(role, user = currentCmsUser){
   cmsSessionToken = "";
   document.querySelector(".login-modal")?.classList.remove("authenticated");
   document.getElementById("loginTitle").textContent = "Login";
-  document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
+   document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "create"));
   renderWeather();
   loadNews("latest", true);
  });

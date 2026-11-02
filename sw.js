@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v92";
+const CACHE_VERSION = "v93";
 const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
 const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
 const MEDIA_CACHE_NAME = `newsneta-media-${CACHE_VERSION}`;

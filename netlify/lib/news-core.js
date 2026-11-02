@@ -109,6 +109,26 @@ const IMAGE_SETS = {
     "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1000&q=76",
     "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1000&q=76"
   ],
+  agriculture: [
+    "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1000&q=76",
+    "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1000&q=76"
+  ],
+  health: [
+    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1000&q=76",
+    "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1000&q=76"
+  ],
+  education: [
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=76",
+    "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=76"
+  ],
+  jobs: [
+    "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1000&q=76",
+    "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=76"
+  ],
+  infrastructure: [
+    "https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&w=1000&q=76",
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=76"
+  ],
   default: [
     "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1000&q=76",
     "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=1000&q=76"
@@ -530,13 +550,21 @@ function selectImage(title, cat, district, index) {
   const text = `${title} ${cat} ${district}`.toLowerCase();
   let key = cat;
   if (/gold|బంగారం|పసిడి/.test(text)) key = "gold";
+  else if (/health|hospital|doctor|medical|child safety|ఆరోగ్య|వైద్య|ఆసుపత్రి|డాక్టర్|చిన్నారుల భద్రత/.test(text)) key = "health";
+  else if (/land survey|farmer|farm|crop|agriculture|భూముల రీ-సర్వే|భూ సర్వే|రైతు|పంట|వ్యవసాయ/.test(text)) key = "agriculture";
+  else if (/railway|bridge|construction|infrastructure|రైల్వే|వంతెన|నిర్మాణ/.test(text)) key = "infrastructure";
+  else if (/election|polling|vote|ballot|ఎన్నిక|పోలింగ్|ఓటు/.test(text)) key = "politics";
+  else if (/employment|recruitment|job|vacancy|ఉపాధి|ఉద్యోగ|నియామక|రిక్రూట్/.test(text)) key = "jobs";
+  else if (/school|college|education|exam|results|విద్య|పాఠశాల|కళాశాల|పరీక్ష|ఫలిత/.test(text)) key = "education";
   else if (/cricket|క్రికెట్|ipl|sports|క్రీడ/.test(text)) key = "cricket";
   else if (/weather|temperature|rain|cyclone|వాతావరణ|ఉష్ణోగ్రత|వర్ష/.test(text)) key = "weather";
   else if (/traffic|metro|road|accident|ట్రాఫిక్|రోడ్డు|ప్రమాద/.test(text)) key = "traffic";
-  else if (/movie|cinema|సినిమా|బాక్సాఫీస్/.test(text)) key = "cinema";
+  else if (/movie|cinema|film|bigg boss|సినిమా|బాక్సాఫీస్|బిగ్ బాస్|నటుడు|నటి|గ్లామర్/.test(text)) key = "cinema";
   else if (/market|business|stock|economy|మార్కెట్|వ్యాపార/.test(text)) key = "business";
   else if (/tech|ai|mobile|టెక్నాలజీ|మొబైల్/.test(text)) key = "technology";
   else if (/trump|iran|israel|world|అంతర్జాతీయ|ప్రపంచ/.test(text)) key = "international";
+  else if (/minister|prime minister|chief minister|amit shah|modi|jagan|chandrababu|revanth|kumaraswamy|మంత్రి|ప్రధాని|సీఎం|అమిత్ షా|మోదీ|జగన్|చంద్రబాబు|రేవంత్|కుమారస్వామి|కిషన్ రెడ్డి/.test(text)) key = "politics";
+  else if (cat === "national") key = "politics";
   else if (district) key = cat === "ap" ? "ap" : "telangana";
 
   const images = IMAGE_SETS[key] || IMAGE_SETS.default;
@@ -1053,4 +1081,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, stableImageIndex, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, selectImage, stableImageIndex, trustedImageUrl };

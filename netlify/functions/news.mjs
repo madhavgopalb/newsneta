@@ -2,7 +2,7 @@ import { getDatabase } from "@netlify/database";
 import "rss-parser";
 import newsCore from "../lib/news-core.js";
 
-const PROXIED_IMAGE_HOSTS = new Set(["thumb.wikimedia.org", "upload.wikimedia.org"]);
+const PROXIED_IMAGE_HOSTS = new Set(["thumb.wikimedia.org", "upload.wikimedia.org", "images.unsplash.com"]);
 
 export function deliveryImageUrl(value, origin) {
   if (!value) return value;

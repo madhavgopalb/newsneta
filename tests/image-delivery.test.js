@@ -75,3 +75,44 @@ test("representative media uses the story subject instead of only its state", ()
     }[expectedSet]);
   }
 });
+
+test("persisted broad representative media is reclassified without replacing exact media", () => {
+  const { _test } = require(path.join(root, "netlify/lib/news-core.js"));
+  const base = {
+    id: "land-survey-story",
+    title: "వీరాయపల్లిలో వేగంగా భూముల రీ-సర్వే",
+    summary: "భూముల సర్వే కొనసాగుతోంది.",
+    category: "ap",
+    author_id: "feed:google-news",
+    content_status: "brief",
+    source_url: "https://example.com/land-survey",
+    published_at: new Date().toISOString()
+  };
+  const broad = _test.persistedArticleFromRow({
+    ...base,
+    featured_media: {
+      url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+      source: "Unsplash",
+      license: "Unsplash License",
+      imageType: "representative",
+      relevanceScore: 82,
+      requiresReview: false
+    }
+  });
+  assert.match(broad.image, /photo-(1500937386664-56d1dfef3854|1625246333195-78d9c38ad449)/);
+  assert.doesNotMatch(broad.image, /photo-1500530855697-b586d89ba3ee/);
+
+  const exactUrl = "https://licensed.example/land-survey-event.jpg";
+  const exact = _test.persistedArticleFromRow({
+    ...base,
+    featured_media: {
+      url: exactUrl,
+      source: "Licensed publisher",
+      license: "Licensed syndication",
+      imageType: "event_candidate",
+      relevanceScore: 92,
+      requiresReview: false
+    }
+  });
+  assert.equal(exact.image, exactUrl);
+});

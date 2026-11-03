@@ -15,6 +15,10 @@ const safeBody = value => String(value || "")
   .filter(Boolean)
   .join("\n\n")
   .trim();
+const safeDescription = value => safeBody(String(value || "")
+  .replace(/<\s*br\s*\/?>/gi, "\n")
+  .replace(/<\/(?:p|div|li|h[1-6])>/gi, "\n\n")
+  .replace(/<[^>]+>/g, " "));
 const stableHash = value => crypto.createHash("sha256").update(String(value)).digest("hex");
 const slugFor = (title, identity) => {
   const base = safeText(title).toLowerCase().replace(/[^a-z0-9\u0c00-\u0c7f]+/gu, "-").replace(/^-|-$/g, "").slice(0, 150) || "news";
@@ -39,13 +43,21 @@ function canonicalArticle(item, category, provider) {
   const sourceUrl = safeText(item.link || item.url);
   const sourceArticleId = safeText(item.id || item.guid || sourceUrl).slice(0, 320);
   if (!sourceArticleId || !safeText(item.title) || !item.pubDate) return null;
-  const media = item.media && item.media.url ? item.media : null;
+  const candidateMedia = item.media && item.media.url ? item.media : null;
+  const mediaApproved = candidateMedia
+    && String(candidateMedia.approvalStatus || candidateMedia.approval_status || "").toLowerCase() === "approved"
+    && candidateMedia.requiresReview !== true
+    && candidateMedia.license
+    && !/unknown|verify/i.test(String(candidateMedia.license));
+  const media = mediaApproved ? candidateMedia : null;
   const contentStatus = item.contentStatus === "licensed_full_text" ? "licensed_full_text" : "brief";
+  const sourceDescription = safeDescription(item.sourceDescription || item.description || item.summary || item.aiSummary);
   return {
     identity: sourceArticleId,
     slug: slugFor(item.title, `${provider}:${sourceArticleId}`),
     title: safeText(item.title),
-    summary: safeText(item.description || item.summary || item.aiSummary),
+    summary: safeText(item.summary || item.description || item.aiSummary).slice(0, 1000),
+    sourceDescription,
     body: contentStatus === "licensed_full_text" ? safeBody(item.body || item.fullArticle) : "",
     contentStatus,
     category,
@@ -128,18 +140,19 @@ async function ingestCategory(client, category, getDatabase) {
     if (article.brokenMedia) counts.brokenMedia += 1;
     const query = await client.query({
       text: `INSERT INTO articles (
-        slug, title, summary, body, category, state, district, status, author_id,
+        slug, title, summary, source_description, body, category, state, district, status, author_id,
         image_url, thumbnail_url, media, featured_media, source_provider,
         source_article_id, source_url, source_name, source_published_at,
         published_at, ingested_at, last_seen_at, created_at, updated_at, content_status,
         full_content_review_required, full_content_review_reason
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,'published',$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$17,now(),now(),now(),now(),$18,$19,$20
+        $1,$2,$3,$4,$5,$6,$7,$8,'published',$9,$10,$11,$12::jsonb,$13::jsonb,$14,$15,$16,$17,$18,$18,now(),now(),now(),now(),$19,$20,$21
       ) ON CONFLICT (source_provider, source_article_id)
         WHERE source_provider IS NOT NULL AND source_article_id IS NOT NULL
       DO UPDATE SET
         title=EXCLUDED.title,
         summary=COALESCE(NULLIF(EXCLUDED.summary, ''), articles.summary),
+        source_description=COALESCE(NULLIF(EXCLUDED.source_description, ''), articles.source_description),
         body=CASE
           WHEN articles.content_status IN ('licensed_full_text','newsroom_full_text') AND EXCLUDED.content_status='brief' THEN articles.body
           ELSE EXCLUDED.body
@@ -160,14 +173,14 @@ async function ingestCategory(client, category, getDatabase) {
         state=COALESCE(EXCLUDED.state, articles.state), district=COALESCE(EXCLUDED.district, articles.district),
         source_url=EXCLUDED.source_url, source_name=EXCLUDED.source_name,
         source_published_at=EXCLUDED.source_published_at, published_at=EXCLUDED.published_at,
-        image_url=COALESCE(EXCLUDED.image_url, articles.image_url),
-        thumbnail_url=COALESCE(EXCLUDED.thumbnail_url, articles.thumbnail_url),
-        media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media ELSE articles.media END,
-        featured_media=COALESCE(EXCLUDED.featured_media, articles.featured_media),
+        image_url=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.image_url WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.image_url ELSE NULL END,
+        thumbnail_url=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.thumbnail_url WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.thumbnail_url ELSE NULL END,
+        media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.media ELSE '[]'::jsonb END,
+        featured_media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.featured_media WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.featured_media ELSE NULL END,
         last_seen_at=now(), updated_at=now()
       RETURNING (xmax = 0) AS inserted`,
       values: [
-        article.slug, article.title, article.summary, article.body, article.category,
+        article.slug, article.title, article.summary, article.sourceDescription, article.body, article.category,
         article.state, article.district, article.authorId, article.imageUrl,
         article.thumbnailUrl, JSON.stringify(article.featuredMedia ? [article.featuredMedia] : []),
         JSON.stringify(article.featuredMedia), provider, article.identity, article.sourceUrl,

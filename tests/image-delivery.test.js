@@ -26,7 +26,7 @@ test("news API rewrites approved archive media to same-origin delivery", async (
   assert.equal(news.deliveryImageUrl("https://licensed.example/article.jpg", "https://newsneta.com"), "https://licensed.example/article.jpg");
 });
 
-test("legacy feed records receive deterministic approved representative media", () => {
+test("legacy feed records without approved article media remain text-only", () => {
   const { _test } = require(path.join(root, "netlify/lib/news-core.js"));
   const row = {
     id: "legacy-feed-story",
@@ -46,11 +46,9 @@ test("legacy feed records receive deterministic approved representative media", 
   };
   const first = _test.persistedArticleFromRow(row);
   const second = _test.persistedArticleFromRow(row);
-  assert.match(first.image, /^https:\/\/images\.unsplash\.com\/photo-/);
+  assert.equal(first.image, null);
   assert.equal(first.image, second.image);
-  assert.equal(first.imageLabel, "REPRESENTATIVE IMAGE");
-  assert.equal(first.mediaDecision.imageType, "representative");
-  assert.equal(first.mediaDecision.requiresReview, false);
+  assert.equal(first.mediaDecision, null);
 });
 
 test("representative media uses the story subject instead of only its state", () => {
@@ -76,7 +74,7 @@ test("representative media uses the story subject instead of only its state", ()
   }
 });
 
-test("persisted broad representative media is reclassified without replacing exact media", () => {
+test("persisted broad representative media is rejected while explicitly approved exact media survives", () => {
   const { _test } = require(path.join(root, "netlify/lib/news-core.js"));
   const base = {
     id: "land-survey-story",
@@ -99,8 +97,7 @@ test("persisted broad representative media is reclassified without replacing exa
       requiresReview: false
     }
   });
-  assert.match(broad.image, /photo-(1500937386664-56d1dfef3854|1625246333195-78d9c38ad449)/);
-  assert.doesNotMatch(broad.image, /photo-1500530855697-b586d89ba3ee/);
+  assert.equal(broad.image, null);
 
   const exactUrl = "https://licensed.example/land-survey-event.jpg";
   const exact = _test.persistedArticleFromRow({
@@ -111,7 +108,8 @@ test("persisted broad representative media is reclassified without replacing exa
       license: "Licensed syndication",
       imageType: "event_candidate",
       relevanceScore: 92,
-      requiresReview: false
+      requiresReview: false,
+      approvalStatus: "approved"
     }
   });
   assert.equal(exact.image, exactUrl);

@@ -2060,7 +2060,9 @@ function serverArticlePayload(article){
   category:categoryIdForValue(article.category), state:article.state, district:article.district,
   slug:article.slug, tags:article.tags, breaking:article.breaking, topStory:article.featuredRequest,
   altText:article.altText, featuredMediaId:article.featuredMediaId || article.featured_media?.id || null,
-  sourceNotes:article.sourceNotes || article.sourceReference || "", scheduledAt:article.scheduledAt || null
+  sourceNotes:article.sourceNotes || article.sourceReference || "", scheduledAt:article.scheduledAt || null,
+  rightsConfirmed:Boolean(article.rightsConfirmed), relevanceEvidence:article.relevanceEvidence || "",
+  imageType:article.imageType || "reporter_photo"
  };
 }
 
@@ -2759,7 +2761,7 @@ function isGenericStoryDescription(value, title = ""){
 }
 
 function storyDescription(story){
- const candidates = [story?.description,story?.summary,story?.aiSummary,story?.contentSnippet,story?.excerpt];
+ const candidates = [story?.sourceDescription,story?.description,story?.summary,story?.aiSummary,story?.contentSnippet,story?.excerpt];
  return candidates.map(cleanText).find(value=>!isGenericStoryDescription(value,story?.title)) || "";
 }
 
@@ -2963,16 +2965,20 @@ function extractSourceImage(item){
   const mime = String(media?.mime_type || media?.mimeType || "").toLowerCase();
   const type = String(media?.media_type || media?.type || media?.imageType || media?.image_type || "").toLowerCase();
   const isImage = mime.startsWith("image/") || ["image","cms_approved","cms_upload","uploaded","event_candidate","event_photo","archive","representative"].includes(type);
-  const approved = media.status === "approved" || media.approved === true || ["cms_approved","event_candidate","event_photo","archive","representative"].includes(type);
+  const approvalStatus = String(media?.approvalStatus || media?.approval_status || media?.status || "").toLowerCase();
+  const rightsVerified = media?.rightsConfirmed === true || media?.rights_confirmed === true || Boolean(media?.license && !/unknown|verify/i.test(String(media.license)));
+  const approved = approvalStatus === "approved" && rightsVerified && !["representative","archive","missing","branded_fallback"].includes(type);
   return isImage && approved && (media.public_url || media.publicUrl || media.url);
  });
  const decision = item.mediaDecision || item.media_decision || primaryMedia || (!Array.isArray(item.media) ? item.media : null);
  const decisionType = String(decision?.imageType || decision?.image_type || "").toLowerCase();
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
  const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
- const hasApprovedCmsMedia = Boolean(primaryMediaUrl && (primaryMedia?.approved === true || primaryMedia?.status === "approved" || ["cms_approved","cms_upload","uploaded"].includes(decisionType)));
- const articleAssociated = !decision || ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","archive","representative"].includes(decisionType);
- const approvedDecision = decision && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
+ const decisionApproval = String(decision?.approvalStatus || decision?.approval_status || decision?.status || "").toLowerCase();
+ const decisionRights = decision?.rightsConfirmed === true || decision?.rights_confirmed === true || Boolean(decision?.license && !/unknown|verify/i.test(String(decision.license)));
+ const hasApprovedCmsMedia = Boolean(primaryMediaUrl && decisionApproval === "approved" && decisionRights && ["cms_approved","cms_upload","uploaded","event_photo","illustration"].includes(decisionType));
+ const articleAssociated = ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","illustration"].includes(decisionType);
+ const approvedDecision = decision && decisionApproval === "approved" && decisionRights && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
  if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
  const candidates = [
   item.featuredImage,
@@ -3089,6 +3095,7 @@ function normalizeItems(items, options={}){
   pubDate:item.pubDate || item.publishedAt || item.published_at || new Date().toISOString(),
   publishedAt:item.publishedAt || item.published_at || item.pubDate || "",
   summary:String(item.summary || item.description || item.aiSummary || item.contentSnippet || item.excerpt || ""),
+  sourceDescription:String(item.sourceDescription || item.source_description || item.description || item.contentSnippet || item.excerpt || item.summary || ""),
   description:storyDescription(item),
   body:String(item.body || ""),
   fullArticle:String(item.fullArticle || ((item.contentStatus || item.content_status) && (item.contentStatus || item.content_status) !== "brief" ? item.body : "") || ""),
@@ -4130,7 +4137,7 @@ function buildExpandedArticle(story){
  const status = story.contentStatus || "brief";
  const isFullArticle = status === "newsroom_full_text" || status === "licensed_full_text";
  const fullBody = story.fullArticle || (isFullArticle ? story.body : "");
- const summary = cleanText(story.description || story.summary || story.aiSummary || "");
+ const availableDescription = String(story.sourceDescription || story.description || story.summary || story.aiSummary || "").trim();
  if(isFullArticle && cleanText(fullBody)){
   return `<div class="article-content article-content-full" data-content-status="${escapeAttr(status)}">${articleBodyMarkup(fullBody)}</div>`;
  }
@@ -4142,7 +4149,7 @@ function buildExpandedArticle(story){
  const sourceLink = story.sourceUrl
   ? `<p class="article-source-link"><a href="${escapeAttr(story.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.original)} →</a></p>`
   : "";
- return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3><p>${escapeHtml(summary || labels.unavailable)}</p>${sourceLink}</div>`;
+ return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3>${availableDescription ? articleBodyMarkup(availableDescription) : `<p>${escapeHtml(labels.unavailable)}</p>`}${sourceLink}</div>`;
 }
 
 function storyMediaGallery(story){
@@ -5060,6 +5067,9 @@ function simplifiedArticleEditor(role, article, categoryOptions){
    <div class="cms-form-grid"><label>Caption<input id="cmsMediaCaption" value="${escapeAttr(article.mediaCaption || "")}" placeholder="What the image or video shows"></label><label>Alt text<input id="cmsAltText" value="${escapeAttr(article.altText || article.headline || "")}" placeholder="Accessible visual description"></label></div>
    <div class="cms-form-grid"><label>Media source<input id="cmsMediaSource" value="${escapeAttr(article.mediaSource || "NewsNeta newsroom")}"></label><label>Copyright owner<input id="cmsCopyrightOwner" value="${escapeAttr(article.copyrightOwner || "NewsNeta")}"></label></div>
    <label>Usage rights<input id="cmsMediaLicense" value="${escapeAttr(article.mediaLicense || "NewsNeta editorial use")}"></label>
+   <label>Why this media belongs to this article<textarea id="cmsRelevanceEvidence" placeholder="Identify the event, person, place, date, or reporter assignment that connects this media to the story.">${escapeHtml(article.relevanceEvidence || "")}</textarea></label>
+   <label>Media type<select id="cmsImageType"><option value="reporter_photo">Reporter photo from this story</option><option value="event_photo">Verified article-specific event photo</option><option value="illustration">Clearly labelled editorial illustration</option></select></label>
+   <label class="cms-toggle"><input id="cmsRightsConfirmed" type="checkbox" ${article.rightsConfirmed ? "checked" : ""}> I confirm NewsNeta has permission to publish this media and that it depicts or clearly illustrates this article.</label>
   </details>
   ${isAdmin ? `<details class="cms-advanced"><summary>Publishing options</summary><div class="cms-form-grid"><label class="cms-toggle"><input id="cmsBreaking" type="checkbox" ${article.breaking ? "checked" : ""}> Breaking news</label><label>Schedule (optional)<input id="cmsScheduledAt" type="datetime-local"></label></div></details>` : ""}
   <section class="cms-article-preview" id="cmsArticlePreview" hidden aria-live="polite"></section>
@@ -5401,6 +5411,8 @@ function updateArticleFromReporterForm(article){
  article.copyrightOwner = document.getElementById("cmsCopyrightOwner")?.value.trim() || article.copyrightOwner;
  article.mediaLicense = document.getElementById("cmsMediaLicense")?.value.trim() || article.mediaLicense;
  article.imageType = document.getElementById("cmsImageType")?.value || article.imageType;
+ article.relevanceEvidence = document.getElementById("cmsRelevanceEvidence")?.value.trim() || article.relevanceEvidence || "";
+ article.rightsConfirmed = Boolean(document.getElementById("cmsRightsConfirmed")?.checked);
  article.imageRelevanceScore = Number(document.getElementById("cmsImageRelevanceScore")?.value || article.imageRelevanceScore || 0);
  article.videoTranscript = document.getElementById("cmsVideoTranscript")?.value.trim() || article.videoTranscript;
  article.breaking = Boolean(document.getElementById("cmsBreaking")?.checked);
@@ -5490,6 +5502,9 @@ async function uploadCmsFileToServer(kind, file, position, config, note){
  form.append("source", document.getElementById("cmsMediaSource")?.value || "NewsNeta reporter upload");
  form.append("copyrightOwner", document.getElementById("cmsCopyrightOwner")?.value || "NewsNeta");
  form.append("license", document.getElementById("cmsMediaLicense")?.value || "NewsNeta editorial use");
+ form.append("imageType", document.getElementById("cmsImageType")?.value || "reporter_photo");
+ form.append("relevanceEvidence", document.getElementById("cmsRelevanceEvidence")?.value || "");
+ form.append("rightsConfirmed", document.getElementById("cmsRightsConfirmed")?.checked ? "true" : "false");
  const payload = await cmsApi("upload", {form});
  const media = payload.media;
  const metadata = {

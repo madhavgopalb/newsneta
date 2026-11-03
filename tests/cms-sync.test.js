@@ -54,6 +54,22 @@ test("CMS articles are stored as complete newsroom content", () => {
   assert.match(source, /content_status='newsroom_full_text'/);
 });
 
+test("scheduled ingestion never recycles CMS articles into feed briefs", () => {
+  const news = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "news-core.js"), "utf8");
+  assert.match(news, /ingestionMode \? licensedItems : mergeCanonicalArticles\(licensedItems, persisted\)/);
+  assert.match(news, /items: ingestionMode \? \[\] : persisted/);
+  assert.match(news, /ingestionMode \? items : mergeCanonicalArticles\(items, persisted\)/);
+  assert.match(news, /if \(!ingestionMode && persisted\.length\)/);
+  assert.match(news, /CASE WHEN id::text=\$1 THEN 0 ELSE 1 END/);
+});
+
+test("approved CMS uploads remain visible in local preview and production", () => {
+  const news = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "news-core.js"), "utf8");
+  assert.match(news, /function trustedCmsMediaUrl/);
+  assert.match(news, /\["localhost", "127\.0\.0\.1"\]/);
+  assert.match(news, /return trustedCmsMediaUrl\(candidate\) \? candidate : null/);
+});
+
 test("CMS login accepts articles without optional media", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const start = source.indexOf("function cmsArticleDefaults");

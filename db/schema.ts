@@ -29,6 +29,7 @@ export const articles = pgTable('articles', {
   imageAlt: text('image_alt'),
   media: jsonb('media').$type<Array<Record<string, unknown>>>().notNull().default([]),
   sourceProvider: varchar('source_provider', { length: 80 }),
+  sourceNotes: text('source_notes'),
   sourceArticleId: varchar('source_article_id', { length: 320 }),
   sourceUrl: text('source_url'),
   sourceName: varchar('source_name', { length: 200 }),
@@ -45,6 +46,7 @@ export const articles = pgTable('articles', {
   views: integer('views').notNull().default(0),
   contentRevision: integer('content_revision').notNull().default(1),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -66,6 +68,14 @@ export const articleWorkflow = pgTable('article_workflow', {
   actorRole: varchar('actor_role', { length: 40 }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [index('article_workflow_article_idx').on(table.articleId, table.createdAt)])
+
+export const cmsPublishRequests = pgTable('cms_publish_requests', {
+  idempotencyKey: varchar('idempotency_key', { length: 160 }).primaryKey(),
+  actorId: varchar('actor_id', { length: 160 }).notNull(),
+  requestHash: varchar('request_hash', { length: 64 }).notNull(),
+  articleId: uuid('article_id').notNull().references(() => articles.id, { onDelete: 'restrict' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [index('cms_publish_requests_actor_idx').on(table.actorId, table.createdAt)])
 
 
 export const ingestionRuns = pgTable('ingestion_runs', {

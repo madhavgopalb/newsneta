@@ -716,6 +716,16 @@ function trustedImageUrl(url = "") {
     && !/s0-w300/i.test(url);
 }
 
+function trustedCmsMediaUrl(url = "") {
+  try {
+    const parsed = new URL(String(url));
+    return parsed.protocol === "https:"
+      || (parsed.protocol === "http:" && ["localhost", "127.0.0.1"].includes(parsed.hostname));
+  } catch {
+    return false;
+  }
+}
+
 function extractMetaImages(html = "") {
   const patterns = [
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i,
@@ -799,7 +809,8 @@ function approvedPersistedImage(row = {}) {
   const mediaUrl = media?.publicUrl || media?.public_url || media?.url || null;
   if (newsroomOwned) {
     if (media && !["cms_approved", "cms_upload", "uploaded"].includes(imageType)) return null;
-    return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
+    const candidate = mediaUrl || row.image_url;
+    return trustedCmsMediaUrl(candidate) ? candidate : null;
   }
   if (!media || media.requiresReview === true || ["branded_fallback", "missing"].includes(imageType)) return null;
   if (imageType === "representative" && String(media.source || "").toLowerCase() !== "unsplash") return null;
@@ -875,7 +886,7 @@ async function persistedArticleById(id, getDatabase) {
       source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
       full_content_review_required, full_content_review_reason FROM articles
       WHERE status='published' AND (id::text=$1 OR source_article_id=$1)
-      ORDER BY updated_at DESC LIMIT 1`,
+      ORDER BY CASE WHEN id::text=$1 THEN 0 ELSE 1 END, updated_at DESC LIMIT 1`,
     values: [identity]
   });
   return result.rows[0] ? persistedArticleFromRow(result.rows[0]) : null;
@@ -972,7 +983,7 @@ exports.handler = async function handler(event, getDatabase) {
         district: district || null,
         freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
-        items: mergeCanonicalArticles(licensedItems, persisted).slice(0, 24)
+        items: (ingestionMode ? licensedItems : mergeCanonicalArticles(licensedItems, persisted)).slice(0, 24)
       };
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
@@ -988,7 +999,7 @@ exports.handler = async function handler(event, getDatabase) {
         district: district || null,
         freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
-        items: persisted
+        items: ingestionMode ? [] : persisted
       };
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
@@ -1044,7 +1055,7 @@ exports.handler = async function handler(event, getDatabase) {
       district: district || null,
       freshnessWindowDays: FRESH_NEWS_DAYS,
       updatedAt: new Date().toISOString(),
-      items: mergeCanonicalArticles(items, persisted).slice(0, 24)
+      items: (ingestionMode ? items : mergeCanonicalArticles(items, persisted)).slice(0, 24)
     };
 
     CACHE[cacheKey] = { time: Date.now(), data };
@@ -1056,11 +1067,11 @@ exports.handler = async function handler(event, getDatabase) {
       endpoint: feedUrl,
       message: String(error.message || error)
     });
-    if (persisted.length) {
+    if (!ingestionMode && persisted.length) {
       return json(200, { status: "stale", provider: "newsneta-database", category: cat, district: district || null, items: persisted, cache: "database-fallback", servedAt: new Date().toISOString() }, 30);
     }
     const stale = CACHE[cacheKey]?.data;
-    if (stale?.items?.length) {
+    if (!ingestionMode && stale?.items?.length) {
       return json(200, {
         ...stale,
         status: "stale",

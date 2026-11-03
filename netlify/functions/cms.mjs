@@ -10,6 +10,22 @@ const slugify = value => clean(value, 220).toLowerCase().replace(/[^a-z0-9\u0c00
 const session = request => auth.verifySession(bearer(request), process.env.CMS_SESSION_SECRET);
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/webm"]);
 const maxUpload = mime => mime.startsWith("video/") ? 150 * 1024 * 1024 : 8 * 1024 * 1024;
+const summaryFromBody = value => {
+  const text = clean(value, 100000).replace(/\s+/g, " ");
+  if (!text) return "";
+  const sentences = text.match(/[^.!?।]+[.!?।]?/gu) || [text];
+  return sentences.slice(0, 2).map(sentence => sentence.trim()).join(" ").trim().slice(0, 420);
+};
+const publishHash = data => crypto.createHash("sha256").update(JSON.stringify({
+  headline: clean(data.headline || data.title, 500),
+  body: clean(data.body, 100000),
+  category: clean(data.category, 80),
+  state: clean(data.state, 80),
+  district: clean(data.district, 120),
+  featuredMediaId: clean(data.featuredMediaId, 80),
+  scheduledAt: clean(data.scheduledAt, 80),
+  breaking: Boolean(data.breaking)
+})).digest("hex");
 
 async function listArticles(pool, user) {
   const result = await pool.query({
@@ -40,9 +56,9 @@ async function saveArticle(pool, user, data) {
 
   let media = null;
   if (data.featuredMediaId) {
-    const found = await pool.query({ text: "SELECT * FROM media_assets WHERE id=$1 LIMIT 1", values: [data.featuredMediaId] });
+    const found = await pool.query({ text: "SELECT * FROM media_assets WHERE id=$1 AND uploaded_by=$2 LIMIT 1", values: [data.featuredMediaId, user.id] });
     media = found.rows[0] || null;
-    if (!media) throw Object.assign(new Error("Featured media was not found"), { status: 400 });
+    if (!media) throw Object.assign(new Error("Featured media was not found or is not owned by this user"), { status: 403 });
   }
   const featured = media ? {
     id: media.id, url: media.public_url, thumbnailUrl: media.mime_type.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : media.public_url, mimeType: media.mime_type,
@@ -62,7 +78,7 @@ async function saveArticle(pool, user, data) {
       is_breaking=EXCLUDED.is_breaking, is_top_story=EXCLUDED.is_top_story, content_status='newsroom_full_text',
       content_revision=articles.content_revision+1, updated_at=now()
       RETURNING *`,
-    values: [slug, headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || null, body,
+    values: [slug, headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || summaryFromBody(body), body,
       category, clean(data.state, 80) || null, clean(data.district, 120) || null, user.id,
       media?.mime_type?.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : (media?.public_url || null), media?.alt_text || clean(data.altText, 500) || null,
       JSON.stringify(featured ? [featured] : []), JSON.stringify(featured),
@@ -73,28 +89,110 @@ async function saveArticle(pool, user, data) {
   return result.rows[0];
 }
 
-async function transitionArticle(pool, user, data) {
-  const found = await pool.query({ text: "SELECT * FROM articles WHERE id=$1 AND source_provider='newsneta-cms' LIMIT 1", values: [data.id] });
-  const article = found.rows[0];
-  if (!article) throw Object.assign(new Error("Article not found"), { status: 404 });
-  const to = clean(data.to, 40);
-  if (!auth.transitionAllowed(user.role, article.status, to)) throw Object.assign(new Error(`Invalid ${user.role} transition from ${article.status} to ${to}`), { status: 409 });
-  if (to === "reviewer_approved" && article.featured_media?.id) {
-    const media = await pool.query({ text: "SELECT caption, alt_text, source, copyright_owner, license FROM media_assets WHERE id=$1", values: [article.featured_media.id] });
-    const asset = media.rows[0];
-    if (!asset || !asset.caption || !asset.alt_text || !asset.source || !asset.copyright_owner || !asset.license) throw Object.assign(new Error("Media rights, caption and alt text are required before approval"), { status: 409 });
-    await pool.query({ text: "UPDATE media_assets SET status='approved', approved_by=$1, updated_at=now() WHERE id=$2", values: [user.id, article.featured_media.id] });
+function validatePublication(data, article, media) {
+  if (!article?.title || !article?.body || !article?.category) throw Object.assign(new Error("Headline, full description and category are required"), { status: 400 });
+  const regional = ["telangana", "ap"].includes(String(article.category).toLowerCase()) || ["Telangana", "Andhra Pradesh"].includes(article.state);
+  if (regional && (!article.state || !article.district)) throw Object.assign(new Error("State and district are required for regional news"), { status: 400 });
+  if (media) {
+    const missing = [["caption", media.caption], ["alt text", media.alt_text], ["source", media.source], ["copyright owner", media.copyright_owner], ["usage rights", media.license]].filter(([, value]) => !clean(value)).map(([label]) => label);
+    if (missing.length) throw Object.assign(new Error(`Media verification is incomplete: ${missing.join(", ")}`), { status: 409 });
   }
-  const publishedAt = to === "published" ? "now()" : "published_at";
-  const result = await pool.query({
-    text: `UPDATE articles SET status=$1, reviewer_id=CASE WHEN $2='reviewer' THEN $3 ELSE reviewer_id END,
-      publisher_id=CASE WHEN $2='admin' THEN $3 ELSE publisher_id END, published_at=${publishedAt},
-      content_revision=content_revision+1, updated_at=now() WHERE id=$4 RETURNING *`,
-    values: [to, user.role, user.id, article.id]
-  });
-  await pool.query({ text: `INSERT INTO article_workflow (article_id,from_status,to_status,action,comments,actor_id,actor_role)
-    VALUES ($1,$2,$3,$4,$5,$6,$7)`, values: [article.id, article.status, to, clean(data.action, 120) || `Transition to ${to}`, clean(data.comments, 4000) || null, user.id, user.role] });
-  return result.rows[0];
+  if (data.scheduledAt) {
+    const scheduled = new Date(data.scheduledAt);
+    if (Number.isNaN(scheduled.getTime()) || scheduled.getTime() <= Date.now()) throw Object.assign(new Error("Scheduled publication must be in the future"), { status: 400 });
+  }
+}
+
+async function directAdminPublish(pool, user, data, idempotencyKey) {
+  if (user.role !== "admin") throw Object.assign(new Error("Only an Admin can publish directly"), { status: 403 });
+  const key = clean(idempotencyKey, 160);
+  if (!/^[a-zA-Z0-9:_-]{16,160}$/.test(key)) throw Object.assign(new Error("A valid idempotency key is required"), { status: 400 });
+  const requestHash = publishHash(data);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const prior = await client.query({
+      text: `SELECT article_id, request_hash FROM cms_publish_requests WHERE idempotency_key=$1 AND actor_id=$2 LIMIT 1`,
+      values: [key, user.id]
+    });
+    if (prior.rows[0]) {
+      if (prior.rows[0].request_hash !== requestHash) throw Object.assign(new Error("Idempotency key was already used for different content"), { status: 409 });
+      const existing = await client.query({ text: "SELECT * FROM articles WHERE id=$1 LIMIT 1", values: [prior.rows[0].article_id] });
+      await client.query("COMMIT");
+      return { article: existing.rows[0], replayed: true };
+    }
+
+    const saved = await saveArticle(client, user, data);
+    let media = null;
+    if (saved.featured_media?.id) {
+      const found = await client.query({ text: "SELECT * FROM media_assets WHERE id=$1 AND uploaded_by=$2 FOR UPDATE", values: [saved.featured_media.id, user.id] });
+      media = found.rows[0] || null;
+      if (!media) throw Object.assign(new Error("Featured media ownership could not be verified"), { status: 403 });
+    }
+    validatePublication(data, saved, media);
+    if (media) {
+      await client.query({ text: "UPDATE media_assets SET status='approved', approved_by=$1, updated_at=now() WHERE id=$2", values: [user.id, media.id] });
+    }
+    const scheduled = Boolean(data.scheduledAt);
+    const nextStatus = scheduled ? "scheduled" : "published";
+    const updated = await client.query({
+      text: `UPDATE articles SET status=$1::varchar, reviewer_id=$2, publisher_id=$2, approved_at=now(),
+        scheduled_at=$3, published_at=CASE WHEN $1::varchar='published' THEN now() ELSE NULL END,
+        source_notes=$4, is_breaking=$5, content_revision=content_revision+1, updated_at=now()
+        WHERE id=$6 AND source_provider='newsneta-cms' RETURNING *`,
+      values: [nextStatus, user.id, scheduled ? new Date(data.scheduledAt) : null, clean(data.sourceNotes, 8000) || null, Boolean(data.breaking), saved.id]
+    });
+    await client.query({
+      text: `INSERT INTO article_workflow (article_id,from_status,to_status,action,comments,actor_id,actor_role)
+        VALUES ($1,$2,$3,$4,$5,$6,'admin')`,
+      values: [saved.id, saved.status, nextStatus, scheduled ? "Admin scheduled publication" : "Admin direct publish", clean(data.sourceNotes, 4000) || "Admin validated, approved and published in one transaction.", user.id]
+    });
+    await client.query({
+      text: `INSERT INTO cms_publish_requests (idempotency_key,actor_id,request_hash,article_id) VALUES ($1,$2,$3,$4)`,
+      values: [key, user.id, requestHash, saved.id]
+    });
+    await client.query("COMMIT");
+    return { article: updated.rows[0], replayed: false };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function transitionArticle(pool, user, data) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const found = await client.query({ text: "SELECT * FROM articles WHERE id=$1 AND source_provider='newsneta-cms' FOR UPDATE", values: [data.id] });
+    const article = found.rows[0];
+    if (!article) throw Object.assign(new Error("Article not found"), { status: 404 });
+    const to = clean(data.to, 40);
+    if (!auth.transitionAllowed(user.role, article.status, to)) throw Object.assign(new Error(`Invalid ${user.role} transition from ${article.status} to ${to}`), { status: 409 });
+    if (to === "reviewer_approved" && article.featured_media?.id) {
+      const media = await client.query({ text: "SELECT caption, alt_text, source, copyright_owner, license FROM media_assets WHERE id=$1 FOR UPDATE", values: [article.featured_media.id] });
+      const asset = media.rows[0];
+      if (!asset || !asset.caption || !asset.alt_text || !asset.source || !asset.copyright_owner || !asset.license) throw Object.assign(new Error("Media rights, caption and alt text are required before approval"), { status: 409 });
+      await client.query({ text: "UPDATE media_assets SET status='approved', approved_by=$1, updated_at=now() WHERE id=$2", values: [user.id, article.featured_media.id] });
+    }
+    const publishedAt = to === "published" ? "now()" : "published_at";
+    const result = await client.query({
+      text: `UPDATE articles SET status=$1, reviewer_id=CASE WHEN $2='reviewer' THEN $3 ELSE reviewer_id END,
+        publisher_id=CASE WHEN $2='admin' THEN $3 ELSE publisher_id END, published_at=${publishedAt},
+        content_revision=content_revision+1, updated_at=now() WHERE id=$4 RETURNING *`,
+      values: [to, user.role, user.id, article.id]
+    });
+    await client.query({ text: `INSERT INTO article_workflow (article_id,from_status,to_status,action,comments,actor_id,actor_role)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)`, values: [article.id, article.status, to, clean(data.action, 120) || `Transition to ${to}`, clean(data.comments, 4000) || null, user.id, user.role] });
+    await client.query("COMMIT");
+    return result.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function uploadMedia(request, pool, user) {
@@ -135,6 +233,10 @@ export default async function handler(request) {
     if (action === "upload") return json(201, { status: "ok", media: await uploadMedia(request, pool, user) });
     const data = await request.json();
     if (action === "save") return json(200, { status: "ok", article: await saveArticle(pool, user, data) });
+    if (action === "publish-now" || action === "schedule") {
+      const result = await directAdminPublish(pool, user, data, request.headers.get("Idempotency-Key") || data.idempotencyKey);
+      return json(200, { status: "ok", ...result });
+    }
     if (action === "transition") return json(200, { status: "ok", article: await transitionArticle(pool, user, data) });
     if (action === "delete") {
       if (user.role !== "admin") return json(403, { status: "forbidden" });
@@ -147,3 +249,5 @@ export default async function handler(request) {
     return json(error.status || 500, { status: "error", message: error.status ? error.message : "CMS request failed" });
   }
 }
+
+export { directAdminPublish, summaryFromBody, validatePublication };

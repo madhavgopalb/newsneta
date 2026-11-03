@@ -955,6 +955,27 @@ html{scroll-padding-top:156px}
 .cms-form textarea{min-height:90px;resize:vertical}
 .cms-form textarea.article-body{min-height:160px}
 .cms-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cms-editor{max-width:860px;margin:0 auto;padding:20px;gap:18px}
+.cms-editor-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:14px}
+.cms-editor-intro strong{display:block;font-size:20px;color:var(--ink)}
+.cms-editor-intro small,.field-help{display:block;color:var(--muted);font-weight:700;margin-top:4px}
+.cms-combined-upload{border-style:solid;background:var(--surface)}
+.cms-upload-progress{min-height:20px;color:#166534;font-size:13px;font-weight:800}
+.upload-preview.show{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.cms-media-thumb{display:grid;gap:6px;min-width:0}
+.cms-media-thumb img,.cms-media-thumb video{width:100%;aspect-ratio:16/10;object-fit:cover}
+.cms-media-thumb b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cms-advanced{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px}
+.cms-advanced summary{cursor:pointer;color:var(--ink);font-weight:900}
+.cms-advanced[open]{display:grid;gap:12px}
+.cms-advanced[open] summary{margin-bottom:4px}
+.cms-toggle{display:flex!important;grid-auto-flow:column;justify-content:start;align-items:center;gap:8px!important;min-height:40px;color:var(--ink)!important}
+.cms-toggle input{width:auto;min-height:0}
+.cms-article-preview{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:18px}
+.cms-article-preview img{width:100%;max-height:380px;object-fit:cover;border-radius:6px;margin-bottom:14px}
+.cms-article-preview h2{font-size:28px;line-height:1.25;margin:10px 0}
+.cms-article-preview p{color:var(--muted);font-size:16px;line-height:1.8}
+.cms-preview-summary{font-weight:800;color:var(--ink)!important;border-left:3px solid var(--red);padding-left:12px}
 .cms-ai-box{border:1px solid rgba(199,11,47,.28);border-radius:14px;background:linear-gradient(135deg,rgba(199,11,47,.08),rgba(255,255,255,.9));padding:14px;display:grid;gap:10px}
 .cms-ai-title{display:flex;align-items:center;gap:8px;font-weight:900;color:#c70b2f}
 .cms-ai-title span{border-radius:6px;background:#c70b2f;color:#fff;padding:4px 8px;font:900 11px/1 Inter,sans-serif}
@@ -1979,6 +2000,8 @@ const cmsRoleProfiles = {
 
 let currentCmsUser = null;
 const cmsUploadSession = {};
+let cmsUploadFailures = [];
+let cmsAutosaveTimer = null;
 
 const cmsSampleArticle = {
  id:"cms-hyderabad-water-brief",
@@ -2018,11 +2041,11 @@ function cmsHeaders(){
  return {Authorization:`Bearer ${cmsSessionToken}`};
 }
 
-async function cmsApi(action, {method="POST", body=null, form=null} = {}){
+async function cmsApi(action, {method="POST", body=null, form=null, headers={}} = {}){
  const response = await fetch(`/.netlify/functions/cms?action=${encodeURIComponent(action)}`, {
   method,
   cache:"no-store",
-  headers:form ? cmsHeaders() : {...cmsHeaders(),"Content-Type":"application/json"},
+  headers:form ? {...cmsHeaders(),...headers} : {...cmsHeaders(),"Content-Type":"application/json",...headers},
   body:form || (body ? JSON.stringify(body) : null)
  });
  const payload = await response.json();
@@ -2032,11 +2055,33 @@ async function cmsApi(action, {method="POST", body=null, form=null} = {}){
 
 function serverArticlePayload(article){
  return {
+  id:article.id,
   headline:article.headline, englishTitle:article.englishHeadline, summary:article.summary, body:article.body,
   category:categoryIdForValue(article.category), state:article.state, district:article.district,
   slug:article.slug, tags:article.tags, breaking:article.breaking, topStory:article.featuredRequest,
-  altText:article.altText, featuredMediaId:article.featuredMediaId || article.featured_media?.id || null
+  altText:article.altText, featuredMediaId:article.featuredMediaId || article.featured_media?.id || null,
+  sourceNotes:article.sourceNotes || article.sourceReference || "", scheduledAt:article.scheduledAt || null
  };
+}
+
+async function publishCmsArticleNow(article){
+ const idempotencyKey = article.publishRequestKey || `publish:${crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+ article.publishRequestKey = idempotencyKey;
+ const action = article.scheduledAt ? "schedule" : "publish-now";
+ const payload = await cmsApi(action, {body:serverArticlePayload(article), headers:{"Idempotency-Key":idempotencyKey}});
+ article.id = payload.article.id;
+ article.slug = payload.article.slug;
+ article.status = payload.article.status;
+ article.publishedAt = payload.article.published_at || article.publishedAt;
+ if(article.status === "published"){
+  const verification = await fetch(`/.netlify/functions/news?id=${encodeURIComponent(article.id)}&refresh=${Date.now()}`, {cache:"no-store"});
+  const verifiedPayload = await verification.json().catch(()=>null);
+  if(!verification.ok || !verifiedPayload?.item) throw new Error("Publication committed, but public API verification is still pending. Retry with the same article to verify without creating a duplicate.");
+ }
+ await reloadCmsArticles();
+ await loadNews(document.querySelector(".nav a.active")?.dataset.cat || "latest", true);
+ await loadHomepageFeeds(true);
+ return payload;
 }
 
 async function reloadCmsArticles(){
@@ -2076,7 +2121,7 @@ function slugify(value){
 
 function cmsArticleDefaults(article = {}){
  const now = new Date().toISOString();
- const headline = article.headline || article.title || "NewsNeta newsroom article";
+ const headline = Object.prototype.hasOwnProperty.call(article,"headline") ? String(article.headline || "") : (article.title || "NewsNeta newsroom article");
  const categoryId = categoryIdForValue(article.category || "telangana");
  const imageUrl = article.image || article.thumbnail || null;
  const existingMedia = Array.isArray(article.media) ? article.media.filter(Boolean) : [];
@@ -2123,6 +2168,7 @@ function cmsArticleDefaults(article = {}){
   metaDescription: article.metaDescription || article.summary || "NewsNeta Telugu news update with verified newsroom workflow.",
   slug: article.slug || slugify(article.englishHeadline || headline),
   sourceReference: article.sourceReference || "Reporter notes",
+  sourceNotes: article.sourceNotes || article.source_notes || "",
   factCheckNotes: article.factCheckNotes || article.notes || "Source, location, image rights and legal checks pending.",
   summary: article.summary || "",
   body: article.body || "",
@@ -2166,6 +2212,14 @@ function primaryCmsArticle(){
  hydrateCmsArticles();
  if(!cmsArticles.length || cmsArticles.every(article=>article.status === "deleted")) cmsArticles = [cmsArticleDefaults(cmsSessionToken ? {id:`draft-${Date.now()}`,status:"draft",headline:"",body:"",summary:"",category:"telangana",state:"Telangana",district:"Hyderabad",media:[]} : {...cmsSampleArticle})];
  cmsArticles = cmsArticles.map(cmsArticleDefaults);
+ if(cmsSessionToken && ["reporter","admin"].includes(currentCmsUser?.role)){
+  const editable = cmsArticles.find(article=>["draft","changes_requested"].includes(article.status));
+  if(editable) return editable;
+  const draft = cmsArticleDefaults({id:`draft-${Date.now()}`,status:"draft",headline:"",body:"",summary:"",category:"telangana",state:"Telangana",district:"Hyderabad",media:[]});
+  cmsArticles.unshift(draft);
+  return draft;
+ }
+ if(currentCmsUser?.role === "reviewer") return cmsArticles.find(article=>["submitted","under_review"].includes(article.status)) || cmsArticles[0];
  return cmsArticles[0];
 }
 
@@ -4976,11 +5030,54 @@ function fillAssistantContent(action){
  }
 }
 
+function simplifiedArticleEditor(role, article, categoryOptions){
+ const state = article.state || "Telangana";
+ const selectedDistricts = state === "Andhra Pradesh" ? districts.ap : districts.telangana;
+ const districtOptions = selectedDistricts.map(d=>`<option ${d === article.district ? "selected" : ""}>${d}</option>`).join("");
+ const isAdmin = role === "admin";
+ return `<form class="cms-form cms-editor" id="storyUploadForm" novalidate>
+  <div class="cms-editor-intro"><div><strong>${isAdmin ? "Create and publish" : "Create article"}</strong><small>${isAdmin ? "Validate and publish immediately, or schedule for later." : "Write the report, attach media, and send it for editorial review."}</small></div><span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></div>
+  <label>News Headline *<textarea id="cmsHeadline" required maxlength="500" placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">${escapeHtml(article.headline || "")}</textarea></label>
+  <label>Full News Description *<textarea id="cmsBody" class="article-body" required placeholder="పూర్తి వార్తను పేరాగ్రాఫ్‌లతో రాయండి...">${escapeHtml(article.body || "")}</textarea><small class="field-help">Use blank lines for paragraphs and ## before a subheading. A card summary is generated automatically without changing this text.</small></label>
+  <div class="cms-form-grid">
+   <label>Category *<select id="cmsCategory" required>${categoryOptions}</select></label>
+   <label>State *<select id="cmsState" required><option ${state === "Telangana" ? "selected" : ""}>Telangana</option><option ${state === "Andhra Pradesh" ? "selected" : ""}>Andhra Pradesh</option><option ${state === "National" ? "selected" : ""}>National</option><option ${state === "International" ? "selected" : ""}>International</option></select></label>
+  </div>
+  <label>District *<select id="cmsDistrict" required><option value="">Select district</option>${districtOptions}</select></label>
+  <div class="upload-drop cms-combined-upload">
+   <strong>Photos and videos</strong>
+   <small>Select multiple files from desktop or mobile. The first photo becomes the story image and thumbnail.</small>
+   <input id="cmsMediaUpload" type="file" accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.webm,image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" multiple>
+   <div class="cms-upload-progress" id="cmsUploadProgress" aria-live="polite"></div>
+   <div class="upload-preview" id="cmsMediaPreview"></div>
+   <button class="pill-btn cms-secondary-btn" id="cmsRetryUploads" type="button" hidden>Retry failed uploads</button>
+  </div>
+  <label>Source Notes<textarea id="cmsSourceNotes" placeholder="Optional source, contact or verification notes">${escapeHtml(article.sourceNotes || article.sourceReference || "")}</textarea></label>
+  <input id="cmsImage" type="hidden" value="${escapeAttr(article.image || "")}">
+  <input id="cmsThumbnail" type="hidden" value="${escapeAttr(article.thumbnail || article.image || "")}">
+  <input id="cmsVideoUrl" type="hidden" value="${escapeAttr(article.videoUrl || "")}">
+  <details class="cms-advanced"><summary>Source and media details</summary>
+   <div class="cms-form-grid"><label>Caption<input id="cmsMediaCaption" value="${escapeAttr(article.mediaCaption || "")}" placeholder="What the image or video shows"></label><label>Alt text<input id="cmsAltText" value="${escapeAttr(article.altText || article.headline || "")}" placeholder="Accessible visual description"></label></div>
+   <div class="cms-form-grid"><label>Media source<input id="cmsMediaSource" value="${escapeAttr(article.mediaSource || "NewsNeta newsroom")}"></label><label>Copyright owner<input id="cmsCopyrightOwner" value="${escapeAttr(article.copyrightOwner || "NewsNeta")}"></label></div>
+   <label>Usage rights<input id="cmsMediaLicense" value="${escapeAttr(article.mediaLicense || "NewsNeta editorial use")}"></label>
+  </details>
+  ${isAdmin ? `<details class="cms-advanced"><summary>Publishing options</summary><div class="cms-form-grid"><label class="cms-toggle"><input id="cmsBreaking" type="checkbox" ${article.breaking ? "checked" : ""}> Breaking news</label><label>Schedule (optional)<input id="cmsScheduledAt" type="datetime-local"></label></div></details>` : ""}
+  <section class="cms-article-preview" id="cmsArticlePreview" hidden aria-live="polite"></section>
+  <div class="cms-form-actions">
+   <button class="pill-btn cms-secondary-btn" type="button" data-save-draft="true">Save Draft</button>
+   <button class="pill-btn cms-secondary-btn" type="button" data-preview-article="true">Preview</button>
+   <button class="pill-btn admin-login-btn" type="submit">${isAdmin ? "Publish Now" : "Submit for Review"}</button>
+  </div>
+  <div class="workflow-note" id="cmsWorkflowNote">${isAdmin ? "Admin publication validates the article and media before one-step publishing." : "Drafts autosave while you write. Submission sends the article to the reviewer queue."}</div>
+ </form>`;
+}
+
 function cmsWorkflowForm(role){
  const article = primaryCmsArticle();
  const districtOptions = [...districts.telangana, ...districts.ap].slice(0,18).map(d=>`<option ${d === article.district ? "selected" : ""}>${d}</option>`).join("");
  const articleCategoryId = categoryIdForValue(article.category);
  const categoryOptions = categories.map(([id,label])=>`<option value="${escapeAttr(id)}" ${id === articleCategoryId ? "selected" : ""}>${label}</option>`).join("");
+ if(role === "reporter" || role === "admin") return simplifiedArticleEditor(role, article, categoryOptions);
  const aiTools = `<div class="cms-ai-box">
   <div class="cms-ai-title">AI Writing Assistant <span>NEWSNETA AI</span></div>
   <div class="cms-ai-actions">
@@ -5266,7 +5363,7 @@ function cmsScreenMarkup(role, screen="article"){
  if(screen === "video") return cmsVideoScreen(role);
  if(screen === "analytics") return cmsAnalyticsScreen(role);
  return `<div class="cms-screen">
-   <div class="cms-screen-head"><div><strong>Create Article</strong><small>Write Telugu news, attach approved media, save a draft and submit it through the newsroom workflow.</small></div><span class="chip">Create</span></div>
+   <div class="cms-screen-head"><div><strong>Create Article</strong><small>${role === "admin" ? "Write, preview, validate and publish complete Telugu news in one session." : role === "reviewer" ? "Review submitted Telugu news and record an editorial decision." : "Write Telugu news, attach approved media, save a draft and submit it for review."}</small></div><span class="chip">Create</span></div>
  ${cmsWorkflowForm(role)}
  </div>`;
 }
@@ -5283,13 +5380,16 @@ function updateArticleFromReporterForm(article){
  article.author = document.getElementById("cmsAuthor")?.value.trim() || article.author;
  article.reporterLocation = document.getElementById("cmsReporterLocation")?.value.trim() || article.reporterLocation;
  article.tags = document.getElementById("cmsTags")?.value.trim() || article.tags;
- article.summary = document.getElementById("cmsSummary")?.value.trim() || article.summary;
  article.body = document.getElementById("cmsBody")?.value.trim() || article.body;
+ const enteredSummary = document.getElementById("cmsSummary")?.value.trim();
+ article.summary = enteredSummary || String(article.body || "").replace(/\s+/g," ").split(/(?<=[.!?।])\s+/u).slice(0,2).join(" ").slice(0,420);
  article.seoTitle = document.getElementById("cmsSeoTitle")?.value.trim() || article.seoTitle || article.headline;
  article.slug = slugify(document.getElementById("cmsSlug")?.value.trim() || article.slug || article.seoTitle || article.headline);
  article.metaDescription = document.getElementById("cmsMetaDescription")?.value.trim() || article.metaDescription;
  article.sourceReference = document.getElementById("cmsSourceReference")?.value.trim() || article.sourceReference;
  article.factCheckNotes = document.getElementById("cmsFactCheckNotes")?.value.trim() || article.factCheckNotes;
+ article.sourceNotes = document.getElementById("cmsSourceNotes")?.value.trim() || article.sourceNotes || "";
+ article.scheduledAt = document.getElementById("cmsScheduledAt")?.value ? new Date(document.getElementById("cmsScheduledAt").value).toISOString() : null;
  article.image = document.getElementById("cmsImage")?.value.trim() || article.image;
  article.thumbnail = document.getElementById("cmsThumbnail")?.value.trim() || article.thumbnail || article.image;
  article.videoUrl = document.getElementById("cmsVideoUrl")?.value.trim() || article.videoUrl;
@@ -5309,6 +5409,7 @@ function updateArticleFromReporterForm(article){
  article.updatedAt = new Date().toISOString();
  const uploadedMedia = [...(cmsUploadSession.images || []).map(item=>item.metadata), cmsUploadSession.thumbnail?.metadata, cmsUploadSession.video?.metadata].filter(Boolean);
  if(cmsUploadSession.images?.[0]?.metadata?.public_url) article.image = cmsUploadSession.images[0].metadata.public_url;
+ if(cmsUploadSession.images?.[0]?.metadata?.public_url) article.thumbnail = cmsUploadSession.images[0].metadata.public_url;
  if(cmsUploadSession.images?.[0]?.metadata?.id) article.featuredMediaId = cmsUploadSession.images[0].metadata.id;
  if(cmsUploadSession.thumbnail?.metadata?.public_url) article.thumbnail = cmsUploadSession.thumbnail.metadata.public_url;
  if(cmsUploadSession.video?.metadata?.public_url){ article.videoUrl = cmsUploadSession.video.metadata.public_url; if(!article.featuredMediaId) article.featuredMediaId = cmsUploadSession.video.metadata.id; }
@@ -5338,9 +5439,9 @@ function formatBytes(bytes){
 
 function uploadConfig(kind){
  const configs = {
-  image:{max:5 * 1024 * 1024, types:["image/jpeg","image/png","image/webp"], urlField:"cmsImage", preview:"cmsImagePreview", bucket:"news-images"},
-  thumbnail:{max:5 * 1024 * 1024, types:["image/jpeg","image/png","image/webp"], urlField:"cmsThumbnail", preview:"cmsThumbnailPreview", bucket:"news-thumbnails"},
-  video:{max:150 * 1024 * 1024, types:["video/mp4","video/quicktime","video/webm"], urlField:"cmsVideoUrl", preview:"cmsVideoPreview", bucket:"news-videos"}
+  image:{max:5 * 1024 * 1024, types:["image/jpeg","image/png","image/webp"], urlField:"cmsImage", preview:"cmsMediaPreview", bucket:"news-images"},
+  thumbnail:{max:5 * 1024 * 1024, types:["image/jpeg","image/png","image/webp"], urlField:"cmsThumbnail", preview:"cmsMediaPreview", bucket:"news-thumbnails"},
+  video:{max:150 * 1024 * 1024, types:["video/mp4","video/quicktime","video/webm"], urlField:"cmsVideoUrl", preview:"cmsMediaPreview", bucket:"news-videos"}
  };
  return configs[kind];
 }
@@ -5351,6 +5452,33 @@ function readFileAsDataUrl(file){
   reader.onload = ()=>resolve(reader.result);
   reader.onerror = reject;
   reader.readAsDataURL(file);
+ });
+}
+
+function createVideoPosterFile(file){
+ return new Promise((resolve,reject)=>{
+  const video = document.createElement("video");
+  const source = URL.createObjectURL(file);
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = "metadata";
+  const cleanup = ()=>URL.revokeObjectURL(source);
+  video.onerror = ()=>{ cleanup(); reject(new Error("Video thumbnail could not be generated")); };
+  video.onloadedmetadata = ()=>{ video.currentTime = Math.min(0.25, Math.max(0, (video.duration || 1) / 10)); };
+  video.onseeked = ()=>{
+   const width = Math.min(1280, video.videoWidth || 1280);
+   const height = Math.round(width * ((video.videoHeight || 720) / (video.videoWidth || 1280)));
+   const canvas = document.createElement("canvas");
+   canvas.width = width;
+   canvas.height = height;
+   canvas.getContext("2d").drawImage(video,0,0,width,height);
+   canvas.toBlob(blob=>{
+    cleanup();
+    if(!blob) return reject(new Error("Video thumbnail could not be encoded"));
+    resolve(new File([blob], `${file.name.replace(/\.[^.]+$/,"")}-thumbnail.jpg`, {type:"image/jpeg"}));
+   },"image/jpeg",0.86);
+  };
+  video.src = source;
  });
 }
 
@@ -5385,8 +5513,7 @@ async function uploadCmsFileToServer(kind, file, position, config, note){
  if(preview){
   const tag = kind === "video" ? `<video src="${escapeAttr(previewUrl)}" controls playsinline></video>` : `<img src="${escapeAttr(previewUrl)}" alt="">`;
   preview.classList.add("show");
-  if(kind === "image" && position > 0) preview.insertAdjacentHTML("beforeend", `${tag}<b>${escapeHtml(file.name)}</b><small>Uploaded securely</small>`);
-  else preview.innerHTML = `${tag}<b>${escapeHtml(file.name)}</b><small>Stored in NewsNeta media storage</small>`;
+  preview.insertAdjacentHTML("beforeend", `<div class="cms-media-thumb">${tag}<b>${escapeHtml(file.name)}</b><small>Uploaded securely</small></div>`);
  }
  if(note) note.textContent = `${file.name} uploaded and attached to the server article.`;
 }
@@ -5450,12 +5577,7 @@ async function handleCmsFileUpload(kind, file, position = 0){
    ? `<video src="${escapeAttr(localUrl)}" controls></video>`
    : `<img src="${escapeAttr(localUrl)}" alt="">`;
   preview.classList.add("show");
-  if(kind === "image" && position > 0){
-   preview.insertAdjacentHTML("beforeend", `${media}<b>${escapeHtml(file.name)}</b><small>${escapeHtml(file.type)} • ${formatBytes(file.size)}</small>`);
-   if(note) note.textContent = `${file.name} selected. The URL field and media metadata were updated.`;
-   return;
-  }
-  preview.innerHTML = `${media}<b>${escapeHtml(file.name)}</b><small>${escapeHtml(file.type)} • ${formatBytes(file.size)}</small><small>Local preview ready. Cloud upload will replace this with a CDN URL in production.</small>`;
+  preview.insertAdjacentHTML("beforeend", `<div class="cms-media-thumb">${media}<b>${escapeHtml(file.name)}</b><small>${escapeHtml(file.type)} • ${formatBytes(file.size)}</small></div>`);
  }
  if(note) note.textContent = `${file.name} selected. The URL field and media metadata were updated.`;
 }
@@ -5478,6 +5600,46 @@ async function handleCmsMultiFileUpload(kind, fileList){
 function bindCmsUploadInputs(){
  [["cmsImageUpload","image"],["cmsThumbnailUpload","thumbnail"],["cmsVideoUpload","video"]].forEach(([id,kind])=>{
   document.getElementById(id)?.addEventListener("change",event=>handleCmsMultiFileUpload(kind, event.target.files));
+ });
+ const combined = document.getElementById("cmsMediaUpload");
+ combined?.addEventListener("change",async event=>{
+  const selectedFiles = Array.from(event.target.files || []);
+  const files = [...selectedFiles];
+  const progress = document.getElementById("cmsUploadProgress");
+  const preview = document.getElementById("cmsMediaPreview");
+  if(preview){ preview.innerHTML = ""; preview.classList.add("show"); }
+  cmsUploadSession.images = [];
+  cmsUploadSession.image = null;
+  cmsUploadSession.video = null;
+  cmsUploadFailures = [];
+  if(!files.some(file=>file.type.startsWith("image/")) && files.some(file=>file.type.startsWith("video/"))){
+   try{
+    if(progress) progress.textContent = "Generating a thumbnail from the video...";
+    files.unshift(await createVideoPosterFile(files.find(file=>file.type.startsWith("video/"))));
+   }catch(error){
+    if(progress) progress.textContent = "Video selected. Add a photo if this device cannot generate its thumbnail.";
+   }
+  }
+  for(const [index,file] of files.entries()){
+   if(progress) progress.textContent = `Uploading ${index + 1} of ${files.length}: ${file.name}`;
+   const kind = file.type.startsWith("video/") ? "video" : "image";
+   try{ await handleCmsFileUpload(kind, file, index); }
+   catch(error){ cmsUploadFailures.push({file,kind,index}); if(progress) progress.textContent = `${file.name} failed: ${error.message || error}`; }
+  }
+  if(progress && !cmsUploadFailures.length) progress.textContent = `${files.length} file${files.length === 1 ? "" : "s"} uploaded and attached.`;
+  const retry = document.getElementById("cmsRetryUploads");
+  if(retry) retry.hidden = !cmsUploadFailures.length;
+ });
+ document.getElementById("cmsRetryUploads")?.addEventListener("click",async()=>{
+  const failed = [...cmsUploadFailures];
+  cmsUploadFailures = [];
+  for(const item of failed){
+   try{ await handleCmsFileUpload(item.kind,item.file,item.index); }
+   catch(error){ cmsUploadFailures.push(item); }
+  }
+  const progress = document.getElementById("cmsUploadProgress");
+  if(progress) progress.textContent = cmsUploadFailures.length ? `${cmsUploadFailures.length} upload(s) still failed.` : "All files uploaded successfully.";
+  document.getElementById("cmsRetryUploads").hidden = !cmsUploadFailures.length;
  });
 }
 
@@ -5515,8 +5677,50 @@ function bindCmsScreen(role){
  document.getElementById("storyUploadForm")?.addEventListener("submit",async event=>{
   event.preventDefault();
   const article = primaryCmsArticle();
+  window.clearTimeout(cmsAutosaveTimer);
+  if(role === "admin"){
+   updateArticleFromReporterForm(article);
+   const form = event.currentTarget;
+   const note = document.getElementById("cmsWorkflowNote");
+   if(!form.checkValidity()){
+    form.reportValidity();
+    if(note) note.textContent = "Complete the required headline, article, category and location fields.";
+    return;
+   }
+   if(cmsUploadFailures.length){ if(note) note.textContent = "Retry failed media uploads before publishing."; return; }
+   const submit = form.querySelector('button[type="submit"]');
+   if(form.dataset.publishConfirmed !== "true"){
+    document.querySelector("[data-preview-article]")?.click();
+    form.dataset.publishConfirmed = "true";
+    if(submit) submit.textContent = article.scheduledAt ? "Confirm Schedule" : "Confirm Publish";
+    if(note) note.textContent = "Review the final preview, then confirm publication.";
+    return;
+   }
+   if(submit){ submit.disabled = true; submit.textContent = article.scheduledAt ? "Scheduling..." : "Publishing..."; }
+   try{
+    const payload = await publishCmsArticleNow(article);
+    saveCmsArticles();
+    if(note) note.textContent = payload.replayed ? "This publication request was already completed safely." : article.scheduledAt ? "Article scheduled successfully." : "Article published successfully.";
+    switchCmsScreen("review");
+   }catch(error){
+    if(note) note.textContent = `Publication failed: ${error.message || error}`;
+    if(submit){ submit.disabled = false; submit.textContent = article.scheduledAt ? "Schedule" : "Publish Now"; }
+   }
+   return;
+  }
   if(role === "reporter"){
    updateArticleFromReporterForm(article);
+   if(!event.currentTarget.checkValidity()){
+    event.currentTarget.reportValidity();
+    const note = document.getElementById("cmsWorkflowNote");
+    if(note) note.textContent = "Complete the required headline, article, category and location fields.";
+    return;
+   }
+   if(cmsUploadFailures.length){
+    const note = document.getElementById("cmsWorkflowNote");
+    if(note) note.textContent = "Retry failed media uploads before submitting.";
+    return;
+   }
    addWorkflowEntry(article, "submitted", "Submitted for review", "Reporter submitted article with media, SEO and source notes.");
    notifyArticle(article, "article_submitted", "Article submitted. Reviewer/editor action required.");
    article.notes = "Submitted by reporter for reviewer fact check.";
@@ -5564,6 +5768,55 @@ function bindCmsScreen(role){
    if(note) note.textContent=`Server sync failed: ${error.message || error}`;
   }
  });
+ const stateSelect = document.getElementById("cmsState");
+ stateSelect?.addEventListener("change",()=>{
+  const districtSelect = document.getElementById("cmsDistrict");
+  if(!districtSelect) return;
+  const values = stateSelect.value === "Telangana" ? districts.telangana : stateSelect.value === "Andhra Pradesh" ? districts.ap : [];
+  districtSelect.innerHTML = `<option value="">${values.length ? "Select district" : "Not applicable"}</option>` + values.map(d=>`<option>${escapeHtml(d)}</option>`).join("");
+  districtSelect.required = values.length > 0;
+ });
+ document.getElementById("cmsScheduledAt")?.addEventListener("change",event=>{
+  const submit = document.querySelector('#storyUploadForm button[type="submit"]');
+  if(submit) submit.textContent = event.target.value ? "Schedule" : "Publish Now";
+ });
+ document.querySelector("[data-preview-article]")?.addEventListener("click",()=>{
+  const article = updateArticleFromReporterForm(primaryCmsArticle());
+  const preview = document.getElementById("cmsArticlePreview");
+  if(!preview) return;
+  const image = article.image ? `<img src="${escapeAttr(article.image)}" alt="${escapeAttr(article.altText || article.headline)}">` : "";
+  preview.innerHTML = `${image}<span class="chip">${escapeHtml(categoryLabelForId(categoryIdForValue(article.category)))}</span><h2>${escapeHtml(article.headline || "Untitled article")}</h2><p class="cms-preview-summary">${escapeHtml(article.summary || "Summary will be generated from the article.")}</p>${String(article.body || "").split(/\n{2,}/).filter(Boolean).map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}`;
+  preview.hidden = false;
+  if(role === "admin"){
+   const form = document.getElementById("storyUploadForm");
+   if(form) form.dataset.publishConfirmed = "true";
+   const submit = form?.querySelector('button[type="submit"]');
+   if(submit) submit.textContent = article.scheduledAt ? "Confirm Schedule" : "Confirm Publish";
+  }
+  preview.scrollIntoView({behavior:"smooth",block:"nearest"});
+ });
+ const editorForm = document.getElementById("storyUploadForm");
+ if((role === "reporter" || role === "admin") && editorForm){
+  editorForm.addEventListener("input",()=>{
+   editorForm.dataset.publishConfirmed = "false";
+   const submit = editorForm.querySelector('button[type="submit"]');
+   if(role === "admin" && submit) submit.textContent = document.getElementById("cmsScheduledAt")?.value ? "Schedule" : "Publish Now";
+   window.clearTimeout(cmsAutosaveTimer);
+   cmsAutosaveTimer = window.setTimeout(async()=>{
+    const article = updateArticleFromReporterForm(primaryCmsArticle());
+    if(!article.headline || !article.body || !article.category) return;
+    try{
+     await persistCmsArticle(article);
+     saveCmsArticles();
+     const note = document.getElementById("cmsWorkflowNote");
+     if(note) note.textContent = `Draft autosaved at ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}.`;
+    }catch(error){
+     const note = document.getElementById("cmsWorkflowNote");
+     if(note) note.textContent = `Autosave paused: ${error.message || error}`;
+    }
+   },1800);
+  });
+ }
  document.querySelectorAll("[data-ai-action]").forEach(button=>{
   button.addEventListener("click",()=>fillAssistantContent(button.dataset.aiAction));
  });
@@ -5680,10 +5933,6 @@ function openRoleDashboard(role, user = currentCmsUser){
   <div class="dashboard-metrics">
    ${cmsMetricsForRole(role).map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}
   </div>
-  <div class="dashboard-actions">
-   ${data.actions.map(([title,desc])=>`<button class="dashboard-action" type="button"><strong>${title}</strong><small>${desc}</small></button>`).join("")}
-  </div>
-  ${cmsWorkflowLane(role)}
    <div id="cmsScreenHost">${cmsScreenMarkup(role, "create")}</div>
    </div>
   </div>
@@ -5699,14 +5948,6 @@ function openRoleDashboard(role, user = currentCmsUser){
    document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "create"));
   renderWeather();
   loadNews("latest", true);
- });
- content.querySelectorAll(".dashboard-action").forEach(button=>{
-  button.addEventListener("click",()=>{
-   const title = button.querySelector("strong")?.textContent || button.textContent.trim() || "Action";
-   const note = document.getElementById("cmsWorkflowNote");
-   if(note) note.textContent = `${title} workspace is ready. Complete the form below to continue the publishing workflow.`;
-   button.scrollIntoView({behavior:"smooth", block:"nearest"});
-  });
  });
  content.querySelectorAll("[data-cms-screen]").forEach(button=>{
   button.addEventListener("click",()=>switchCmsScreen(button.dataset.cmsScreen));

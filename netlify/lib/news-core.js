@@ -777,6 +777,34 @@ async function articleImage(item, cat, district, index = 0, options = {}) {
   return brandedFallbackDecision(intent, "No verified, approved article-specific image was available");
 }
 
+function editoriallyApprovedMedia(media) {
+  if (!media || !media.url) return false;
+  const approval = String(media.approvalStatus || media.approval_status || media.status || "").toLowerCase();
+  const type = String(media.imageType || media.image_type || "").toLowerCase();
+  const rightsConfirmed = media.rightsConfirmed === true || media.rights_confirmed === true
+    || Boolean(media.license && !/unknown|verify/i.test(String(media.license)));
+  return approval === "approved"
+    && media.requiresReview !== true
+    && rightsConfirmed
+    && !["representative", "archive", "missing", "branded_fallback"].includes(type);
+}
+
+function publicMediaItem(item = {}) {
+  const media = Array.isArray(item.media) ? item.media[0] : item.media;
+  if (editoriallyApprovedMedia(media)) return item;
+  return {
+    ...item,
+    image: null,
+    imageUrl: null,
+    thumbnailUrl: null,
+    media: null,
+    mediaDecision: null,
+    imageLabel: "",
+    imageRelevanceScore: null,
+    imageStatus: "unavailable"
+  };
+}
+
 function mergeCanonicalArticles(primary = [], secondary = []) {
   const seen = new Set();
   return [...primary, ...secondary].filter(article => {
@@ -969,7 +997,7 @@ exports.handler = async function handler(event, getDatabase) {
         district: district || null,
         freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
-        items: (ingestionMode ? licensedItems : mergeCanonicalArticles(licensedItems, persisted)).slice(0, 24)
+        items: (ingestionMode ? licensedItems.map(publicMediaItem) : mergeCanonicalArticles(licensedItems.map(publicMediaItem), persisted)).slice(0, 24)
       };
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
@@ -1041,7 +1069,7 @@ exports.handler = async function handler(event, getDatabase) {
       district: district || null,
       freshnessWindowDays: FRESH_NEWS_DAYS,
       updatedAt: new Date().toISOString(),
-      items: (ingestionMode ? items : mergeCanonicalArticles(items, persisted)).slice(0, 24)
+      items: (ingestionMode ? items.map(publicMediaItem) : mergeCanonicalArticles(items.map(publicMediaItem), persisted)).slice(0, 24)
     };
 
     CACHE[cacheKey] = { time: Date.now(), data };
@@ -1079,4 +1107,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, selectImage, stableImageIndex, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, editoriallyApprovedMedia, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };

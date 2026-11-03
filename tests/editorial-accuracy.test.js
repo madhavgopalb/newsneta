@@ -49,6 +49,19 @@ test("20 unrelated or unapproved feed images never become public article media",
   }
 });
 
+test("public refresh payload strips pending media fields server-side", () => {
+  const item = news.publicMediaItem({
+    id: "pending-media",
+    image: "https://images.example/unverified.jpg",
+    imageUrl: "https://images.example/unverified.jpg",
+    media: { url: "https://images.example/unverified.jpg", imageType: "event_candidate", approvalStatus: "pending", requiresReview: true, license: "Verify rights" }
+  });
+  assert.equal(item.image, null);
+  assert.equal(item.imageUrl, null);
+  assert.equal(item.media, null);
+  assert.equal(item.imageStatus, "unavailable");
+});
+
 test("paragraph-form source descriptions remain separate from card summaries", () => {
   const article = ingestion.canonicalArticle({
     id: "description-preservation",

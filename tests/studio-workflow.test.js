@@ -14,12 +14,21 @@ test("NewsNeta Studio exposes four primary newsroom actions", () => {
   assert.equal((modal.match(/<button class="cms-tab/g) || []).length, 4);
 });
 
-test("reporter creation screen documents direct device upload and the review path", () => {
-  assert.match(page, /Reporter publishing steps/);
-  assert.match(page, /Select one or more images, a thumbnail or video from this device/);
-  assert.match(page, /Choose files directly from desktop or mobile/);
-  assert.doesNotMatch(page, /data-cms-screen-jump="manage"/);
-  assert.doesNotMatch(page, /data-cms-screen-jump="article"/);
+test("reporter and admin share one simplified article editor", () => {
+  const editor = page.slice(page.indexOf("function simplifiedArticleEditor"), page.indexOf("function cmsWorkflowForm"));
+  for (const field of ["cmsHeadline", "cmsBody", "cmsCategory", "cmsState", "cmsDistrict", "cmsMediaUpload"]) assert.match(editor, new RegExp(field));
+  assert.match(editor, /Save Draft/);
+  assert.match(editor, /Preview/);
+  assert.match(editor, /Submit for Review/);
+  assert.match(editor, /Publish Now/);
+  assert.match(editor, /multiple/);
+  assert.doesNotMatch(editor, /SEO Title|Image URL|Thumbnail URL|Relevance Score|Reporter Location/);
+});
+
+test("dashboard omits shortcut cards and workflow diagram", () => {
+  const dashboard = page.slice(page.indexOf("function openRoleDashboard"), page.indexOf('document.getElementById("loginForm")'));
+  assert.doesNotMatch(dashboard, /dashboard-actions/);
+  assert.doesNotMatch(dashboard, /cmsWorkflowLane/);
 });
 
 test("feed import uses the signed CMS session and bounded categories", () => {

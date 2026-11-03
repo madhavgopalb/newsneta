@@ -56,9 +56,9 @@ test("CMS articles are stored as complete newsroom content", () => {
 
 test("scheduled ingestion never recycles CMS articles into feed briefs", () => {
   const news = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "news-core.js"), "utf8");
-  assert.match(news, /ingestionMode \? licensedItems : mergeCanonicalArticles\(licensedItems, persisted\)/);
+  assert.match(news, /ingestionMode \? licensedItems\.map\(publicMediaItem\) : mergeCanonicalArticles\(licensedItems\.map\(publicMediaItem\), persisted\)/);
   assert.match(news, /items: ingestionMode \? \[\] : persisted/);
-  assert.match(news, /ingestionMode \? items : mergeCanonicalArticles\(items, persisted\)/);
+  assert.match(news, /ingestionMode \? items\.map\(publicMediaItem\) : mergeCanonicalArticles\(items\.map\(publicMediaItem\), persisted\)/);
   assert.match(news, /if \(!ingestionMode && persisted\.length\)/);
   assert.match(news, /CASE WHEN id::text=\$1 THEN 0 ELSE 1 END/);
 });

@@ -59,11 +59,21 @@ async function saveArticle(pool, user, data) {
     const found = await pool.query({ text: "SELECT * FROM media_assets WHERE id=$1 AND uploaded_by=$2 LIMIT 1", values: [data.featuredMediaId, user.id] });
     media = found.rows[0] || null;
     if (!media) throw Object.assign(new Error("Featured media was not found or is not owned by this user"), { status: 403 });
+    const evidence = clean(data.relevanceEvidence, 4000);
+    const imageType = ["reporter_photo", "event_photo", "illustration"].includes(clean(data.imageType, 40)) ? clean(data.imageType, 40) : "reporter_photo";
+    const updatedMedia = await pool.query({
+      text: `UPDATE media_assets SET image_type=$1, relevance_evidence=$2::jsonb, rights_confirmed=$3, updated_at=now()
+        WHERE id=$4 AND uploaded_by=$5 RETURNING *`,
+      values: [imageType, JSON.stringify({ statement: evidence, humanConfirmed: Boolean(evidence) }), Boolean(data.rightsConfirmed), media.id, user.id]
+    });
+    media = updatedMedia.rows[0] || media;
   }
   const featured = media ? {
     id: media.id, url: media.public_url, thumbnailUrl: media.mime_type.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : media.public_url, mimeType: media.mime_type,
     caption: media.caption, altText: media.alt_text, source: media.source, copyrightOwner: media.copyright_owner,
-    license: media.license, imageType: "cms_approved", relevanceScore: media.status === "approved" ? 100 : 80
+    license: media.license, imageType: media.image_type || "reporter_photo", relevanceScore: media.status === "approved" ? 100 : 80,
+    approvalStatus: media.status || "pending", requiresReview: media.status !== "approved", rightsConfirmed: Boolean(media.rights_confirmed),
+    relevanceEvidence: media.relevance_evidence || {}, originalUrl: media.original_url || media.public_url
   } : null;
   const result = await pool.query({
     text: `INSERT INTO articles (slug,title,english_title,summary,body,category,state,district,status,author_id,
@@ -96,6 +106,9 @@ function validatePublication(data, article, media) {
   if (media) {
     const missing = [["caption", media.caption], ["alt text", media.alt_text], ["source", media.source], ["copyright owner", media.copyright_owner], ["usage rights", media.license]].filter(([, value]) => !clean(value)).map(([label]) => label);
     if (missing.length) throw Object.assign(new Error(`Media verification is incomplete: ${missing.join(", ")}`), { status: 409 });
+    if (!media.rights_confirmed) throw Object.assign(new Error("Media publication rights must be explicitly confirmed"), { status: 409 });
+    const evidence = media.relevance_evidence?.statement || "";
+    if (!clean(evidence, 4000) || media.relevance_evidence?.humanConfirmed !== true) throw Object.assign(new Error("Explain why the selected media belongs to this article"), { status: 409 });
   }
   if (data.scheduledAt) {
     const scheduled = new Date(data.scheduledAt);
@@ -132,6 +145,11 @@ async function directAdminPublish(pool, user, data, idempotencyKey) {
     validatePublication(data, saved, media);
     if (media) {
       await client.query({ text: "UPDATE media_assets SET status='approved', approved_by=$1, updated_at=now() WHERE id=$2", values: [user.id, media.id] });
+      await client.query({
+        text: `UPDATE articles SET featured_media=jsonb_set(jsonb_set(jsonb_set(featured_media,'{approvalStatus}','\"approved\"'::jsonb),'{requiresReview}','false'::jsonb),'{rightsConfirmed}','true'::jsonb),
+          media=jsonb_build_array(jsonb_set(jsonb_set(jsonb_set(featured_media,'{approvalStatus}','\"approved\"'::jsonb),'{requiresReview}','false'::jsonb),'{rightsConfirmed}','true'::jsonb)) WHERE id=$1`,
+        values: [saved.id]
+      });
     }
     const scheduled = Boolean(data.scheduledAt);
     const nextStatus = scheduled ? "scheduled" : "published";
@@ -171,10 +189,11 @@ async function transitionArticle(pool, user, data) {
     const to = clean(data.to, 40);
     if (!auth.transitionAllowed(user.role, article.status, to)) throw Object.assign(new Error(`Invalid ${user.role} transition from ${article.status} to ${to}`), { status: 409 });
     if (to === "reviewer_approved" && article.featured_media?.id) {
-      const media = await client.query({ text: "SELECT caption, alt_text, source, copyright_owner, license FROM media_assets WHERE id=$1 FOR UPDATE", values: [article.featured_media.id] });
+      const media = await client.query({ text: "SELECT caption, alt_text, source, copyright_owner, license, rights_confirmed, relevance_evidence FROM media_assets WHERE id=$1 FOR UPDATE", values: [article.featured_media.id] });
       const asset = media.rows[0];
-      if (!asset || !asset.caption || !asset.alt_text || !asset.source || !asset.copyright_owner || !asset.license) throw Object.assign(new Error("Media rights, caption and alt text are required before approval"), { status: 409 });
+      if (!asset || !asset.caption || !asset.alt_text || !asset.source || !asset.copyright_owner || !asset.license || !asset.rights_confirmed || !asset.relevance_evidence?.humanConfirmed) throw Object.assign(new Error("Media rights, relevance evidence, caption and alt text are required before approval"), { status: 409 });
       await client.query({ text: "UPDATE media_assets SET status='approved', approved_by=$1, updated_at=now() WHERE id=$2", values: [user.id, article.featured_media.id] });
+      await client.query({ text: `UPDATE articles SET featured_media=jsonb_set(jsonb_set(jsonb_set(featured_media,'{approvalStatus}','\"approved\"'::jsonb),'{requiresReview}','false'::jsonb),'{rightsConfirmed}','true'::jsonb), media=jsonb_build_array(jsonb_set(jsonb_set(jsonb_set(featured_media,'{approvalStatus}','\"approved\"'::jsonb),'{requiresReview}','false'::jsonb),'{rightsConfirmed}','true'::jsonb)) WHERE id=$1`, values: [article.id] });
     }
     const publishedAt = to === "published" ? "now()" : "published_at";
     const result = await client.query({
@@ -207,11 +226,14 @@ async function uploadMedia(request, pool, user) {
   await store.set(key, file, { metadata: { contentType: file.type, fileName: file.name, uploadedBy: user.id } });
   const publicUrl = `${new URL(request.url).origin}/.netlify/functions/media?key=${encodeURIComponent(key)}`;
   const inserted = await pool.query({
-    text: `INSERT INTO media_assets (storage_key,public_url,mime_type,file_name,file_size,caption,alt_text,source,copyright_owner,license,uploaded_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    text: `INSERT INTO media_assets (storage_key,public_url,original_url,mime_type,file_name,file_size,caption,alt_text,source,copyright_owner,license,image_type,relevance_evidence,rights_confirmed,uploaded_by)
+      VALUES ($1,$2,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14) RETURNING *`,
     values: [key, publicUrl, file.type, clean(file.name, 500), file.size, clean(form.get("caption"), 2000) || null,
       clean(form.get("altText"), 1000) || null, clean(form.get("source"), 1000) || null,
-      clean(form.get("copyrightOwner"), 1000) || null, clean(form.get("license"), 1000) || null, user.id]
+      clean(form.get("copyrightOwner"), 1000) || null, clean(form.get("license"), 1000) || null,
+      ["reporter_photo", "event_photo", "illustration"].includes(clean(form.get("imageType"), 40)) ? clean(form.get("imageType"), 40) : "reporter_photo",
+      JSON.stringify({ statement: clean(form.get("relevanceEvidence"), 4000), humanConfirmed: Boolean(clean(form.get("relevanceEvidence"), 4000)) }),
+      String(form.get("rightsConfirmed")) === "true", user.id]
   });
   return inserted.rows[0];
 }

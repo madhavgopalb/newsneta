@@ -22,7 +22,10 @@ const fullRow = {
     url: "https://newsneta.example/.netlify/functions/media?key=article.jpg",
     mimeType: "image/jpeg",
     imageType: "cms_approved",
-    relevanceScore: 100
+    relevanceScore: 100,
+    approvalStatus: "approved",
+    requiresReview: false,
+    rightsConfirmed: true
   },
   source_url: null,
   source_name: "NewsNeta",
@@ -56,7 +59,10 @@ test("uploaded video metadata survives article serialization", () => {
       url: "https://newsneta.example/.netlify/functions/media?key=story.mp4",
       thumbnailUrl: "https://newsneta.example/.netlify/functions/media?key=poster.jpg",
       mimeType: "video/mp4",
-      imageType: "cms_approved"
+      imageType: "cms_approved",
+      approvalStatus: "approved",
+      requiresReview: false,
+      rightsConfirmed: true
     }
   };
   const article = news.persistedArticleFromRow(row);

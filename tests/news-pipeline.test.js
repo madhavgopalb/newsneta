@@ -35,7 +35,7 @@ test("RSS media remains associated with the same article", () => {
   assert.equal(media.imageType, "event_candidate");
 });
 
-test("RSS stories without embedded media may use a strongly matched licensed file photo", async () => {
+test("RSS stories without embedded media keep archive candidates pending editorial approval", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => new Response(JSON.stringify({
     query: {
@@ -62,14 +62,15 @@ test("RSS stories without embedded media may use a strongly matched licensed fil
     assert.equal(media.url, "https://upload.wikimedia.org/hyderabad-traffic.jpg");
     assert.equal(media.imageType, "archive");
     assert.equal(media.label, "FILE PHOTO");
-    assert.equal(media.requiresReview, false);
+    assert.equal(media.requiresReview, true);
+    assert.equal(media.approvalStatus, "pending");
     assert.ok(media.relevanceScore >= 80);
   } finally {
     global.fetch = originalFetch;
   }
 });
 
-test("licensed image matching uses a labelled topic fallback instead of a location-only result", async () => {
+test("irrelevant archive matching falls back to no public image", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => new Response(JSON.stringify({
     query: {
@@ -93,16 +94,15 @@ test("licensed image matching uses a labelled topic fallback instead of a locati
   }), { status: 200, headers: { "Content-Type": "application/json" } });
   try {
     const media = await news.articleImage({ title: "Hyderabad RTC bus route update" }, "telangana", "Hyderabad");
-    assert.match(media.url, /^https:\/\/images\.unsplash\.com\//);
-    assert.equal(media.imageType, "representative");
-    assert.equal(media.label, "REPRESENTATIVE IMAGE");
-    assert.equal(media.requiresReview, false);
+    assert.equal(media.url, null);
+    assert.equal(media.imageType, "missing");
+    assert.equal(media.requiresReview, true);
   } finally {
     global.fetch = originalFetch;
   }
 });
 
-test("scheduled ingestion skips slow archive search and uses the reviewed topic tier", async () => {
+test("scheduled ingestion skips slow archive search and remains text-only", async () => {
   const originalFetch = global.fetch;
   let fetches = 0;
   global.fetch = async () => {
@@ -118,9 +118,9 @@ test("scheduled ingestion skips slow archive search and uses the reviewed topic 
       { skipArchive: true }
     );
     assert.equal(fetches, 0);
-    assert.equal(media.imageType, "representative");
-    assert.equal(media.requiresReview, false);
-    assert.match(media.url, /^https:\/\/images\.unsplash\.com\//);
+    assert.equal(media.imageType, "missing");
+    assert.equal(media.requiresReview, true);
+    assert.equal(media.url, null);
   } finally {
     global.fetch = originalFetch;
   }
@@ -151,13 +151,13 @@ test("legacy feed archive images are not returned as current article media", () 
   const approved = news.approvedPersistedImage({
     author_id: "feed:licensed",
     image_url: "https://publisher.example/story.jpg",
-    featured_media: { url: "https://publisher.example/story.jpg", imageType: "event_candidate", relevanceScore: 88, requiresReview: false }
+    featured_media: { url: "https://publisher.example/story.jpg", imageType: "event_candidate", relevanceScore: 88, requiresReview: false, approvalStatus: "approved", license: "Licensed syndication" }
   });
   assert.equal(approved, "https://publisher.example/story.jpg");
   const cmsApproved = news.approvedPersistedImage({
     author_id: "reporter-123",
     image_url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg",
-    featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg", imageType: "cms_approved", relevanceScore: 100 }
+    featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg", imageType: "cms_approved", relevanceScore: 100, approvalStatus: "approved", requiresReview: false, rightsConfirmed: true }
   });
   assert.equal(cmsApproved, "https://newsneta.com/.netlify/functions/media?key=approved.jpg");
   assert.equal(news.approvedPersistedImage({
@@ -173,6 +173,7 @@ test("legacy feed archive images are not returned as current article media", () 
       imageType: "archive",
       relevanceScore: 84,
       requiresReview: false,
+      approvalStatus: "approved",
       license: "CC BY-SA 4.0"
     }
   }), "https://upload.wikimedia.org/article-file-photo.jpg");
@@ -187,7 +188,7 @@ test("legacy feed archive images are not returned as current article media", () 
       requiresReview: false,
       license: "Unsplash License"
     }
-  }), "https://images.unsplash.com/topic.jpg");
+  }), null);
 });
 
 test("ingestion keeps stable identity and media on one canonical article", () => {
@@ -197,7 +198,7 @@ test("ingestion keeps stable identity and media on one canonical article", () =>
     pubDate: "2026-10-13T04:00:00.000Z",
     link: "https://publisher.example/article-123",
     source: "Licensed Publisher",
-    media: { url: "https://media.example/article-123.jpg", imageType: "event_candidate" }
+    media: { url: "https://media.example/article-123.jpg", imageType: "event_candidate", approvalStatus: "approved", requiresReview: false, license: "Licensed syndication" }
   };
   const first = ingestion.canonicalArticle(item, "telangana", "licensed-news-api");
   const second = ingestion.canonicalArticle(item, "telangana", "licensed-news-api");
@@ -228,7 +229,7 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v94"/);
+  assert.match(source, /CACHE_VERSION = "v95"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);
@@ -242,10 +243,11 @@ test("ingestion preserves regional classification when latest feed sees the same
   assert.match(source, /district=COALESCE\(EXCLUDED\.district, articles\.district\)/);
 });
 
-test("ingestion preserves valid persisted media when a later source update has none", () => {
+test("ingestion preserves only explicitly approved persisted media when a later source update has none", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "netlify", "lib", "ingest-news-core.js"), "utf8");
-  assert.match(source, /image_url=COALESCE\(EXCLUDED\.image_url, articles\.image_url\)/);
-  assert.match(source, /featured_media=COALESCE\(EXCLUDED\.featured_media, articles\.featured_media\)/);
+  assert.match(source, /featured_media->>'approvalStatus'/);
+  assert.match(source, /THEN articles\.image_url ELSE NULL END/);
+  assert.match(source, /THEN articles\.featured_media ELSE NULL END/);
 });
 
 test("scheduled ingestion uses the rights-aware resolver instead of enclosure-only media", () => {

@@ -343,10 +343,12 @@ function mediaDecision({
   imageType = "missing",
   label = "",
   score = 10,
+  approvalStatus = "pending",
   intent = {},
   reasons = []
 } = {}) {
   const safeScore = Math.max(0, Math.min(100, Number(score) || 0));
+  const approved = approvalStatus === "approved";
   return {
     url,
     thumbnailUrl: url,
@@ -358,11 +360,18 @@ function mediaDecision({
     attributionRequired,
     imageType,
     label,
+    approvalStatus,
     relevanceScore: safeScore,
     visualStatus: visualStatus(safeScore, imageType),
-    requiresReview: safeScore < 80 || !license || /unknown|verify/i.test(license),
+    requiresReview: !approved || safeScore < 80 || !license || /unknown|verify/i.test(license),
     selectedAt: new Date().toISOString(),
     intent,
+    relevanceEvidence: {
+      headlineEntities: intent.entities || [],
+      eventTerms: intent.event || [],
+      location: intent.location || "",
+      reasons
+    },
     scoreBreakdown: {
       semantic: Math.min(30, Math.round(safeScore * 0.30)),
       entity: Math.min(20, Math.round(safeScore * 0.20)),
@@ -391,19 +400,7 @@ function brandedFallbackDecision(intent, reason = "No sufficiently relevant, rig
 }
 
 function representativeImageDecision(title, cat, district, index, intent, reason) {
-  const url = selectImage(title, cat, district, index);
-  return mediaDecision({
-    url,
-    originalUrl: url,
-    source: "Unsplash",
-    copyrightOwner: "Unsplash contributor",
-    license: "Unsplash License",
-    imageType: "representative",
-    label: "REPRESENTATIVE IMAGE",
-    score: 82,
-    intent,
-    reasons: [reason, "Selected from the reviewed NewsNeta topic photo collection and labelled as representative"]
-  });
+  return brandedFallbackDecision(intent, reason || "No verified article-specific image was available");
 }
 
 function expandedNewsDescription(title, cat, district, seedText = "") {
@@ -503,8 +500,9 @@ async function fetchGNewsItems(cat, district) {
           license: "Provider-associated editorial image; verify syndication terms",
           imageType: "event_candidate",
           score: 88,
+          approvalStatus: "pending",
           intent,
-          reasons: ["Image was supplied with the same provider article", "Headline and image share the provider record"]
+          reasons: ["Image was supplied with the same provider article", "Publisher usage rights still require editorial confirmation"]
         })
       : null;
     if (!media) {
@@ -698,8 +696,9 @@ async function commonsImage(query, intent = {}) {
       imageType: "archive",
       label: "FILE PHOTO",
       score: best.score,
+      approvalStatus: "pending",
       intent,
-      reasons: ["Matched an approved reusable-media source", "Archive image is labelled to avoid implying a current-event photograph"],
+      reasons: ["Matched a reusable-media source", "Editorial approval is required before associating this file photo with the article"],
       ...commonsMetadata(info)
     });
     IMAGE_CACHE[key] = { time: Date.now(), decision };
@@ -759,8 +758,9 @@ function feedAssociatedMedia(item, cat, district) {
     license: "Publisher-associated editorial image; verify syndication terms",
     imageType: "event_candidate",
     score: 86,
+    approvalStatus: "pending",
     intent,
-    reasons: ["Image was supplied in the same RSS article record"]
+    reasons: ["Image was supplied in the same RSS article record", "Publisher usage rights still require editorial confirmation"]
   });
 }
 
@@ -774,14 +774,35 @@ async function articleImage(item, cat, district, index = 0, options = {}) {
     const archive = await commonsImage(imageSearchQuery(title, cat, district), intent);
     if (archive.url && archive.relevanceScore >= AUTO_IMAGE_THRESHOLD) return archive;
   }
-  return representativeImageDecision(
-    title,
-    cat,
-    district,
-    index,
-    intent,
-    "No exact provider or licensed archive photograph was available"
-  );
+  return brandedFallbackDecision(intent, "No verified, approved article-specific image was available");
+}
+
+function editoriallyApprovedMedia(media) {
+  if (!media || !media.url) return false;
+  const approval = String(media.approvalStatus || media.approval_status || media.status || "").toLowerCase();
+  const type = String(media.imageType || media.image_type || "").toLowerCase();
+  const rightsConfirmed = media.rightsConfirmed === true || media.rights_confirmed === true
+    || Boolean(media.license && !/unknown|verify/i.test(String(media.license)));
+  return approval === "approved"
+    && media.requiresReview !== true
+    && rightsConfirmed
+    && !["representative", "archive", "missing", "branded_fallback"].includes(type);
+}
+
+function publicMediaItem(item = {}) {
+  const media = Array.isArray(item.media) ? item.media[0] : item.media;
+  if (editoriallyApprovedMedia(media)) return item;
+  return {
+    ...item,
+    image: null,
+    imageUrl: null,
+    thumbnailUrl: null,
+    media: null,
+    mediaDecision: null,
+    imageLabel: "",
+    imageRelevanceScore: null,
+    imageStatus: "unavailable"
+  };
 }
 
 function mergeCanonicalArticles(primary = [], secondary = []) {
@@ -808,13 +829,17 @@ function approvedPersistedImage(row = {}) {
   const newsroomOwned = !String(row.author_id || "").startsWith("feed:");
   const mediaUrl = media?.publicUrl || media?.public_url || media?.url || null;
   if (newsroomOwned) {
-    if (media && !["cms_approved", "cms_upload", "uploaded"].includes(imageType)) return null;
+    const approvalStatus = String(media?.approvalStatus || media?.approval_status || media?.status || "").toLowerCase();
+    const rightsConfirmed = media?.rightsConfirmed === true || media?.rights_confirmed === true;
+    if (!media || approvalStatus !== "approved" || media.requiresReview === true || !rightsConfirmed) return null;
+    if (!["cms_approved", "cms_upload", "uploaded", "reporter_photo", "event_photo", "illustration"].includes(imageType)) return null;
     const candidate = mediaUrl || row.image_url;
     return trustedCmsMediaUrl(candidate) ? candidate : null;
   }
-  if (!media || media.requiresReview === true || ["branded_fallback", "missing"].includes(imageType)) return null;
-  if (imageType === "representative" && String(media.source || "").toLowerCase() !== "unsplash") return null;
-  if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload", "archive", "representative"].includes(imageType)) return null;
+  const approvalStatus = String(media?.approvalStatus || media?.approval_status || "").toLowerCase();
+  if (!media || approvalStatus !== "approved" || media.requiresReview === true || ["branded_fallback", "missing", "representative"].includes(imageType)) return null;
+  if (!media.license || /unknown|verify/i.test(String(media.license))) return null;
+  if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload", "archive", "illustration"].includes(imageType)) return null;
   return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
 }
 
@@ -822,27 +847,16 @@ function persistedArticleFromRow(row = {}) {
   const featuredIsVideo = String(row.featured_media?.mimeType || row.featured_media?.mime_type || "").startsWith("video/");
   const featuredUrl = row.featured_media?.url || row.featured_media?.publicUrl || row.featured_media?.public_url || null;
   const featuredThumbnail = row.featured_media?.thumbnailUrl || row.featured_media?.thumbnail_url || row.thumbnail_url || null;
-  const feedAuthored = String(row.author_id || "").startsWith("feed:");
   const approvedImage = featuredIsVideo ? featuredThumbnail : approvedPersistedImage(row);
-  const persistedImageType = String(row.featured_media?.imageType || row.featured_media?.image_type || "").toLowerCase();
-  const representativeMedia = feedAuthored && (!approvedImage || persistedImageType === "representative")
-    ? representativeImageDecision(
-        row.title,
-        row.category,
-        row.district,
-        stableImageIndex(row.source_article_id || row.source_url || row.title, 24),
-        extractImageIntent(row.title, row.category, row.district, row.summary),
-        "Legacy feed record did not contain approved article media"
-      )
-    : null;
-  const resolvedImage = representativeMedia?.url || approvedImage || null;
-  const resolvedMedia = representativeMedia || row.featured_media || null;
+  const resolvedImage = approvedImage || null;
+  const resolvedMedia = approvedImage ? row.featured_media : null;
   return {
     id: row.id,
     headline: row.title,
     title: row.title,
     summary: row.summary || "",
-    description: row.summary || "",
+    sourceDescription: row.source_description || row.summary || "",
+    description: row.source_description || row.summary || "",
     body: row.body || "",
     fullArticle: row.content_status === "brief" ? "" : (row.body || ""),
     contentStatus: row.content_status || "brief",
@@ -881,7 +895,7 @@ async function persistedArticleById(id, getDatabase) {
   if (!identity) return null;
   const { pool } = getDatabase();
   const result = await pool.query({
-    text: `SELECT id, title, summary, body, category, state, district, image_url,
+    text: `SELECT id, title, summary, source_description, body, category, state, district, image_url,
       thumbnail_url, featured_media, source_url, source_name, published_at,
       source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
       full_content_review_required, full_content_review_reason FROM articles
@@ -903,7 +917,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
     }
     const limitIndex = district ? 3 : 2;
     const result = await pool.query({
-      text: `SELECT id, title, summary, body, category, state, district, image_url,
+      text: `SELECT id, title, summary, source_description, body, category, state, district, image_url,
         thumbnail_url, featured_media, source_url, source_name, published_at,
         source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
         full_content_review_required, full_content_review_reason FROM articles
@@ -983,7 +997,7 @@ exports.handler = async function handler(event, getDatabase) {
         district: district || null,
         freshnessWindowDays: FRESH_NEWS_DAYS,
         updatedAt: new Date().toISOString(),
-        items: (ingestionMode ? licensedItems : mergeCanonicalArticles(licensedItems, persisted)).slice(0, 24)
+        items: (ingestionMode ? licensedItems.map(publicMediaItem) : mergeCanonicalArticles(licensedItems.map(publicMediaItem), persisted)).slice(0, 24)
       };
       CACHE[cacheKey] = { time: Date.now(), data };
       return json(200, {...data, cache: forceRefresh ? "bypass" : "fresh", servedAt: new Date().toISOString()});
@@ -1055,7 +1069,7 @@ exports.handler = async function handler(event, getDatabase) {
       district: district || null,
       freshnessWindowDays: FRESH_NEWS_DAYS,
       updatedAt: new Date().toISOString(),
-      items: (ingestionMode ? items : mergeCanonicalArticles(items, persisted)).slice(0, 24)
+      items: (ingestionMode ? items.map(publicMediaItem) : mergeCanonicalArticles(items.map(publicMediaItem), persisted)).slice(0, 24)
     };
 
     CACHE[cacheKey] = { time: Date.now(), data };
@@ -1093,4 +1107,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, selectImage, stableImageIndex, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, editoriallyApprovedMedia, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };

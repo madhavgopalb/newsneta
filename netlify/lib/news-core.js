@@ -781,12 +781,13 @@ function editoriallyApprovedMedia(media) {
   if (!media || !media.url) return false;
   const approval = String(media.approvalStatus || media.approval_status || media.status || "").toLowerCase();
   const type = String(media.imageType || media.image_type || "").toLowerCase();
-  const rightsConfirmed = media.rightsConfirmed === true || media.rights_confirmed === true
-    || Boolean(media.license && !/unknown|verify/i.test(String(media.license)));
+  const rightsConfirmed = media.rightsConfirmed === true || media.rights_confirmed === true;
+  const relevanceEvidence = media.relevanceEvidence || media.relevance_evidence || {};
   return approval === "approved"
     && media.requiresReview !== true
     && rightsConfirmed
-    && !["representative", "archive", "missing", "branded_fallback"].includes(type);
+    && relevanceEvidence.humanConfirmed === true
+    && !["representative", "missing", "branded_fallback"].includes(type);
 }
 
 function publicMediaItem(item = {}) {
@@ -831,14 +832,17 @@ function approvedPersistedImage(row = {}) {
   if (newsroomOwned) {
     const approvalStatus = String(media?.approvalStatus || media?.approval_status || media?.status || "").toLowerCase();
     const rightsConfirmed = media?.rightsConfirmed === true || media?.rights_confirmed === true;
-    if (!media || approvalStatus !== "approved" || media.requiresReview === true || !rightsConfirmed) return null;
-    if (!["cms_approved", "cms_upload", "uploaded", "reporter_photo", "event_photo", "illustration"].includes(imageType)) return null;
+    const relevanceEvidence = media?.relevanceEvidence || media?.relevance_evidence || {};
+    if (!media || approvalStatus !== "approved" || media.requiresReview === true || !rightsConfirmed || relevanceEvidence.humanConfirmed !== true) return null;
+    if (!["cms_approved", "cms_upload", "uploaded", "reporter_photo", "event_photo", "archive", "illustration"].includes(imageType)) return null;
     const candidate = mediaUrl || row.image_url;
     return trustedCmsMediaUrl(candidate) ? candidate : null;
   }
   const approvalStatus = String(media?.approvalStatus || media?.approval_status || "").toLowerCase();
+  const rightsConfirmed = media?.rightsConfirmed === true || media?.rights_confirmed === true;
+  const relevanceEvidence = media?.relevanceEvidence || media?.relevance_evidence || {};
   if (!media || approvalStatus !== "approved" || media.requiresReview === true || ["branded_fallback", "missing", "representative"].includes(imageType)) return null;
-  if (!media.license || /unknown|verify/i.test(String(media.license))) return null;
+  if (!rightsConfirmed || relevanceEvidence.humanConfirmed !== true || !media.license || /unknown|verify/i.test(String(media.license))) return null;
   if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload", "archive", "illustration"].includes(imageType)) return null;
   return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
 }
@@ -870,7 +874,7 @@ function persistedArticleFromRow(row = {}) {
     media: resolvedMedia ? [resolvedMedia] : [],
     mediaDecision: resolvedMedia,
     featuredMedia: resolvedMedia,
-    imageLabel: resolvedMedia?.label || "",
+    imageLabel: resolvedMedia?.label || (String(resolvedMedia?.imageType || resolvedMedia?.image_type).toLowerCase() === "illustration" ? "ILLUSTRATION" : String(resolvedMedia?.imageType || resolvedMedia?.image_type).toLowerCase() === "archive" ? "FILE PHOTO" : ""),
     imageRelevanceScore: resolvedMedia?.relevanceScore ?? resolvedMedia?.relevance_score ?? null,
     imageStatus: resolvedMedia?.visualStatus || resolvedMedia?.visual_status || null,
     link: row.source_url || `?article=${encodeURIComponent(row.id)}`,

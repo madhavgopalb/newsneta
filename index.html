@@ -999,6 +999,7 @@ html{scroll-padding-top:156px}
  box-shadow:var(--shadow);
 }
 .story-modal img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.story-media-caption{padding:8px 18px;border-bottom:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:12px;font-weight:700}
 .story-video{width:100%;aspect-ratio:16/9;background:#000;margin:0 0 18px;overflow:hidden}
 .story-video video,.story-video iframe{width:100%;height:100%;border:0;display:block;object-fit:contain}
 .story-modal-body{padding:18px}
@@ -1891,6 +1892,7 @@ body{background:var(--bg)}
   <article class="story-modal">
    <button class="icon-btn" id="closeStory" type="button" aria-label="Close story" style="position:absolute;right:24px;top:24px;z-index:2;background:rgba(255,255,255,.92)">×</button>
    <img id="storyModalImage" alt="" hidden onerror="imageFallback(event)">
+   <div class="story-media-caption" id="storyModalImageCaption" hidden></div>
    <div class="story-modal-body">
     <span class="tag" id="storyModalCategory">News</span>
     <h2 id="storyModalTitle">Story title</h2>
@@ -2966,8 +2968,9 @@ function extractSourceImage(item){
   const type = String(media?.media_type || media?.type || media?.imageType || media?.image_type || "").toLowerCase();
   const isImage = mime.startsWith("image/") || ["image","cms_approved","cms_upload","uploaded","event_candidate","event_photo","archive","representative"].includes(type);
   const approvalStatus = String(media?.approvalStatus || media?.approval_status || media?.status || "").toLowerCase();
-  const rightsVerified = media?.rightsConfirmed === true || media?.rights_confirmed === true || Boolean(media?.license && !/unknown|verify/i.test(String(media.license)));
-  const approved = approvalStatus === "approved" && rightsVerified && !["representative","archive","missing","branded_fallback"].includes(type);
+  const rightsVerified = media?.rightsConfirmed === true || media?.rights_confirmed === true;
+  const evidence = media?.relevanceEvidence || media?.relevance_evidence || {};
+  const approved = approvalStatus === "approved" && rightsVerified && evidence.humanConfirmed === true && !["representative","missing","branded_fallback"].includes(type);
   return isImage && approved && (media.public_url || media.publicUrl || media.url);
  });
  const decision = item.mediaDecision || item.media_decision || primaryMedia || (!Array.isArray(item.media) ? item.media : null);
@@ -2975,10 +2978,11 @@ function extractSourceImage(item){
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
  const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
  const decisionApproval = String(decision?.approvalStatus || decision?.approval_status || decision?.status || "").toLowerCase();
- const decisionRights = decision?.rightsConfirmed === true || decision?.rights_confirmed === true || Boolean(decision?.license && !/unknown|verify/i.test(String(decision.license)));
- const hasApprovedCmsMedia = Boolean(primaryMediaUrl && decisionApproval === "approved" && decisionRights && ["cms_approved","cms_upload","uploaded","event_photo","illustration"].includes(decisionType));
- const articleAssociated = ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","illustration"].includes(decisionType);
- const approvedDecision = decision && decisionApproval === "approved" && decisionRights && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
+ const decisionRights = decision?.rightsConfirmed === true || decision?.rights_confirmed === true;
+ const decisionEvidence = decision?.relevanceEvidence || decision?.relevance_evidence || {};
+ const hasApprovedCmsMedia = Boolean(primaryMediaUrl && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && ["cms_approved","cms_upload","uploaded","event_photo","archive","illustration"].includes(decisionType));
+ const articleAssociated = ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","archive","illustration"].includes(decisionType);
+ const approvedDecision = decision && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
  if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
  const candidates = [
   item.featuredImage,
@@ -3008,6 +3012,7 @@ function imageFallback(event){
  console.warn(JSON.stringify({code:"ARTICLE_IMAGE_LOAD_FAILED",articleId:img.closest?.("[data-story-id]")?.dataset.storyId || null,url:img.currentSrc || img.src,timestamp:new Date().toISOString()}));
  img.removeAttribute("src");
  img.hidden = true;
+ if(img.id === "storyModalImage") document.getElementById("storyModalImageCaption")?.setAttribute("hidden", "");
  const host = img.parentElement;
  host?.classList.add("media-unavailable");
  img.closest(".news-card")?.classList.add("no-media");
@@ -4417,13 +4422,23 @@ function scrollStoryModalToTop(){
 
 function setStoryModalMedia(story){
  const image = document.getElementById("storyModalImage");
+ const caption = document.getElementById("storyModalImageCaption");
  if(!image) return;
  const url = extractSourceImage(story);
+ const media = (Array.isArray(story.media) ? story.media[0] : story.media) || story.featuredMedia || story.mediaDecision || {};
+ const imageType = String(media.imageType || media.image_type || "").toLowerCase();
+ const label = story.imageLabel || media.label || (imageType === "illustration" ? "ILLUSTRATION" : imageType === "archive" ? "FILE PHOTO" : "");
+ const captionText = media.caption || media.altText || media.alt_text || "";
+ const attribution = media.source || media.copyrightOwner || media.copyright_owner || "";
  image.onerror = imageFallback;
  image.alt = story.title || "";
  image.hidden = !url;
  if(url) image.src = url;
  else image.removeAttribute("src");
+ if(caption){
+  caption.textContent = [label, captionText, attribution].filter(Boolean).join(" • ");
+  caption.hidden = !url || !caption.textContent;
+ }
  image.parentElement?.querySelectorAll(".media-state").forEach(item=>item.remove());
  if(!url) image.insertAdjacentHTML("afterend", `<span class="media-state media-missing" role="img" aria-label="Image unavailable">Image unavailable</span>`);
 }
@@ -4949,7 +4964,9 @@ function publishedCmsStories(cat){
     license:article.mediaLicense,
     imageType:article.imageType,
     relevanceScore:article.imageRelevanceScore,
-    label:/archive|representative/i.test(article.imageType) ? "FILE PHOTO" : "",
+    label:article.imageType === "illustration" ? "ILLUSTRATION" : /archive|representative/i.test(article.imageType) ? "FILE PHOTO" : "",
+    rightsConfirmed:Boolean(article.rightsConfirmed),
+    relevanceEvidence:{statement:article.relevanceEvidence || "",humanConfirmed:Boolean(article.relevanceEvidence)},
     visualStatus:Number(article.imageRelevanceScore) >= 90 ? "green" : Number(article.imageRelevanceScore) >= 70 ? "blue" : "orange"
    },
    imageRelevanceScore:article.imageRelevanceScore,

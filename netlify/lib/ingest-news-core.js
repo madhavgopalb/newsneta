@@ -44,9 +44,12 @@ function canonicalArticle(item, category, provider) {
   const sourceArticleId = safeText(item.id || item.guid || sourceUrl).slice(0, 320);
   if (!sourceArticleId || !safeText(item.title) || !item.pubDate) return null;
   const candidateMedia = item.media && item.media.url ? item.media : null;
+  const relevanceEvidence = candidateMedia?.relevanceEvidence || candidateMedia?.relevance_evidence || {};
   const mediaApproved = candidateMedia
     && String(candidateMedia.approvalStatus || candidateMedia.approval_status || "").toLowerCase() === "approved"
     && candidateMedia.requiresReview !== true
+    && (candidateMedia.rightsConfirmed === true || candidateMedia.rights_confirmed === true)
+    && relevanceEvidence.humanConfirmed === true
     && candidateMedia.license
     && !/unknown|verify/i.test(String(candidateMedia.license));
   const media = mediaApproved ? candidateMedia : null;

@@ -25,7 +25,8 @@ const fullRow = {
     relevanceScore: 100,
     approvalStatus: "approved",
     requiresReview: false,
-    rightsConfirmed: true
+    rightsConfirmed: true,
+    relevanceEvidence: { statement: "Reporter photograph linked to this article", humanConfirmed: true }
   },
   source_url: null,
   source_name: "NewsNeta",
@@ -62,7 +63,8 @@ test("uploaded video metadata survives article serialization", () => {
       imageType: "cms_approved",
       approvalStatus: "approved",
       requiresReview: false,
-      rightsConfirmed: true
+      rightsConfirmed: true,
+      relevanceEvidence: { statement: "Reporter video linked to this article", humanConfirmed: true }
     }
   };
   const article = news.persistedArticleFromRow(row);

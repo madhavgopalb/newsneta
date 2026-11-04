@@ -49,6 +49,44 @@ test("20 unrelated or unapproved feed images never become public article media",
   }
 });
 
+test("a license string and high score cannot replace explicit rights and human relevance approval", () => {
+  for (const [title, url] of articleClasses) {
+    const common = {
+      url,
+      imageType: "event_candidate",
+      relevanceScore: 99,
+      approvalStatus: "approved",
+      requiresReview: false,
+      license: "Licensed editorial use"
+    };
+    const withoutRights = ingestion.canonicalArticle({
+      id: `${title}-rights`, title, pubDate: "2026-11-03T08:00:00.000Z", description: "Verified source description.",
+      media: { ...common, rightsConfirmed: false, relevanceEvidence: { statement: "High score", humanConfirmed: true } }
+    }, "latest", "test-feed");
+    const withoutHumanReview = ingestion.canonicalArticle({
+      id: `${title}-evidence`, title, pubDate: "2026-11-03T08:00:00.000Z", description: "Verified source description.",
+      media: { ...common, rightsConfirmed: true, relevanceEvidence: { statement: "Automated match", humanConfirmed: false } }
+    }, "latest", "test-feed");
+    assert.equal(withoutRights.imageUrl, null, `${title}: rights`);
+    assert.equal(withoutHumanReview.imageUrl, null, `${title}: evidence`);
+  }
+});
+
+test("only explicitly approved article media survives API serialization", () => {
+  const approved = {
+    url: "https://images.example/verified-event.jpg",
+    imageType: "event_photo",
+    approvalStatus: "approved",
+    requiresReview: false,
+    rightsConfirmed: true,
+    relevanceEvidence: { statement: "Reporter photographed the named event", humanConfirmed: true },
+    license: "NewsNeta owned"
+  };
+  assert.equal(news.editoriallyApprovedMedia(approved), true);
+  assert.equal(news.editoriallyApprovedMedia({ ...approved, rightsConfirmed: false }), false);
+  assert.equal(news.editoriallyApprovedMedia({ ...approved, relevanceEvidence: { statement: "AI score", humanConfirmed: false } }), false);
+});
+
 test("public refresh payload strips pending media fields server-side", () => {
   const item = news.publicMediaItem({
     id: "pending-media",
@@ -89,6 +127,8 @@ test("browser detail uses source description paragraphs and requires explicit me
   assert.match(source, /story\.sourceDescription \|\| story\.description/);
   assert.match(source, /availableDescription \? articleBodyMarkup\(availableDescription\)/);
   assert.match(source, /decisionApproval === "approved"/);
+  assert.match(source, /decisionEvidence\.humanConfirmed === true/);
+  assert.doesNotMatch(source, /Boolean\(decision\?\.license/);
   assert.doesNotMatch(source, /\["cms_approved","event_candidate","event_photo","archive","representative"\]\.includes\(type\)/);
 });
 
@@ -103,4 +143,15 @@ test("CMS publication rejects media without explicit rights or relevance evidenc
     caption: "Caption", alt_text: "Alt", source: "Reporter", copyright_owner: "NewsNeta", license: "Editorial use",
     rights_confirmed: true, relevance_evidence: {}
   }), /why the selected media belongs/);
+});
+
+test("migration quarantines legacy public media without explicit human approval", () => {
+  const migration = fs.readFileSync(path.join(__dirname, "..", "netlify", "database", "migrations", "20261104120000_strict_media_approval", "migration.sql"), "utf8");
+  assert.match(migration, /rightsConfirmed/);
+  assert.match(migration, /humanConfirmed/);
+  assert.match(migration, /approvalStatus/);
+  assert.match(migration, /image_url = NULL/);
+  assert.match(migration, /status = 'rejected'/);
+  assert.match(migration, /jsonb_typeof\(featured_media\) = 'object'/);
+  assert.match(migration, /jsonb_typeof\(featured_media\) <> 'object'/);
 });

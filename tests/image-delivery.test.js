@@ -109,7 +109,9 @@ test("persisted broad representative media is rejected while explicitly approved
       imageType: "event_candidate",
       relevanceScore: 92,
       requiresReview: false,
-      approvalStatus: "approved"
+      approvalStatus: "approved",
+      rightsConfirmed: true,
+      relevanceEvidence: { statement: "Publisher image for this exact land survey report", humanConfirmed: true }
     }
   });
   assert.equal(exact.image, exactUrl);

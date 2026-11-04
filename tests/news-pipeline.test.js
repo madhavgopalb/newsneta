@@ -151,13 +151,13 @@ test("legacy feed archive images are not returned as current article media", () 
   const approved = news.approvedPersistedImage({
     author_id: "feed:licensed",
     image_url: "https://publisher.example/story.jpg",
-    featured_media: { url: "https://publisher.example/story.jpg", imageType: "event_candidate", relevanceScore: 88, requiresReview: false, approvalStatus: "approved", license: "Licensed syndication" }
+    featured_media: { url: "https://publisher.example/story.jpg", imageType: "event_candidate", relevanceScore: 88, requiresReview: false, approvalStatus: "approved", license: "Licensed syndication", rightsConfirmed: true, relevanceEvidence: { statement: "Exact publisher article image", humanConfirmed: true } }
   });
   assert.equal(approved, "https://publisher.example/story.jpg");
   const cmsApproved = news.approvedPersistedImage({
     author_id: "reporter-123",
     image_url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg",
-    featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg", imageType: "cms_approved", relevanceScore: 100, approvalStatus: "approved", requiresReview: false, rightsConfirmed: true }
+    featured_media: { url: "https://newsneta.com/.netlify/functions/media?key=approved.jpg", imageType: "cms_approved", relevanceScore: 100, approvalStatus: "approved", requiresReview: false, rightsConfirmed: true, relevanceEvidence: { statement: "Reporter uploaded for this article", humanConfirmed: true } }
   });
   assert.equal(cmsApproved, "https://newsneta.com/.netlify/functions/media?key=approved.jpg");
   assert.equal(news.approvedPersistedImage({
@@ -174,7 +174,9 @@ test("legacy feed archive images are not returned as current article media", () 
       relevanceScore: 84,
       requiresReview: false,
       approvalStatus: "approved",
-      license: "CC BY-SA 4.0"
+      license: "CC BY-SA 4.0",
+      rightsConfirmed: true,
+      relevanceEvidence: { statement: "Editor confirmed this archive image illustrates the named subject", humanConfirmed: true }
     }
   }), "https://upload.wikimedia.org/article-file-photo.jpg");
   assert.equal(news.approvedPersistedImage({
@@ -198,7 +200,7 @@ test("ingestion keeps stable identity and media on one canonical article", () =>
     pubDate: "2026-10-13T04:00:00.000Z",
     link: "https://publisher.example/article-123",
     source: "Licensed Publisher",
-    media: { url: "https://media.example/article-123.jpg", imageType: "event_candidate", approvalStatus: "approved", requiresReview: false, license: "Licensed syndication" }
+    media: { url: "https://media.example/article-123.jpg", imageType: "event_candidate", approvalStatus: "approved", requiresReview: false, license: "Licensed syndication", rightsConfirmed: true, relevanceEvidence: { statement: "Exact provider article image", humanConfirmed: true } }
   };
   const first = ingestion.canonicalArticle(item, "telangana", "licensed-news-api");
   const second = ingestion.canonicalArticle(item, "telangana", "licensed-news-api");
@@ -229,7 +231,7 @@ test("service worker clones before cache write and keeps representation paramete
 test("service worker uses network-first media and does not cache failed images", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   const mediaHandler = source.slice(source.indexOf("async function handleImageRequest"), source.indexOf("self.addEventListener(\"activate\""));
-  assert.match(source, /CACHE_VERSION = "v95"/);
+  assert.match(source, /CACHE_VERSION = "v96"/);
   assert.match(mediaHandler, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(mediaHandler, /isCacheableImage\(response\)/);
   assert.match(mediaHandler, /cache\.match\(request\)/);

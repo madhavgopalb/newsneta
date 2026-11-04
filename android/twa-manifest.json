@@ -4,26 +4,26 @@
   "name": "NewsNeta - Telugu News",
   "launcherName": "NewsNeta",
   "display": "standalone",
-  "themeColor": "#d71920",
+  "themeColor": "#CE0203",
   "themeColorDark": "#080b12",
-  "navigationColor": "#d71920",
+  "navigationColor": "#CE0203",
   "navigationColorDark": "#080b12",
-  "navigationDividerColor": "#d71920",
+  "navigationDividerColor": "#CE0203",
   "navigationDividerColorDark": "#080b12",
-  "backgroundColor": "#f7f8fb",
+  "backgroundColor": "#f7f7f8",
   "enableNotifications": true,
   "startUrl": "/",
   "scope": "/",
   "orientation": "portrait",
-  "iconUrl": "https://newsneta.com/assets/app/icon-512.png",
-  "maskableIconUrl": "https://newsneta.com/assets/app/maskable-512.png",
+  "iconUrl": "https://newsneta.com/assets/app/icon-512.png?v=brand-v1",
+  "maskableIconUrl": "https://newsneta.com/assets/app/maskable-512.png?v=brand-v1",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android/newsneta-release.keystore",
     "alias": "newsneta"
   },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
   "shortcuts": [
     {
       "name": "Latest News",
@@ -42,7 +42,7 @@
     }
   ],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://newsneta.com/manifest.json",
+  "webManifestUrl": "https://newsneta.com/manifest.json?v=brand-v1",
   "fallbackType": "customtabs",
   "features": {
     "locationDelegation": {

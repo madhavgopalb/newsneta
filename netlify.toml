@@ -9,6 +9,12 @@
   force = true
 
 [[redirects]]
+  from = "/news/*"
+  to = "/.netlify/functions/article?slug=:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/telangana"
   to = "/index.html"
   status = 200
@@ -47,6 +53,11 @@
   for = "/.netlify/functions/news"
   [headers.values]
     Cache-Control = "no-store, max-age=0"
+
+[[headers]]
+  for = "/news/*"
+  [headers.values]
+    Cache-Control = "public, max-age=60, stale-while-revalidate=300"
 
 [[headers]]
   for = "/assets/*"

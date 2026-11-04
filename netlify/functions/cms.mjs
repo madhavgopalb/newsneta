@@ -70,6 +70,7 @@ async function saveArticle(pool, user, data) {
   }
   const featured = media ? {
     id: media.id, url: media.public_url, thumbnailUrl: media.mime_type.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : media.public_url, mimeType: media.mime_type,
+    storageKey: media.storage_key,
     caption: media.caption, altText: media.alt_text, source: media.source, copyrightOwner: media.copyright_owner,
     license: media.license, imageType: media.image_type || "reporter_photo", relevanceScore: media.status === "approved" ? 100 : 80,
     approvalStatus: media.status || "pending", requiresReview: media.status !== "approved", rightsConfirmed: Boolean(media.rights_confirmed),
@@ -179,6 +180,21 @@ async function directAdminPublish(pool, user, data, idempotencyKey) {
   }
 }
 
+async function saveArticleTransaction(pool, user, data) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const article = await saveArticle(client, user, data);
+    await client.query("COMMIT");
+    return article;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function transitionArticle(pool, user, data) {
   const client = await pool.connect();
   try {
@@ -254,7 +270,7 @@ export default async function handler(request) {
     if (request.method === "GET" && action === "list") return json(200, { status: "ok", items: await listArticles(pool, user) });
     if (action === "upload") return json(201, { status: "ok", media: await uploadMedia(request, pool, user) });
     const data = await request.json();
-    if (action === "save") return json(200, { status: "ok", article: await saveArticle(pool, user, data) });
+    if (action === "save") return json(200, { status: "ok", article: await saveArticleTransaction(pool, user, data) });
     if (action === "publish-now" || action === "schedule") {
       const result = await directAdminPublish(pool, user, data, request.headers.get("Idempotency-Key") || data.idempotencyKey);
       return json(200, { status: "ok", ...result });
@@ -272,4 +288,4 @@ export default async function handler(request) {
   }
 }
 
-export { directAdminPublish, summaryFromBody, validatePublication };
+export { directAdminPublish, saveArticleTransaction, summaryFromBody, validatePublication };

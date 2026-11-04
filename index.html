@@ -7,7 +7,7 @@
 <meta name="description" content="NewsNeta delivers current Telugu news from Andhra Pradesh, Telangana and districts, along with politics, national, international, cinema, sports, business and technology coverage."/>
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
 <meta name="keywords" content="Telugu news, breaking news Telugu, Telangana news, Andhra Pradesh news, district news, politics, cinema, sports, business, NewsNeta"/>
-<meta name="theme-color" content="#d71920"/>
+<meta name="theme-color" content="#CE0203"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -18,28 +18,33 @@
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="te_IN"/>
 <meta property="og:url" content="https://newsneta.com/"/>
-<meta property="og:image" content="https://newsneta.com/assets/newsneta-logo-header.png"/>
+<meta property="og:image" content="https://newsneta.com/assets/brand/v1/social-share-1200x630.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="NewsNeta - Telugu News, Breaking News, District News"/>
 <meta name="twitter:description" content="Telugu breaking news, district updates, politics, cinema, sports, business and technology from NewsNeta."/>
+<meta name="twitter:image" content="https://newsneta.com/assets/brand/v1/social-share-1200x630.png"/>
 <link rel="canonical" href="https://newsneta.com/"/>
-<link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="assets/newsneta-logo.jpg"/>
+<link rel="manifest" href="manifest.json?v=brand-v1"/>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/v1/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="48x48" href="assets/brand/v1/favicon-48.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/v1/apple-touch-icon-180.png"/>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"NewsMediaOrganization","name":"NewsNeta","url":"https://newsneta.com/","logo":"https://newsneta.com/assets/newsneta-logo-header.png","sameAs":["https://newsneta.com/"],"areaServed":["Telangana","Andhra Pradesh","India"],"publishingPrinciples":"https://newsneta.com/#publishingDesk"}
+{"@context":"https://schema.org","@type":"NewsMediaOrganization","name":"NewsNeta","url":"https://newsneta.com/","logo":"https://newsneta.com/assets/brand/v1/wordmark-desktop.png","sameAs":["https://newsneta.com/"],"areaServed":["Telangana","Andhra Pradesh","India"],"publishingPrinciples":"https://newsneta.com/#publishingDesk"}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="assets/brand/brand-config.js?v=brand-v1" defer></script>
 <style>
 :root{
- --bg:#f7f8fb;
+ --bg:#f7f7f8;
  --surface:#ffffff;
  --surface-2:rgba(255,255,255,.72);
- --ink:#111827;
+ --ink:#171717;
  --muted:#667085;
  --line:rgba(17,24,39,.1);
- --brand:#d71920;
+ --brand:#CE0203;
+ --brand-dark:#A60002;
  --brand-2:#ffb000;
  --teal:#0ea5a8;
  --blue:#2563eb;
@@ -64,12 +69,9 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
  margin:0;
- background:
-  radial-gradient(circle at 15% -10%, rgba(215,25,32,.12), transparent 28rem),
-  radial-gradient(circle at 92% 8%, rgba(14,165,168,.12), transparent 24rem),
-  var(--bg);
+ background:var(--bg);
  color:var(--ink);
- font-family:"Noto Sans Telugu", Inter, system-ui, sans-serif;
+ font-family:"Noto Sans Telugu","Noto Sans Devanagari",Inter,system-ui,sans-serif;
  line-height:1.5;
 }
 body.lock{overflow:hidden}
@@ -91,21 +93,21 @@ html{scroll-padding-top:156px}
 [id]{scroll-margin-top:156px}
 .header{
  display:grid;
- grid-template-columns:minmax(320px,430px) minmax(240px,1fr) auto;
+ grid-template-columns:minmax(300px,360px) minmax(240px,1fr) auto;
  align-items:center;
  gap:14px;
  max-width:1240px;
  margin:0 auto;
- padding:8px 16px;
+ padding:10px 16px;
 }
 .brand-cluster{display:flex;align-items:center;gap:8px;min-width:0}
-.brand{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;height:78px;flex:1}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;min-height:82px;flex:1}
 .brand-logo{
  width:100%;
- height:100%;
- max-width:410px;
- max-height:78px;
- border-radius:8px;
+ height:auto;
+ max-width:330px;
+ max-height:82px;
+ border-radius:4px;
  object-fit:contain;
  object-position:center;
  background:transparent;
@@ -172,7 +174,7 @@ html{scroll-padding-top:156px}
  grid-template-columns:minmax(0,1fr);
  gap:6px;
  align-items:center;
- background:#159bd8;
+ background:var(--brand);
  padding:0 16px;
 }
 .nav-scroll-shell{
@@ -183,7 +185,7 @@ html{scroll-padding-top:156px}
  width:100%;
  max-width:1240px;
  margin:0 auto;
- background:#159bd8;
+ background:var(--brand);
 }
 .nav-scroll-btn{
  width:34px;
@@ -216,7 +218,7 @@ html{scroll-padding-top:156px}
  margin:0;
  padding:0;
  align-items:center;
- background:#159bd8;
+ background:var(--brand);
 }
 .nav::-webkit-scrollbar{display:none}
 .nav a{
@@ -234,7 +236,7 @@ html{scroll-padding-top:156px}
  white-space:nowrap;
  touch-action:manipulation;
 }
-.nav a.active{background:rgba(255,255,255,.16);color:#fff}
+.nav a.active{background:var(--brand-dark);color:#fff}
 .nav-item{position:relative;flex:0 0 auto}
 .nav-trigger{
  min-height:58px;
@@ -584,8 +586,8 @@ html{scroll-padding-top:156px}
 [data-theme="dark"] .news-panel-tabs{background:#111827}
 .news-panel-tab{flex:1;border:0;border-radius:0;background:#fff;color:#101827;min-height:50px;padding:0 10px;font-weight:900;font-size:17px}
 [data-theme="dark"] .news-panel-tab{background:#182132;color:#dbeafe}
-.news-panel-tab.active{background:#159bd8;border-color:#159bd8;color:#fff}
-.side-view-all{width:calc(100% - 24px);margin:12px;border:1px solid #159bd8;background:transparent;color:#159bd8;min-height:46px;font-weight:900;font-size:15px}
+.news-panel-tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.side-view-all{width:calc(100% - 24px);margin:12px;border:1px solid var(--brand);background:transparent;color:var(--brand);min-height:46px;font-weight:900;font-size:15px}
 .counter-row{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:0 0 10px;text-align:left;color:inherit;min-width:0}
 .counter-row img,.counter-row .media-state{width:72px;height:54px;min-height:54px;border-radius:4px;object-fit:cover}
 .counter-row-copy{display:grid;gap:5px;min-width:0}
@@ -866,9 +868,10 @@ html{scroll-padding-top:156px}
 .role-dashboard{padding:0;background:#f4f6f8;overflow:auto}
 .role-dashboard[hidden]{display:none}
 .cms-shell{display:grid;grid-template-columns:220px minmax(0,1fr);height:calc(94vh - 119px);min-height:560px}
-.cms-sidebar{background:#202733;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
+.cms-sidebar{background:#202124;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
 .cms-sidebar strong{display:block;font-size:16px;margin-bottom:4px}
 .cms-sidebar small{display:block;color:#b8c2d2;font-weight:800;margin-bottom:10px}
+.cms-sidebar-brand{width:100%;max-width:190px;height:auto;border-radius:4px;margin-bottom:4px}
 .cms-menu-btn{border:0;border-radius:6px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font-weight:900}
 .cms-menu-btn.active{background:var(--brand)}
 .cms-workspace{padding:16px;display:grid;gap:12px;align-content:start;overflow:auto}
@@ -910,7 +913,7 @@ html{scroll-padding-top:156px}
 .queue-item small{color:var(--muted);font-weight:800}
 .queue-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .queue-actions button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;min-height:32px;padding:0 10px;font-weight:900}
-.queue-actions button.danger{border-color:rgba(199,11,47,.28);color:#c70b2f;background:#fff5f7}
+.queue-actions button.danger{border-color:rgba(206,2,3,.28);color:var(--brand);background:#fff5f5}
 .status-pill{display:inline-flex;align-items:center;border-radius:999px;background:#f1f5f9;color:#334155;padding:4px 8px;font-size:11px;font-weight:900;text-transform:uppercase}
 .status-pill.published{background:#dcfce7;color:#166534}
 .status-pill.scheduled{background:#ede9fe;color:#5b21b6}
@@ -977,10 +980,10 @@ html{scroll-padding-top:156px}
 .cms-article-preview p{color:var(--muted);font-size:16px;line-height:1.8}
 .cms-preview-summary{font-weight:800;color:var(--ink)!important;border-left:3px solid var(--red);padding-left:12px}
 .cms-ai-box{border:1px solid rgba(199,11,47,.28);border-radius:14px;background:linear-gradient(135deg,rgba(199,11,47,.08),rgba(255,255,255,.9));padding:14px;display:grid;gap:10px}
-.cms-ai-title{display:flex;align-items:center;gap:8px;font-weight:900;color:#c70b2f}
-.cms-ai-title span{border-radius:6px;background:#c70b2f;color:#fff;padding:4px 8px;font:900 11px/1 Inter,sans-serif}
+.cms-ai-title{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--brand)}
+.cms-ai-title span{border-radius:6px;background:var(--brand);color:#fff;padding:4px 8px;font:900 11px/1 Inter,sans-serif}
 .cms-ai-actions{display:flex;gap:8px;flex-wrap:wrap}
-.cms-ai-actions button{border:1px solid rgba(199,11,47,.22);background:#fff;color:#c70b2f;border-radius:999px;min-height:34px;padding:0 12px;font-weight:800}
+.cms-ai-actions button{border:1px solid rgba(206,2,3,.22);background:#fff;color:var(--brand);border-radius:999px;min-height:34px;padding:0 12px;font-weight:800}
 .cms-form-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;position:sticky;bottom:0;background:linear-gradient(180deg,rgba(255,255,255,.88),#fff);border-top:1px solid var(--line);padding-top:12px;z-index:2}
 .cms-form-actions .pill-btn{min-width:170px}
 .cms-secondary-btn{border-color:var(--line);background:#fff;color:var(--ink)}
@@ -1047,6 +1050,7 @@ html{scroll-padding-top:156px}
 .article-content-brief{padding:18px;border-left:4px solid var(--accent);background:var(--soft);border-radius:4px}
 .article-content-brief h3{margin-top:0}
 .article-detail-state{display:grid;place-items:center;gap:12px;min-height:220px;padding:32px;text-align:center;color:var(--muted)}
+.article-loading-brand{width:min(220px,70vw);height:auto;border-radius:4px;box-shadow:0 8px 28px rgba(15,23,42,.12)}
 .article-detail-spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:article-spin .8s linear infinite}
 .article-detail-state button{min-height:42px;padding:0 18px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:900}
 @keyframes article-spin{to{transform:rotate(360deg)}}
@@ -1107,7 +1111,7 @@ html{scroll-padding-top:156px}
  align-items:center;
  padding:20px 22px;
  border-bottom:0;
- background:#c70b2f;
+ background:var(--brand);
  color:#fff;
 }
 .login-modal header strong{font-size:25px;line-height:1.1}
@@ -1115,7 +1119,9 @@ html{scroll-padding-top:156px}
 .login-modal header .icon-btn{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.22);color:#fff}
 .cms-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);background:#fff}
 .cms-tab{min-height:44px;border:0;border-bottom:2px solid transparent;background:#fff;color:var(--muted);font-weight:900;cursor:pointer}
-.cms-tab.active{color:#c70b2f;border-bottom-color:#c70b2f}
+.cms-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.login-brand-lockup{display:flex;align-items:center;gap:14px;min-width:0}
+.login-brand-logo{width:150px;height:auto;border-radius:4px;flex:0 0 auto}
 .login-kicker{padding:16px 16px 0}
 .login-kicker strong{display:block;font-size:18px}
 .login-kicker small{display:block;color:var(--muted);font-weight:800;margin-top:3px}
@@ -1194,8 +1200,8 @@ html{scroll-padding-top:156px}
  .topbar{position:sticky}
  .header{display:flex;padding:6px 10px;gap:6px;min-height:62px}
  .brand-cluster{display:contents}
- .brand{order:1;flex:1;max-width:none;height:54px}
- .brand-logo{width:100%;height:62px;max-width:292px;max-height:62px;object-fit:contain;transform:none;transform-origin:center}
+ .brand{order:1;flex:1;max-width:none;min-height:54px}
+ .brand-logo{width:100%;height:auto;max-width:188px;max-height:58px;object-fit:contain;transform:none;transform-origin:center}
  .brand h1{font-size:18px}
  .brand small{font-size:11px}
  .header-actions{order:2;gap:4px;flex:0 0 auto}
@@ -1212,10 +1218,10 @@ html{scroll-padding-top:156px}
  .mobile-search-toggle::before{content:"⌕";font-size:21px;line-height:1}
  .search-wrap input{height:42px;font-size:16px;background:var(--surface)}
  .header{grid-template-columns:minmax(0,1fr) auto}
- .nav-menu-row{display:block;padding:0;background:#159bd8;border-top:0;border-bottom:0}
- .nav-scroll-shell{display:block;min-width:0;width:100%;max-width:none;margin:0;background:#159bd8}
+ .nav-menu-row{display:block;padding:0;background:var(--brand);border-top:0;border-bottom:0}
+ .nav-scroll-shell{display:block;min-width:0;width:100%;max-width:none;margin:0;background:var(--brand)}
  .nav-scroll-btn{display:none}
- .nav{display:flex;gap:0;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0;min-height:48px;background:#159bd8;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+ .nav{display:flex;gap:0;overflow-x:auto;overflow-y:hidden;max-height:none;border:0;border-radius:0;padding:0;min-height:48px;background:var(--brand);scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
  .nav>a,.nav>.nav-item{display:flex!important;flex:0 0 auto;position:relative}
  .mobile-nav-more{display:none!important}
  .nav a{scroll-snap-align:start}
@@ -1285,12 +1291,15 @@ html{scroll-padding-top:156px}
  .weather-grid{grid-template-columns:1fr}
  .login-content{grid-template-columns:1fr;max-height:86vh;overflow:auto}
  .login-modal{width:100%;max-height:96vh;border-radius:10px}
+ .login-brand-lockup{gap:10px}
+ .login-brand-logo{width:118px}
+ .login-modal header strong{font-size:20px}
  .login-modal.authenticated .login-content{max-height:calc(96vh - 119px);overflow:auto}
  .login-panel{border-right:0}
  .role-dashboard{border-top:1px solid var(--line)}
  .cms-shell{grid-template-columns:1fr;height:auto;min-height:0}
  .cms-sidebar{grid-template-columns:1fr 1fr;align-items:start;position:sticky;top:0;z-index:3}
- .cms-sidebar strong,.cms-sidebar small{grid-column:1/-1}
+ .cms-sidebar .cms-sidebar-brand,.cms-sidebar strong,.cms-sidebar small{grid-column:1/-1}
  .cms-workspace{padding:12px;overflow:visible}
  .dashboard-head{display:grid}
  .dashboard-head-actions{justify-content:stretch}
@@ -1325,8 +1334,8 @@ html{scroll-padding-top:156px}
  .notify{bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px}
 }
 @media (max-width:430px){
- .brand{height:50px}
- .brand-logo{width:100%;height:50px;max-width:190px;max-height:50px}
+ .brand{min-height:54px}
+ .brand-logo{width:100%;height:auto;max-width:176px;max-height:54px}
  .header-actions .admin-login-btn{padding:0 10px;font-size:12px}
  .header-actions .admin-login-btn .label{display:inline}
  .hero-actions .primary-btn,.hero-actions .ghost-btn{flex:1;justify-content:center}
@@ -1335,7 +1344,7 @@ html{scroll-padding-top:156px}
  .summary{font-size:13px}
 }
 @media (max-width:360px){
- .brand-logo{width:100%;height:48px;max-width:154px;max-height:48px}
+ .brand-logo{width:100%;height:auto;max-width:142px;max-height:48px}
  .header-actions{gap:4px}
  .header-actions .admin-login-btn{min-width:46px;padding:0 7px}
  .header-actions .language-select{min-width:70px;max-width:72px;padding:0 5px}
@@ -1401,9 +1410,9 @@ body{background:var(--bg)}
 .district-controls{display:grid;gap:10px}
 .district-controls select{width:100%;min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 12px}
 .editorial-empty{padding:24px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
-.publication-footer{background:#101827;color:#e5e7eb;margin-top:36px;padding:36px 20px calc(36px + env(safe-area-inset-bottom))}
+.publication-footer{background:#171717;color:#e5e7eb;margin-top:36px;padding:36px 20px calc(36px + env(safe-area-inset-bottom))}
 .footer-inner{max-width:1280px;margin:auto;display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:28px}
-.footer-brand img{width:220px;max-width:100%;background:transparent}
+.footer-brand img{width:240px;max-width:100%;height:auto;border-radius:4px;background:var(--brand)}
 .footer-brand p{color:#aeb8c7;max-width:340px}
 .footer-col strong{display:block;margin-bottom:12px;color:#fff}
 .footer-col a{display:block;color:#aeb8c7;padding:5px 0}
@@ -1434,7 +1443,7 @@ body{background:var(--bg)}
    <div class="brand-cluster">
     <button class="pill-btn menu-toggle" id="menuToggle" type="button" aria-label="Open news menu" aria-expanded="false" aria-controls="menuDrawer">☰</button>
     <a class="brand" href="/" data-home-link>
-     <img class="brand-logo" src="assets/newsneta-logo-header.png" alt="NewsNeta logo"/>
+     <img class="brand-logo" data-brand-logo data-brand-variant="desktop" src="assets/brand/v1/wordmark-desktop.png" alt="NewsNeta official logo" width="1280" height="552"/>
      <div><h1>NewsNeta</h1><small>తెలుగు ప్రజల వార్తా వేదిక</small></div>
     </a>
    </div>
@@ -1804,7 +1813,7 @@ body{background:var(--bg)}
  <footer class="publication-footer">
   <div class="footer-inner">
    <div class="footer-brand">
-    <img src="assets/newsneta-logo-transparent.png" alt="NewsNeta">
+    <img data-brand-logo data-brand-variant="footer" src="assets/brand/v1/wordmark-mobile.png" alt="NewsNeta official logo" width="720" height="310">
     <p>Andhra Pradesh, Telangana, district and national news with clear Telugu reporting and responsible editorial review.</p>
    </div>
    <nav class="footer-col" aria-label="News sections"><strong>News</strong><a href="/andhra-pradesh" data-region-route="ap">Andhra Pradesh</a><a href="/telangana" data-region-route="telangana">Telangana</a><a href="#latestGrid" data-cat="national">National</a><a href="#latestGrid" data-cat="international">International</a><a href="#latestGrid" data-cat="politics">Politics</a></nav>
@@ -1841,9 +1850,12 @@ body{background:var(--bg)}
  <div class="modal-backdrop" id="loginBackdrop" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
   <div class="login-modal">
    <header>
-    <div>
-     <strong id="loginTitle">Login</strong>
-     <p class="summary" style="margin:4px 0 0">Sign in to NewsNeta newsroom</p>
+    <div class="login-brand-lockup">
+     <img class="login-brand-logo" data-brand-logo data-brand-variant="newsroom" src="assets/brand/v1/wordmark-mobile.png" alt="NewsNeta newsroom" width="720" height="310">
+     <div>
+      <strong id="loginTitle">Login</strong>
+      <p class="summary" style="margin:4px 0 0">Sign in to NewsNeta newsroom</p>
+     </div>
     </div>
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
@@ -4514,7 +4526,7 @@ function showStoryDetailState(id, state, message){
  document.getElementById("storyModalMeta").textContent = "";
  document.getElementById("storyModalSummary").hidden = true;
  copy.innerHTML = state === "loading"
-  ? `<div class="article-detail-state" role="status"><span class="article-detail-spinner"></span><p>${escapeHtml(message)}</p></div>`
+  ? `<div class="article-detail-state" role="status">${window.NewsNetaBrand?.components?.LoadingBrand({className:"article-loading-brand",alt:"NewsNeta loading"}) || ""}<span class="article-detail-spinner"></span><p>${escapeHtml(message)}</p></div>`
   : `<div class="article-detail-state" role="alert"><p>${escapeHtml(message)}</p><button type="button" data-article-retry="${escapeAttr(id)}">Retry</button></div>`;
  setStoryModalMedia({title:"",image:null});
  backdrop.classList.add("open");
@@ -5929,6 +5941,7 @@ function openRoleDashboard(role, user = currentCmsUser){
  content.innerHTML = `
   <div class="cms-shell">
    <aside class="cms-sidebar">
+     <img class="cms-sidebar-brand" data-brand-logo data-brand-variant="newsroom" src="assets/brand/v1/wordmark-mobile.png" alt="NewsNeta Studio" width="720" height="310">
      <strong>NewsNeta Studio</strong>
     <small>${user ? `${user.name} • ${user.location.city}` : "Newsroom"} workspace</small>
      <button class="cms-menu-btn active" type="button" data-cms-screen="create">Create Article</button>

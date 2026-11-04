@@ -1,13 +1,16 @@
-const CACHE_VERSION = "v95";
+const CACHE_VERSION = "v96";
 const CACHE_NAME = `newsneta-pwa-${CACHE_VERSION}`;
 const API_CACHE_NAME = `newsneta-api-${CACHE_VERSION}`;
 const MEDIA_CACHE_NAME = `newsneta-media-${CACHE_VERSION}`;
 const NEWSNETA_CACHE_PREFIXES = ["newsneta-pwa-", "newsneta-api-", "newsneta-media-"];
 const APP_SHELL = [
   "/manifest.json",
-  "/assets/newsneta-logo.jpg",
-  "/assets/newsneta-logo-transparent.png",
-  "/assets/newsneta-logo-header.png",
+  "/assets/brand/brand-config.js?v=brand-v1",
+  "/assets/brand/v1/wordmark-desktop.png",
+  "/assets/brand/v1/wordmark-mobile.png",
+  "/assets/brand/v1/favicon-32.png",
+  "/assets/brand/v1/favicon-48.png",
+  "/assets/brand/v1/apple-touch-icon-180.png",
   "/assets/app/icon-192.png",
   "/assets/app/icon-512.png",
   "/assets/app/maskable-192.png",

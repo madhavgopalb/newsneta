@@ -37,7 +37,7 @@ if (manifest) {
   if (manifest.scope !== "/") failures.push("manifest scope should be /");
   const icons = manifest.icons || [];
   for (const expected of ["assets/app/icon-192.png", "assets/app/icon-512.png", "assets/app/maskable-512.png"]) {
-    if (!icons.some(icon => icon.src === expected)) failures.push(`manifest icon missing: ${expected}`);
+    if (!icons.some(icon => String(icon.src || "").split("?")[0] === expected)) failures.push(`manifest icon missing: ${expected}`);
   }
   if (!icons.some(icon => String(icon.purpose || "").includes("maskable"))) failures.push("manifest needs at least one maskable icon");
 }
@@ -46,7 +46,7 @@ const twa = readJson("android/twa-manifest.json");
 if (twa) {
   if (twa.packageId !== "com.newsneta.twa") failures.push("TWA packageId must be com.newsneta.twa");
   if (twa.host !== "newsneta.com") failures.push("TWA host must be newsneta.com");
-  if (twa.webManifestUrl !== "https://newsneta.com/manifest.json") failures.push("TWA webManifestUrl must point to production manifest");
+  if (String(twa.webManifestUrl || "").split("?")[0] !== "https://newsneta.com/manifest.json") failures.push("TWA webManifestUrl must point to production manifest");
   if (!twa.signingKey?.path || !twa.signingKey?.alias) failures.push("TWA signing key path and alias are required");
 }
 

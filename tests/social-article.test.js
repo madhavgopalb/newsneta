@@ -84,3 +84,8 @@ test("CMS save and publish media associations use transactions", () => {
   assert.match(saveTransaction, /query\("ROLLBACK"\)/);
   assert.match(source, /storageKey: media\.storage_key/);
 });
+
+test("article reader falls back to its approved public feed record when detail fetch fails", () => {
+  const source = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  assert.match(source, /catch\(error\)\{[\s\S]*?if\(localStory\) renderStoryDetail\(localStory\)/);
+});

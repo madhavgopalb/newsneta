@@ -152,4 +152,6 @@ test("migration quarantines legacy public media without explicit human approval"
   assert.match(migration, /approvalStatus/);
   assert.match(migration, /image_url = NULL/);
   assert.match(migration, /status = 'rejected'/);
+  assert.match(migration, /jsonb_typeof\(featured_media\) = 'object'/);
+  assert.match(migration, /jsonb_typeof\(featured_media\) <> 'object'/);
 });

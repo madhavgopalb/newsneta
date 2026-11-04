@@ -611,7 +611,7 @@ function selectImage(title, cat, district, index) {
 function imageSearchQuery(title, cat, district) {
   const text = `${title} ${cat}`.toLowerCase();
   if (/yoga|యోగ/.test(text)) return "yoga competition India";
-  if (/bus|rtc|depot|బస్సు|డిపో|ఆర్టీసీ/.test(text)) return "public bus transport India";
+  if (/\bbus\b|\brtc\b|\bdepot\b|బస్సు|డిపో|ఆర్టీసీ/.test(text)) return "public bus transport India";
   if (/forest|tribal|గిరిజన|అటవీ|ఫారెస్ట్/.test(text)) return "tribal forest India";
   if (/cabinet|కేబినెట్|secretariat|సచివాలయ/.test(text)) return cat === "ap" ? "Andhra Pradesh government secretariat" : "Telangana government secretariat";
   if (/court|judge|కోర్టు|న్యాయ/.test(text)) return "court building India";

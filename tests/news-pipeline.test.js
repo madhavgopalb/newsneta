@@ -37,6 +37,8 @@ test("RSS media remains associated with the same article", () => {
 
 test("RSS stories without embedded media keep archive candidates pending editorial approval", async () => {
   const originalFetch = global.fetch;
+  const previousPolicy = process.env.COMMONS_MEDIA_EDITOR_APPROVED;
+  process.env.COMMONS_MEDIA_EDITOR_APPROVED = "false";
   global.fetch = async () => new Response(JSON.stringify({
     query: {
       pages: {
@@ -67,6 +69,47 @@ test("RSS stories without embedded media keep archive candidates pending editori
     assert.ok(media.relevanceScore >= 80);
   } finally {
     global.fetch = originalFetch;
+    if (previousPolicy === undefined) delete process.env.COMMONS_MEDIA_EDITOR_APPROVED;
+    else process.env.COMMONS_MEDIA_EDITOR_APPROVED = previousPolicy;
+  }
+});
+
+test("editor-approved Commons policy publishes only a licensed relevant file photo", async () => {
+  const originalFetch = global.fetch;
+  const previousPolicy = process.env.COMMONS_MEDIA_EDITOR_APPROVED;
+  process.env.COMMONS_MEDIA_EDITOR_APPROVED = "true";
+  global.fetch = async () => new Response(JSON.stringify({
+    query: {
+      pages: {
+        1: {
+          title: "File:Hyderabad traffic road update.jpg",
+          imageinfo: [{
+            mime: "image/jpeg",
+            thumburl: "https://upload.wikimedia.org/hyderabad-traffic-approved.jpg",
+            url: "https://upload.wikimedia.org/hyderabad-traffic-approved-original.jpg",
+            descriptionurl: "https://commons.wikimedia.org/wiki/File:Hyderabad_traffic_road_update.jpg",
+            extmetadata: {
+              LicenseShortName: { value: "CC BY-SA 4.0" },
+              Artist: { value: "Test photographer" },
+              ImageDescription: { value: "Hyderabad traffic road update" }
+            }
+          }]
+        }
+      }
+    }
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  try {
+    const media = await news.articleImage({ title: "Hyderabad traffic road update" }, "telangana", "Hyderabad");
+    assert.equal(media.approvalStatus, "approved");
+    assert.equal(media.rightsConfirmed, true);
+    assert.equal(media.relevanceEvidence.humanConfirmed, true);
+    assert.equal(media.label, "FILE PHOTO");
+    assert.equal(media.requiresReview, false);
+    assert.equal(news.editoriallyApprovedMedia(media), true);
+  } finally {
+    global.fetch = originalFetch;
+    if (previousPolicy === undefined) delete process.env.COMMONS_MEDIA_EDITOR_APPROVED;
+    else process.env.COMMONS_MEDIA_EDITOR_APPROVED = previousPolicy;
   }
 });
 
@@ -139,6 +182,59 @@ test("placeholder and logo image URLs are rejected", () => {
   assert.equal(news.trustedImageUrl("https://example.com/logo.png"), false);
   assert.equal(news.trustedImageUrl("https://example.com/placeholder.jpg"), false);
   assert.equal(news.trustedImageUrl("https://example.com/article.jpg"), true);
+});
+
+test("UUID-formatted GNews keys are normalized to the provider format", () => {
+  assert.equal(
+    news.normalizeGNewsApiKey("90d05b36-e8f0-41ae-9d4a-11b59b48c48d"),
+    "90d05b36e8f041ae9d4a11b59b48c48d"
+  );
+  assert.equal(news.normalizeGNewsApiKey("0123456789abcdef0123456789abcdef"), "0123456789abcdef0123456789abcdef");
+});
+
+test("GNews article media remains blocked until provider rights policy is explicitly approved", () => {
+  const previousRights = process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED;
+  const previousEditorial = process.env.GNEWS_MEDIA_EDITOR_APPROVED;
+  delete process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED;
+  delete process.env.GNEWS_MEDIA_EDITOR_APPROVED;
+  try {
+    const media = news.gnewsArticleMedia({
+      image: "https://media.example.com/exact-article.jpg",
+      source: { name: "Example Publisher" }
+    });
+    assert.equal(media.approvalStatus, "pending");
+    assert.equal(media.rightsConfirmed, false);
+    assert.equal(media.requiresReview, true);
+    assert.equal(news.editoriallyApprovedMedia(media), false);
+  } finally {
+    if (previousRights === undefined) delete process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED;
+    else process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED = previousRights;
+    if (previousEditorial === undefined) delete process.env.GNEWS_MEDIA_EDITOR_APPROVED;
+    else process.env.GNEWS_MEDIA_EDITOR_APPROVED = previousEditorial;
+  }
+});
+
+test("explicitly approved GNews provider media survives public serialization", () => {
+  const previousRights = process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED;
+  const previousEditorial = process.env.GNEWS_MEDIA_EDITOR_APPROVED;
+  process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED = "true";
+  process.env.GNEWS_MEDIA_EDITOR_APPROVED = "true";
+  try {
+    const media = news.gnewsArticleMedia({
+      image: "https://media.example.com/exact-article.jpg",
+      source: { name: "Example Publisher" }
+    });
+    assert.equal(media.approvalStatus, "approved");
+    assert.equal(media.rightsConfirmed, true);
+    assert.equal(media.relevanceEvidence.humanConfirmed, true);
+    assert.equal(media.requiresReview, false);
+    assert.equal(news.editoriallyApprovedMedia(media), true);
+  } finally {
+    if (previousRights === undefined) delete process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED;
+    else process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED = previousRights;
+    if (previousEditorial === undefined) delete process.env.GNEWS_MEDIA_EDITOR_APPROVED;
+    else process.env.GNEWS_MEDIA_EDITOR_APPROVED = previousEditorial;
+  }
 });
 
 test("legacy feed archive images are not returned as current article media", () => {

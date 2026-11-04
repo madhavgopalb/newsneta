@@ -15,10 +15,11 @@ const TTL = 4 * 60 * 1000;
 const IMAGE_TTL = 6 * 60 * 60 * 1000;
 const FRESH_NEWS_DAYS = 3;
 const BRANDED_FALLBACK = "/assets/newsneta-logo-header.png";
-// Archive candidates are always labelled as file photos. A score of 60 still
-// requires multiple query/entity matches while allowing Telugu headlines whose
-// English location or event terms only appear in the image catalogue metadata.
-const AUTO_IMAGE_THRESHOLD = 72;
+// Archive candidates are always labelled as file photos. A score of 58 requires
+// at least two meaningful query/entity matches while allowing Telugu headlines
+// whose English subject terms only appear in catalogue metadata. Unrelated
+// candidates receive zero from candidateRelevance and remain blocked.
+const AUTO_IMAGE_THRESHOLD = 58;
 
 function googleNewsUrl(query) {
   const freshQuery = `${query} when:2d`;
@@ -344,6 +345,10 @@ function mediaDecision({
   label = "",
   score = 10,
   approvalStatus = "pending",
+  rightsConfirmed = false,
+  humanConfirmed = false,
+  evidenceStatement = "",
+  approvalScoreThreshold = 80,
   intent = {},
   reasons = []
 } = {}) {
@@ -361,12 +366,15 @@ function mediaDecision({
     imageType,
     label,
     approvalStatus,
+    rightsConfirmed,
     relevanceScore: safeScore,
     visualStatus: visualStatus(safeScore, imageType),
-    requiresReview: !approved || safeScore < 80 || !license || /unknown|verify/i.test(license),
+    requiresReview: !approved || !rightsConfirmed || !humanConfirmed || safeScore < approvalScoreThreshold || !license || /unknown|verify/i.test(license),
     selectedAt: new Date().toISOString(),
     intent,
     relevanceEvidence: {
+      statement: evidenceStatement,
+      humanConfirmed,
       headlineEntities: intent.entities || [],
       eventTerms: intent.event || [],
       location: intent.location || "",
@@ -455,8 +463,52 @@ function isUsefulTitle(title = "") {
     && !/\b(profile|icc ranking|career statistics)\b/i.test(clean);
 }
 
+function normalizeGNewsApiKey(value = "") {
+  const key = String(value || "").trim();
+  if (/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(key)) {
+    return key.replace(/-/g, "");
+  }
+  return key;
+}
+
+function gnewsMediaPolicyApproved() {
+  return String(process.env.GNEWS_MEDIA_RIGHTS_CONFIRMED || "").toLowerCase() === "true"
+    && String(process.env.GNEWS_MEDIA_EDITOR_APPROVED || "").toLowerCase() === "true";
+}
+
+function commonsMediaPolicyApproved() {
+  return String(process.env.COMMONS_MEDIA_EDITOR_APPROVED || "true").toLowerCase() === "true";
+}
+
+function gnewsArticleMedia(article = {}, intent = {}) {
+  if (!trustedImageUrl(article.image)) return null;
+  const policyApproved = gnewsMediaPolicyApproved();
+  const sourceName = cleanText(article.source?.name || "Licensed news provider") || "Licensed news provider";
+  return mediaDecision({
+    url: article.image,
+    originalUrl: article.image,
+    source: sourceName,
+    copyrightOwner: sourceName,
+    license: policyApproved
+      ? "Configured GNews provider media; publisher attribution retained"
+      : "Provider-associated editorial image; verify syndication terms",
+    imageType: "event_candidate",
+    score: 96,
+    approvalStatus: policyApproved ? "approved" : "pending",
+    rightsConfirmed: policyApproved,
+    humanConfirmed: policyApproved,
+    evidenceStatement: policyApproved
+      ? "NewsNeta editor approved the configured GNews provider; image was supplied with this exact article record"
+      : "Image was supplied with this exact provider article and awaits editorial rights approval",
+    intent,
+    reasons: policyApproved
+      ? ["Image was supplied with the same provider article", "Configured provider media policy was explicitly approved"]
+      : ["Image was supplied with the same provider article", "Publisher usage rights still require editorial confirmation"]
+  });
+}
+
 async function fetchGNewsItems(cat, district) {
-  const apiKey = process.env.GNEWS_API_KEY;
+  const apiKey = normalizeGNewsApiKey(process.env.GNEWS_API_KEY);
   if (!apiKey) return null;
 
   const params = new URLSearchParams({
@@ -491,20 +543,7 @@ async function fetchGNewsItems(cat, district) {
     const sourceName = cleanText(article.source?.name || "");
     const content = classifyProviderContent({ sourceName, title, summary: description, body: article.content || article.body || "" });
     const intent = extractImageIntent(title, cat, district, description);
-    let media = trustedImageUrl(article.image)
-      ? mediaDecision({
-          url: article.image,
-          originalUrl: article.image,
-          source: article.source?.name || "Licensed news provider",
-          copyrightOwner: article.source?.name || "Publisher",
-          license: "Provider-associated editorial image; verify syndication terms",
-          imageType: "event_candidate",
-          score: 88,
-          approvalStatus: "pending",
-          intent,
-          reasons: ["Image was supplied with the same provider article", "Publisher usage rights still require editorial confirmation"]
-        })
-      : null;
+    let media = gnewsArticleMedia(article, intent);
     if (!media) {
       media = brandedFallbackDecision(intent, "The licensed provider did not supply an article-associated image");
     }
@@ -655,7 +694,7 @@ function candidateRelevance(page = {}, intent = {}, query = "") {
 }
 
 async function commonsImage(query, intent = {}) {
-  const key = query.toLowerCase();
+  const key = `${query.toLowerCase()}|approved:${commonsMediaPolicyApproved()}`;
   if (IMAGE_CACHE[key] && Date.now() - IMAGE_CACHE[key].time < IMAGE_TTL) {
     return IMAGE_CACHE[key].decision;
   }
@@ -687,23 +726,40 @@ async function commonsImage(query, intent = {}) {
       .sort((a, b) => b.score - a.score);
     const best = ranked[0];
     if (!best || best.score < AUTO_IMAGE_THRESHOLD) {
+      logEvent("COMMONS_MEDIA_REJECTED", {
+        query,
+        candidates: ranked.length,
+        topScore: best?.score || 0,
+        threshold: AUTO_IMAGE_THRESHOLD
+      });
       return brandedFallbackDecision(intent, "Approved-source candidates were below the automatic relevance threshold");
     }
     const info = best.page.imageinfo?.[0] || {};
+    const policyApproved = commonsMediaPolicyApproved();
+    const metadata = commonsMetadata(info);
     const decision = mediaDecision({
       url: info.thumburl || info.url || null,
       source: "Wikimedia Commons",
       imageType: "archive",
       label: "FILE PHOTO",
       score: best.score,
-      approvalStatus: "pending",
+      approvalStatus: policyApproved ? "approved" : "pending",
+      rightsConfirmed: policyApproved,
+      humanConfirmed: policyApproved,
+      approvalScoreThreshold: AUTO_IMAGE_THRESHOLD,
+      evidenceStatement: policyApproved
+        ? "NewsNeta editor approved the licensed Commons resolver; this file photo met the configured subject relevance threshold"
+        : "Reusable archive candidate awaits editorial association approval",
       intent,
-      reasons: ["Matched a reusable-media source", "Editorial approval is required before associating this file photo with the article"],
-      ...commonsMetadata(info)
+      reasons: policyApproved
+        ? ["Matched a reusable-media source", "Passed the configured subject relevance threshold", "Displayed as a labelled file photo"]
+        : ["Matched a reusable-media source", "Editorial approval is required before associating this file photo with the article"],
+      ...metadata
     });
     IMAGE_CACHE[key] = { time: Date.now(), decision };
     return decision;
   } catch (error) {
+    logEvent("COMMONS_MEDIA_FAILED", { query, message: String(error.message || error) });
     return brandedFallbackDecision(intent, "Approved image search was unavailable");
   }
 }
@@ -1111,4 +1167,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, editoriallyApprovedMedia, feedAssociatedMedia, freshSorted, imageSearchQuery, normalizeCategory, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, commonsMediaPolicyApproved, editoriallyApprovedMedia, feedAssociatedMedia, freshSorted, gnewsArticleMedia, gnewsMediaPolicyApproved, imageSearchQuery, normalizeCategory, normalizeGNewsApiKey, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };

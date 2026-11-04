@@ -12,6 +12,11 @@ test("category aliases preserve canonical feeds", () => {
   assert.equal(news.normalizeCategory("unknown"), "telangana");
 });
 
+test("business headlines do not get misclassified as bus transport", () => {
+  assert.equal(news.imageSearchQuery("Business market update", "business", ""), "Indian stock market business");
+  assert.equal(news.imageSearchQuery("City bus depot update", "telangana", ""), "public bus transport India");
+});
+
 test("fresh feed normalization removes duplicate article identities", () => {
   const now = new Date().toISOString();
   const items = [

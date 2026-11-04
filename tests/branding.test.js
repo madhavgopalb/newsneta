@@ -64,6 +64,6 @@ test("PWA, Android and service worker use versioned official assets", () => {
   manifest.icons.forEach(icon => assert.match(icon.src, /\?v=brand-v1$/));
   assert.match(twa.iconUrl, /\?v=brand-v1$/);
   assert.equal(twa.appVersionCode, 2);
-  assert.match(serviceWorker, /CACHE_VERSION = "v96"/);
+  assert.match(serviceWorker, /CACHE_VERSION = "v97"/);
   assert.match(serviceWorker, /assets\/brand\/v1\/wordmark-desktop\.png/);
 });

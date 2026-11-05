@@ -4412,7 +4412,13 @@ function setStoryModalMedia(story){
 async function openDirectStoryIfReady(){
  const requested = new URL(location.href).searchParams.get("article");
  const backdrop = document.getElementById("storyBackdrop");
- if(!requested || backdrop?.classList.contains("open")) return;
+ if(!requested) return;
+ if(backdrop?.classList.contains("open")){
+  const localStory = findStoryById(requested);
+  const title = document.getElementById("storyModalTitle")?.textContent || "";
+  if(localStory && /Loading article|could not be loaded/i.test(title)) renderStoryDetail(localStory);
+  return;
+ }
  await openStoryDetail(requested);
 }
 

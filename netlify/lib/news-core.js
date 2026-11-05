@@ -899,7 +899,8 @@ function approvedPersistedImage(row = {}) {
   const relevanceEvidence = media?.relevanceEvidence || media?.relevance_evidence || {};
   if (!media || approvalStatus !== "approved" || media.requiresReview === true || ["branded_fallback", "missing", "representative"].includes(imageType)) return null;
   if (!rightsConfirmed || relevanceEvidence.humanConfirmed !== true || !media.license || /unknown|verify/i.test(String(media.license))) return null;
-  if (score < 80 || !["event_candidate", "event_photo", "uploaded", "cms_upload", "archive", "illustration"].includes(imageType)) return null;
+  const minimumScore = imageType === "archive" ? AUTO_IMAGE_THRESHOLD : 80;
+  if (score < minimumScore || !["event_candidate", "event_photo", "uploaded", "cms_upload", "archive", "illustration"].includes(imageType)) return null;
   return trustedImageUrl(mediaUrl || row.image_url) ? (mediaUrl || row.image_url) : null;
 }
 

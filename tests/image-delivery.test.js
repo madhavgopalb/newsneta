@@ -184,3 +184,30 @@ test("scheduled ingestion records rejected resolution attempts without publishin
     news.editoriallyApprovedMedia = originalApproved;
   }
 });
+
+test("visible persisted stories receive only approved article-specific media", async () => {
+  const news = require(path.join(root, "netlify/lib/news-core.js"))._test;
+  const approved = {
+    url: "https://upload.wikimedia.org/visible-story.jpg",
+    thumbnailUrl: "https://upload.wikimedia.org/visible-story.jpg",
+    imageType: "archive",
+    label: "FILE PHOTO",
+    relevanceScore: 84,
+    visualStatus: "blue",
+    approvalStatus: "approved",
+    requiresReview: false,
+    rightsConfirmed: true,
+    license: "CC BY-SA 4.0",
+    relevanceEvidence: { statement: "Matched named subject", humanConfirmed: true }
+  };
+  const rejected = { ...approved, url: "https://upload.wikimedia.org/rejected.jpg", approvalStatus: "pending", requiresReview: true };
+  const items = [
+    { id: "one", title: "Approved image story", summary: "Summary", image: null },
+    { id: "two", title: "Rejected image story", summary: "Summary", image: null }
+  ];
+  const enriched = await news.enrichVisiblePersistedArticles(items, "latest", null, 2, async item => item.id === "unused" ? rejected : (item.title.startsWith("Approved") ? approved : rejected));
+  assert.equal(enriched[0].image, approved.url);
+  assert.equal(enriched[0].featuredMedia, approved);
+  assert.equal(enriched[1].image, null);
+  assert.equal(enriched[1].featuredMedia, undefined);
+});

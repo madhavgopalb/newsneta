@@ -51,6 +51,11 @@ test("server-rendered article HTML exposes article-specific social metadata befo
   assert.ok(html.indexOf("og:title") < html.indexOf("<script>"));
 });
 
+test("article function explicitly includes the CommonJS feed parser dependency for Netlify bundling", () => {
+  const source = fs.readFileSync(path.join(root, "netlify", "functions", "article.mjs"), "utf8");
+  assert.match(source, /import "rss-parser";/);
+});
+
 test("article page uses a truthful branded fallback and only Listen and Share are prominent", async () => {
   const { pageHtml } = await import("../netlify/functions/article.mjs");
   const html = pageHtml({ ...publishedRow, image_url: null, thumbnail_url: null, featured_media: null }, new URL("https://newsneta.com/news/no-image"));

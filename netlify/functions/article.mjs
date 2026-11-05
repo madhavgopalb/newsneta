@@ -1,4 +1,5 @@
 import { getDatabase } from "@netlify/database";
+import "rss-parser";
 import newsCore from "../lib/news-core.js";
 
 const BRAND_IMAGE = "/assets/brand/v1/social-share-1200x630.png";

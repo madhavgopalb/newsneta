@@ -1,7 +1,9 @@
 const crypto = require("node:crypto");
 const { handler: fetchNews, _test: newsTest } = require("./news-core");
 
-const LOCK_ID = 638281002;
+// Transaction-scoped locks are required with pooled Postgres connections. The
+// new key intentionally bypasses any orphaned session lock from older deploys.
+const LOCK_ID = 638281003;
 const DEFAULT_CATEGORIES = ["latest", "ap", "telangana", "politics", "national", "international", "cinema", "sports", "cricket", "technology", "business", "education", "jobs", "viral"];
 const MAX_RETRIES = 2;
 const DEFAULT_MEDIA_ENRICH_BUDGET = 12;
@@ -266,10 +268,17 @@ exports.handler = async function handler(getDatabase, categoryOverride = null) {
   };
   mediaBudget.remaining = mediaBudget.initial;
   let runId;
+  let transactionOpen = false;
 
   try {
-    const lock = await client.query("SELECT pg_try_advisory_lock($1) AS acquired", [LOCK_ID]);
-    if (!lock.rows[0]?.acquired) return { statusCode: 202, body: JSON.stringify({ status: "skipped", reason: "ingestion-already-running" }) };
+    await client.query("BEGIN");
+    transactionOpen = true;
+    const lock = await client.query("SELECT pg_try_advisory_xact_lock($1) AS acquired", [LOCK_ID]);
+    if (!lock.rows[0]?.acquired) {
+      await client.query("ROLLBACK");
+      transactionOpen = false;
+      return { statusCode: 202, body: JSON.stringify({ status: "skipped", reason: "ingestion-already-running" }) };
+    }
     const run = await client.query("INSERT INTO ingestion_runs (provider, status, categories) VALUES ($1, 'running', $2::jsonb) RETURNING id", ["newsneta-feed-pipeline", JSON.stringify(selected)]);
     runId = run.rows[0].id;
 
@@ -302,12 +311,18 @@ exports.handler = async function handler(getDatabase, categoryOverride = null) {
         articles_rejected=$6, errors=$7::jsonb, metadata=$8::jsonb WHERE id=$9`,
       values: [status, durationMs, totals.fetched, totals.inserted, totals.updated, totals.rejected, JSON.stringify(errors), JSON.stringify({ withoutMedia: totals.withoutMedia, brokenMedia: totals.brokenMedia, mediaEnriched: totals.mediaEnriched, mediaBudget: mediaBudget.initial, mediaBudgetUsed: mediaBudget.initial - mediaBudget.remaining }), runId]
     });
+    await client.query("COMMIT");
+    transactionOpen = false;
     return { statusCode: status === "failed" ? 502 : 200, body: JSON.stringify({ status, durationMs, categories: selected, totals, errors }) };
   } catch (error) {
+    if (transactionOpen) {
+      await client.query("ROLLBACK").catch(() => {});
+      transactionOpen = false;
+    }
     if (runId) await client.query("UPDATE ingestion_runs SET status='failed', finished_at=now(), duration_ms=$1, errors=$2::jsonb WHERE id=$3", [Date.now() - startedAt, JSON.stringify([{ message: error.message }]), runId]).catch(() => {});
     return { statusCode: 500, body: JSON.stringify({ status: "failed", message: error.message }) };
   } finally {
-    await client.query("SELECT pg_advisory_unlock($1)", [LOCK_ID]).catch(() => {});
+    if (transactionOpen) await client.query("ROLLBACK").catch(() => {});
     client.release();
   }
 };

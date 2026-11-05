@@ -28,3 +28,12 @@ test("manual newsroom refresh is token protected and POST only", async () => {
   assert.match(source, /timingSafeEqual/);
   assert.match(source, /runIngestion\(getDatabase, categories\)/);
 });
+
+test("ingestion uses a transaction-scoped advisory lock for pooled Postgres", () => {
+  const source = fs.readFileSync(path.join(root, "netlify/lib/ingest-news-core.js"), "utf8");
+  assert.match(source, /pg_try_advisory_xact_lock/);
+  assert.doesNotMatch(source, /pg_try_advisory_lock\(/);
+  assert.doesNotMatch(source, /pg_advisory_unlock/);
+  assert.match(source, /await client\.query\("COMMIT"\)/);
+  assert.match(source, /await client\.query\("ROLLBACK"\)/);
+});

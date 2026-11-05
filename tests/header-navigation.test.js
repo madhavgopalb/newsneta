@@ -55,10 +55,11 @@ test("district master and canonical regional paths include current supported dis
   assert.match(netlify, /from = "\/andhra-pradesh\/\*"/);
 });
 
-test("article sharing uses the direct story URL and follow profiles are not fabricated", () => {
-  assert.match(page, /url\.searchParams\.set\("article"/);
+test("article sharing uses a permanent server-rendered article URL and a compact fallback menu", () => {
+  assert.match(page, /new URL\(`\/news\/\$\{encodeURIComponent\(identity\)\}`/);
   assert.match(page, /data-social-share="copy"/);
-  assert.match(page, /data-social-share="native"/);
-  assert.match(page, /id="storyFollowBtn"/);
-  assert.match(page, /once they are configured and verified/);
+  assert.match(page, /id="storyShare"/);
+  assert.match(page, /id="storyShareMenu" hidden/);
+  assert.doesNotMatch(page, /id="storyFollowBtn"|For More, Follow Us/);
+  assert.match(netlify, /from = "\/news\/\*"/);
 });

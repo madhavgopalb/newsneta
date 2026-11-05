@@ -951,7 +951,8 @@ function persistedArticleFromRow(row = {}) {
     district: row.district,
     image: resolvedImage,
     imageUrl: resolvedImage,
-    thumbnailUrl: featuredThumbnail || resolvedImage,
+    thumbnailUrl: row.thumbnail_url || featuredThumbnail || resolvedImage,
+    socialImageUrl: row.social_image_url || row.thumbnail_url || resolvedImage,
     video: featuredIsVideo && featuredUrl ? { type: "uploaded", url: featuredUrl, mimeType: row.featured_media.mimeType || row.featured_media.mime_type, posterUrl: featuredThumbnail || row.image_url || null } : null,
     media: resolvedMedia ? [resolvedMedia] : [],
     mediaDecision: resolvedMedia,
@@ -982,7 +983,7 @@ async function persistedArticleById(id, getDatabase) {
   const { pool } = getDatabase();
   const result = await pool.query({
     text: `SELECT id, title, summary, source_description, body, category, state, district, image_url,
-      thumbnail_url, featured_media, source_url, source_name, published_at,
+      thumbnail_url, social_image_url, featured_media, source_url, source_name, published_at,
       source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
       full_content_review_required, full_content_review_reason FROM articles
       WHERE status='published' AND (id::text=$1 OR source_article_id=$1)
@@ -1004,7 +1005,7 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
     const limitIndex = district ? 3 : 2;
     const result = await pool.query({
       text: `SELECT id, title, summary, source_description, body, category, state, district, image_url,
-        thumbnail_url, featured_media, source_url, source_name, published_at,
+        thumbnail_url, social_image_url, featured_media, source_url, source_name, published_at,
         source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
         full_content_review_required, full_content_review_reason FROM articles
         WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}

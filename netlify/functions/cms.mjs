@@ -10,6 +10,7 @@ const slugify = value => clean(value, 220).toLowerCase().replace(/[^a-z0-9\u0c00
 const session = request => auth.verifySession(bearer(request), process.env.CMS_SESSION_SECRET);
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/webm"]);
 const maxUpload = mime => mime.startsWith("video/") ? 150 * 1024 * 1024 : 8 * 1024 * 1024;
+const allowedImageMime = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const summaryFromBody = value => {
   const text = clean(value, 100000).replace(/\s+/g, " ");
   if (!text) return "";
@@ -31,15 +32,97 @@ async function listArticles(pool, user) {
   const result = await pool.query({
     text: `SELECT id, slug, title AS headline, english_title, summary, body, category, state, district,
       status, author_id AS reporter, reviewer_id AS reviewer, publisher_id AS admin,
-      image_url AS image, thumbnail_url AS thumbnail, image_alt, media, featured_media,
+      image_url AS image, thumbnail_url AS thumbnail, social_image_url, thumbnail_metadata, image_alt, media, featured_media,
       tags, is_breaking, is_top_story, scheduled_at, published_at, content_revision, content_status,
-      created_at, updated_at
+      last_editor_id, created_at, updated_at
       FROM articles
       WHERE source_provider='newsneta-cms'
       ORDER BY updated_at DESC LIMIT 250`,
     values: []
   });
   return result.rows;
+}
+
+async function validateRemoteImage(value) {
+  let url;
+  try { url = new URL(clean(value, 2000)); } catch { throw Object.assign(new Error("Thumbnail URL is invalid"), { status: 400 }); }
+  if (url.protocol !== "https:") throw Object.assign(new Error("Thumbnail URL must use HTTPS"), { status: 400 });
+  for (const method of ["HEAD", "GET"]) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(url, { method, redirect: "follow", signal: controller.signal, headers: { Accept: "image/avif,image/webp,image/*" } });
+      const mime = String(response.headers.get("content-type") || "").split(";")[0].toLowerCase();
+      if (response.ok && allowedImageMime.has(mime)) {
+        if (response.body) await response.body.cancel().catch(() => {});
+        return { url: response.url || url.href, mimeType: mime };
+      }
+      if (response.body) await response.body.cancel().catch(() => {});
+    } catch {
+      // Some image CDNs reject HEAD; GET is the controlled fallback.
+    } finally { clearTimeout(timeout); }
+  }
+  throw Object.assign(new Error("Thumbnail URL is unavailable or is not a supported image"), { status: 400 });
+}
+
+async function editPublishedArticle(pool, user, data) {
+  if (user.role !== "admin") throw Object.assign(new Error("Only an Admin can edit a published article"), { status: 403 });
+  const id = clean(data.id, 80);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw Object.assign(new Error("A valid article ID is required"), { status: 400 });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const found = await client.query({ text: "SELECT * FROM articles WHERE id=$1 AND source_provider='newsneta-cms' AND status='published' FOR UPDATE", values: [id] });
+    const article = found.rows[0];
+    if (!article) throw Object.assign(new Error("Published newsroom article not found"), { status: 404 });
+    const headline = clean(data.headline || data.title, 500);
+    const body = clean(data.body, 100000);
+    const category = clean(data.category, 80).toLowerCase();
+    const editNote = clean(data.editNote, 4000);
+    if (!headline || !body || !category) throw Object.assign(new Error("Headline, full description and category are required"), { status: 400 });
+    if (!editNote) throw Object.assign(new Error("A revision note is required for published article edits"), { status: 400 });
+    const state = clean(data.state, 80) || null;
+    const district = clean(data.district, 120) || null;
+    const regional = ["telangana", "ap"].includes(category);
+    if (regional && (!state || !district)) throw Object.assign(new Error("State and district are required for regional news"), { status: 400 });
+
+    let thumbnailUrl = article.thumbnail_url;
+    let thumbnailMetadata = article.thumbnail_metadata || {};
+    if (clean(data.thumbnailUrl, 2000) && clean(data.thumbnailUrl, 2000) !== article.thumbnail_url) {
+      const statement = clean(data.thumbnailRelevanceEvidence, 4000);
+      const source = clean(data.thumbnailSource, 1000);
+      const license = clean(data.thumbnailLicense, 1000);
+      if (!data.thumbnailRightsConfirmed || !statement || !source || !license) throw Object.assign(new Error("Thumbnail source, rights, license and article relevance are required"), { status: 409 });
+      const verified = await validateRemoteImage(data.thumbnailUrl);
+      thumbnailUrl = verified.url;
+      thumbnailMetadata = { source, license, relevanceEvidence: { statement, humanConfirmed: true }, rightsConfirmed: true, mimeType: verified.mimeType, verifiedAt: new Date().toISOString() };
+    }
+    const socialImageUrl = clean(data.socialImageUrl, 2000) || thumbnailUrl || article.image_url;
+    await client.query({
+      text: `INSERT INTO article_revisions (article_id,revision_number,snapshot,edited_by,edit_note)
+        VALUES ($1,$2,$3::jsonb,$4,$5)`,
+      values: [article.id, article.content_revision || 1, JSON.stringify(article), user.id, editNote]
+    });
+    const updated = await client.query({
+      text: `UPDATE articles SET title=$1, english_title=$2, summary=$3, body=$4, category=$5, state=$6, district=$7,
+        thumbnail_url=$8, social_image_url=$9, thumbnail_metadata=$10::jsonb, image_alt=$11, tags=$12::jsonb,
+        is_breaking=$13, last_editor_id=$14, content_revision=COALESCE(content_revision,0)+1, updated_at=now()
+        WHERE id=$15 RETURNING *`,
+      values: [headline, clean(data.englishTitle, 500) || article.english_title, clean(data.summary, 4000) || summaryFromBody(body), body,
+        category, state, district, thumbnailUrl, socialImageUrl, JSON.stringify(thumbnailMetadata), clean(data.altText, 500) || article.image_alt,
+        JSON.stringify(Array.isArray(data.tags) ? data.tags : clean(data.tags, 1000).split(",").map(tag => tag.trim()).filter(Boolean)), Boolean(data.breaking), user.id, article.id]
+    });
+    await client.query({
+      text: `INSERT INTO article_workflow (article_id,from_status,to_status,action,comments,actor_id,actor_role)
+        VALUES ($1,'published','published','Admin updated published article',$2,$3,'admin')`,
+      values: [article.id, editNote, user.id]
+    });
+    await client.query("COMMIT");
+    return updated.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally { client.release(); }
 }
 
 async function saveArticle(pool, user, data) {
@@ -53,6 +136,7 @@ async function saveArticle(pool, user, data) {
   const current = existing.rows[0];
   if (current && user.role === "reporter" && current.author_id !== user.id) throw Object.assign(new Error("Reporter cannot edit another reporter's article"), { status: 403 });
   if (current && user.role === "reporter" && !["draft", "changes_requested"].includes(current.status)) throw Object.assign(new Error("Article must be returned to draft before reporter editing"), { status: 409 });
+  if (current?.status === "published") throw Object.assign(new Error("Published articles must use the audited edit endpoint"), { status: 409 });
 
   let media = null;
   if (data.featuredMediaId) {
@@ -271,6 +355,7 @@ export default async function handler(request) {
     if (action === "upload") return json(201, { status: "ok", media: await uploadMedia(request, pool, user) });
     const data = await request.json();
     if (action === "save") return json(200, { status: "ok", article: await saveArticleTransaction(pool, user, data) });
+    if (action === "edit-published") return json(200, { status: "ok", article: await editPublishedArticle(pool, user, data) });
     if (action === "publish-now" || action === "schedule") {
       const result = await directAdminPublish(pool, user, data, request.headers.get("Idempotency-Key") || data.idempotencyKey);
       return json(200, { status: "ok", ...result });
@@ -278,7 +363,7 @@ export default async function handler(request) {
     if (action === "transition") return json(200, { status: "ok", article: await transitionArticle(pool, user, data) });
     if (action === "delete") {
       if (user.role !== "admin") return json(403, { status: "forbidden" });
-      const deleted = await pool.query({ text: "UPDATE articles SET status='deleted', content_revision=content_revision+1, updated_at=now() WHERE id=$1 AND source_provider='newsneta-cms' RETURNING id", values: [data.id] });
+      const deleted = await pool.query({ text: "UPDATE articles SET status='deleted', content_revision=COALESCE(content_revision,0)+1, updated_at=now() WHERE id=$1 AND source_provider='newsneta-cms' RETURNING id", values: [data.id] });
       return deleted.rows.length ? json(200, { status: "ok" }) : json(404, { status: "not-found" });
     }
     return json(404, { status: "not-found" });
@@ -288,4 +373,4 @@ export default async function handler(request) {
   }
 }
 
-export { directAdminPublish, saveArticleTransaction, summaryFromBody, validatePublication };
+export { directAdminPublish, editPublishedArticle, saveArticleTransaction, summaryFromBody, validatePublication, validateRemoteImage };

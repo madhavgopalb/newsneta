@@ -55,11 +55,13 @@ test("district master and canonical regional paths include current supported dis
   assert.match(netlify, /from = "\/andhra-pradesh\/\*"/);
 });
 
-test("article sharing uses a permanent server-rendered article URL and a compact fallback menu", () => {
+test("article sharing uses a permanent article URL and an inline five-action share row", () => {
   assert.match(page, /new URL\(`\/news\/\$\{encodeURIComponent\(identity\)\}`/);
-  assert.match(page, /data-social-share="copy"/);
-  assert.match(page, /id="storyShare"/);
-  assert.match(page, /id="storyShareMenu" hidden/);
+  for (const platform of ["facebook", "whatsapp", "twitter", "linkedin", "copy"]) {
+    assert.match(page, new RegExp(`data-social-share="${platform}"`));
+  }
+  assert.match(page, /id="storyShareStatus"/);
+  assert.doesNotMatch(page, /id="storyShareMenu"/);
   assert.doesNotMatch(page, /id="storyFollowBtn"|For More, Follow Us/);
   assert.match(netlify, /from = "\/news\/\*"/);
 });

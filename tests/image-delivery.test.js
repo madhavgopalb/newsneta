@@ -116,3 +116,39 @@ test("persisted broad representative media is rejected while explicitly approved
   });
   assert.equal(exact.image, exactUrl);
 });
+
+test("scheduled ingestion enriches only missing records within its shared media budget", async () => {
+  const ingestion = require(path.join(root, "netlify/lib/ingest-news-core.js"));
+  const news = require(path.join(root, "netlify/lib/news-core.js"))._test;
+  const originalArticleImage = news.articleImage;
+  const originalApproved = news.editoriallyApprovedMedia;
+  const image = {
+    url: "https://upload.wikimedia.org/approved-story.jpg",
+    thumbnailUrl: "https://upload.wikimedia.org/approved-story.jpg",
+    imageType: "archive",
+    relevanceScore: 88,
+    approvalStatus: "approved",
+    requiresReview: false,
+    rightsConfirmed: true,
+    license: "CC BY-SA 4.0",
+    relevanceEvidence: { statement: "Matched story subject", humanConfirmed: true }
+  };
+  news.articleImage = async () => image;
+  news.editoriallyApprovedMedia = () => true;
+  try {
+    const client = { query: async () => ({ rows: [] }) };
+    const budget = { initial: 1, remaining: 1 };
+    const articles = [
+      { identity: "one", title: "First story", summary: "First summary", featuredMedia: null },
+      { identity: "two", title: "Second story", summary: "Second summary", featuredMedia: null }
+    ];
+    const enriched = await ingestion._test.enrichArticlesWithMedia(client, articles, "latest", budget);
+    assert.equal(enriched.filter(article => article.featuredMedia).length, 1);
+    assert.equal(enriched[0].imageUrl, image.url);
+    assert.equal(enriched[1].imageUrl, undefined);
+    assert.equal(budget.remaining, 0);
+  } finally {
+    news.articleImage = originalArticleImage;
+    news.editoriallyApprovedMedia = originalApproved;
+  }
+});

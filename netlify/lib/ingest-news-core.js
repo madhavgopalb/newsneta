@@ -4,6 +4,7 @@ const { handler: fetchNews, _test: newsTest } = require("./news-core");
 const LOCK_ID = 638281002;
 const DEFAULT_CATEGORIES = ["latest", "ap", "telangana", "politics", "national", "international", "cinema", "sports", "cricket", "technology", "business", "education", "jobs", "viral"];
 const MAX_RETRIES = 2;
+const DEFAULT_MEDIA_ENRICH_BUDGET = 12;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const safeText = value => String(value || "").replace(/\s+/g, " ").trim();
@@ -119,7 +120,37 @@ async function mapWithConcurrency(items, limit, mapper) {
   return results;
 }
 
-async function ingestCategory(client, category, getDatabase) {
+async function enrichArticlesWithMedia(client, articles, category, mediaBudget) {
+  const candidates = articles.filter(article => !article.featuredMedia && article.identity);
+  if (!candidates.length || mediaBudget.remaining <= 0) return articles;
+
+  const existing = await client.query({
+    text: `SELECT source_article_id FROM articles
+      WHERE source_article_id = ANY($1::text[])
+        AND image_url IS NOT NULL
+        AND COALESCE(featured_media->>'approvalStatus', featured_media->>'approval_status', '') = 'approved'`,
+    values: [candidates.map(article => article.identity)]
+  });
+  const alreadyEnriched = new Set(existing.rows.map(row => String(row.source_article_id)));
+
+  return mapWithConcurrency(articles, 4, async (article, index) => {
+    if (article.featuredMedia || alreadyEnriched.has(String(article.identity)) || mediaBudget.remaining <= 0) return article;
+    mediaBudget.remaining -= 1;
+    const media = await newsTest.articleImage({
+      title: article.title,
+      contentSnippet: article.sourceDescription || article.summary
+    }, category, article.district, index);
+    if (!newsTest.editoriallyApprovedMedia(media)) return article;
+    return {
+      ...article,
+      imageUrl: media.url,
+      thumbnailUrl: media.thumbnailUrl || media.url,
+      featuredMedia: media
+    };
+  });
+}
+
+async function ingestCategory(client, category, getDatabase, mediaBudget) {
   category = newsTest.normalizeCategory(category);
   const result = await withRetry(async () => {
     const response = await fetchNews({ queryStringParameters: { cat: category, force: String(Date.now()), ingest: "1" } }, getDatabase);
@@ -131,12 +162,21 @@ async function ingestCategory(client, category, getDatabase) {
 
   const provider = safeText(result.provider || "rss").slice(0, 80);
   const normalized = result.items.map(item => canonicalArticle(item, category, provider)).filter(Boolean);
-  const articles = await mapWithConcurrency(normalized, 4, async article => {
+  const enriched = await enrichArticlesWithMedia(client, normalized, category, mediaBudget);
+  const articles = await mapWithConcurrency(enriched, 4, async article => {
     if (!article.imageUrl) return article;
     if (await validateMediaUrl(article.imageUrl)) return article;
     return { ...article, imageUrl: null, thumbnailUrl: null, featuredMedia: null, brokenMedia: true };
   });
-  const counts = { fetched: result.items.length, inserted: 0, updated: 0, rejected: result.items.length - articles.length, withoutMedia: 0, brokenMedia: 0 };
+  const counts = {
+    fetched: result.items.length,
+    inserted: 0,
+    updated: 0,
+    rejected: result.items.length - articles.length,
+    withoutMedia: 0,
+    brokenMedia: 0,
+    mediaEnriched: articles.filter((article, index) => article.featuredMedia && !normalized[index]?.featuredMedia).length
+  };
 
   for (const article of articles) {
     if (!article.imageUrl) counts.withoutMedia += 1;
@@ -211,7 +251,13 @@ exports.handler = async function handler(getDatabase, categoryOverride = null) {
     ? categoryOverride.map(newsTest.normalizeCategory).filter((value, index, values) => values.indexOf(value) === index)
     : (categories.length ? categories : DEFAULT_CATEGORIES);
   const errors = [];
-  const totals = { fetched: 0, inserted: 0, updated: 0, rejected: 0, withoutMedia: 0, brokenMedia: 0 };
+  const totals = { fetched: 0, inserted: 0, updated: 0, rejected: 0, withoutMedia: 0, brokenMedia: 0, mediaEnriched: 0 };
+  const requestedMediaBudget = Number(process.env.NEWS_INGEST_MEDIA_BUDGET || DEFAULT_MEDIA_ENRICH_BUDGET);
+  const mediaBudget = {
+    initial: Math.max(0, Math.min(24, Number.isFinite(requestedMediaBudget) ? requestedMediaBudget : DEFAULT_MEDIA_ENRICH_BUDGET)),
+    remaining: 0
+  };
+  mediaBudget.remaining = mediaBudget.initial;
   let runId;
 
   try {
@@ -227,7 +273,7 @@ exports.handler = async function handler(getDatabase, categoryOverride = null) {
       while (queue.length) {
         const category = queue.shift();
         try {
-          const result = await ingestCategory(client, category, getDatabase);
+          const result = await ingestCategory(client, category, getDatabase, mediaBudget);
           for (const key of Object.keys(totals)) totals[key] += result.counts[key] || 0;
         } catch (error) {
           errors.push({ category, message: error.message, at: new Date().toISOString() });
@@ -247,7 +293,7 @@ exports.handler = async function handler(getDatabase, categoryOverride = null) {
       text: `UPDATE ingestion_runs SET status=$1, finished_at=now(), duration_ms=$2,
         articles_fetched=$3, articles_inserted=$4, articles_updated=$5,
         articles_rejected=$6, errors=$7::jsonb, metadata=$8::jsonb WHERE id=$9`,
-      values: [status, durationMs, totals.fetched, totals.inserted, totals.updated, totals.rejected, JSON.stringify(errors), JSON.stringify({ withoutMedia: totals.withoutMedia, brokenMedia: totals.brokenMedia }), runId]
+      values: [status, durationMs, totals.fetched, totals.inserted, totals.updated, totals.rejected, JSON.stringify(errors), JSON.stringify({ withoutMedia: totals.withoutMedia, brokenMedia: totals.brokenMedia, mediaEnriched: totals.mediaEnriched, mediaBudget: mediaBudget.initial, mediaBudgetUsed: mediaBudget.initial - mediaBudget.remaining }), runId]
     });
     return { statusCode: status === "failed" ? 502 : 200, body: JSON.stringify({ status, durationMs, categories: selected, totals, errors }) };
   } catch (error) {
@@ -259,4 +305,4 @@ exports.handler = async function handler(getDatabase, categoryOverride = null) {
   }
 };
 
-exports._test = { canonicalArticle, slugFor, stableHash, validateMediaUrl };
+exports._test = { canonicalArticle, enrichArticlesWithMedia, slugFor, stableHash, validateMediaUrl };

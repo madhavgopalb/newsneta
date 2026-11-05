@@ -281,6 +281,34 @@ test("legacy feed archive images are not returned as current article media", () 
     }
   }), "https://upload.wikimedia.org/article-file-photo.jpg");
   assert.equal(news.approvedPersistedImage({
+    author_id: "feed:approved-commons-resolver",
+    image_url: "https://upload.wikimedia.org/approved-subject-file-photo.jpg",
+    featured_media: {
+      url: "https://upload.wikimedia.org/approved-subject-file-photo.jpg",
+      imageType: "archive",
+      relevanceScore: 58,
+      requiresReview: false,
+      approvalStatus: "approved",
+      license: "CC BY 2.0",
+      rightsConfirmed: true,
+      relevanceEvidence: { statement: "Approved resolver matched the named subject", humanConfirmed: true }
+    }
+  }), "https://upload.wikimedia.org/approved-subject-file-photo.jpg");
+  assert.equal(news.approvedPersistedImage({
+    author_id: "feed:below-threshold-archive",
+    image_url: "https://upload.wikimedia.org/weak-match.jpg",
+    featured_media: {
+      url: "https://upload.wikimedia.org/weak-match.jpg",
+      imageType: "archive",
+      relevanceScore: 57,
+      requiresReview: false,
+      approvalStatus: "approved",
+      license: "CC BY 2.0",
+      rightsConfirmed: true,
+      relevanceEvidence: { statement: "Weak subject match", humanConfirmed: true }
+    }
+  }), null);
+  assert.equal(news.approvedPersistedImage({
     author_id: "feed:topic-photo",
     image_url: "https://images.unsplash.com/topic.jpg",
     featured_media: {

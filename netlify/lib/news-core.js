@@ -872,6 +872,31 @@ function mergeCanonicalArticles(primary = [], secondary = []) {
   });
 }
 
+async function enrichVisiblePersistedArticles(items = [], cat, district, limit = 8, resolver = articleImage) {
+  let remaining = Math.max(0, Number(limit) || 0);
+  return mapWithConcurrency(items, 4, async (item, index) => {
+    if (item.image || item.imageUrl || item.featuredMedia || remaining <= 0) return item;
+    remaining -= 1;
+    const media = await resolver({
+      title: item.title,
+      contentSnippet: item.sourceDescription || item.summary
+    }, item.category || cat, item.district || district, index);
+    if (!editoriallyApprovedMedia(media)) return item;
+    return {
+      ...item,
+      image: media.url,
+      imageUrl: media.url,
+      thumbnailUrl: media.thumbnailUrl || media.url,
+      media: [media],
+      mediaDecision: media,
+      featuredMedia: media,
+      imageLabel: media.label || (media.imageType === "archive" ? "FILE PHOTO" : ""),
+      imageRelevanceScore: media.relevanceScore,
+      imageStatus: media.visualStatus
+    };
+  });
+}
+
 function stableImageIndex(value = "", length = 1) {
   const size = Math.max(1, Number(length) || 1);
   let hash = 0;
@@ -1023,7 +1048,10 @@ exports.handler = async function handler(event, getDatabase) {
     });
   }
 
-  const persisted = await persistedArticles(cat, district, 24, getDatabase);
+  const persistedRows = await persistedArticles(cat, district, 24, getDatabase);
+  const persisted = ingestionMode
+    ? persistedRows
+    : await enrichVisiblePersistedArticles(persistedRows, cat, district, cat === "latest" ? 12 : 8);
   if (!ingestionMode && !forceRefresh && persisted.length) {
     const data = {
       status: "ok",
@@ -1168,4 +1196,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, commonsMediaPolicyApproved, editoriallyApprovedMedia, feedAssociatedMedia, freshSorted, gnewsArticleMedia, gnewsMediaPolicyApproved, imageSearchQuery, normalizeCategory, normalizeGNewsApiKey, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, commonsMediaPolicyApproved, editoriallyApprovedMedia, enrichVisiblePersistedArticles, feedAssociatedMedia, freshSorted, gnewsArticleMedia, gnewsMediaPolicyApproved, imageSearchQuery, normalizeCategory, normalizeGNewsApiKey, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };

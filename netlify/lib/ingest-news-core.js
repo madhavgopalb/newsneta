@@ -127,8 +127,10 @@ async function enrichArticlesWithMedia(client, articles, category, mediaBudget) 
   const existing = await client.query({
     text: `SELECT source_article_id FROM articles
       WHERE source_article_id = ANY($1::text[])
-        AND image_url IS NOT NULL
-        AND COALESCE(featured_media->>'approvalStatus', featured_media->>'approval_status', '') = 'approved'`,
+        AND (
+          (image_url IS NOT NULL AND COALESCE(featured_media->>'approvalStatus', featured_media->>'approval_status', '') = 'approved')
+          OR (jsonb_typeof(media) = 'array' AND jsonb_array_length(media) > 0)
+        )`,
     values: [candidates.map(article => article.identity)]
   });
   const alreadyEnriched = new Set(existing.rows.map(row => String(row.source_article_id)));
@@ -140,12 +142,13 @@ async function enrichArticlesWithMedia(client, articles, category, mediaBudget) 
       title: article.title,
       contentSnippet: article.sourceDescription || article.summary
     }, category, article.district, index);
-    if (!newsTest.editoriallyApprovedMedia(media)) return article;
+    if (!newsTest.editoriallyApprovedMedia(media)) return { ...article, mediaAudit: media };
     return {
       ...article,
       imageUrl: media.url,
       thumbnailUrl: media.thumbnailUrl || media.url,
-      featuredMedia: media
+      featuredMedia: media,
+      mediaAudit: media
     };
   });
 }
@@ -218,14 +221,18 @@ async function ingestCategory(client, category, getDatabase, mediaBudget) {
         source_published_at=EXCLUDED.source_published_at, published_at=EXCLUDED.published_at,
         image_url=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.image_url WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.image_url ELSE NULL END,
         thumbnail_url=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.thumbnail_url WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.thumbnail_url ELSE NULL END,
-        media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.media ELSE '[]'::jsonb END,
+        media=CASE
+          WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media
+          WHEN jsonb_typeof(EXCLUDED.media)='array' AND jsonb_array_length(EXCLUDED.media)>0 THEN EXCLUDED.media
+          ELSE articles.media
+        END,
         featured_media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.featured_media WHEN COALESCE(articles.featured_media->>'approvalStatus',articles.featured_media->>'approval_status','')='approved' THEN articles.featured_media ELSE NULL END,
         last_seen_at=now(), updated_at=now()
       RETURNING (xmax = 0) AS inserted`,
       values: [
         article.slug, article.title, article.summary, article.sourceDescription, article.body, article.category,
         article.state, article.district, article.authorId, article.imageUrl,
-        article.thumbnailUrl, JSON.stringify(article.featuredMedia ? [article.featuredMedia] : []),
+        article.thumbnailUrl, JSON.stringify(article.mediaAudit ? [article.mediaAudit] : article.featuredMedia ? [article.featuredMedia] : []),
         JSON.stringify(article.featuredMedia), provider, article.identity, article.sourceUrl,
         article.sourceName, article.publishedAt, article.contentStatus,
         article.fullContentReviewRequired, article.fullContentReviewReason

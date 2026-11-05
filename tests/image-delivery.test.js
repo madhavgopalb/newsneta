@@ -152,3 +152,35 @@ test("scheduled ingestion enriches only missing records within its shared media 
     news.editoriallyApprovedMedia = originalApproved;
   }
 });
+
+test("scheduled ingestion records rejected resolution attempts without publishing them", async () => {
+  const ingestion = require(path.join(root, "netlify/lib/ingest-news-core.js"));
+  const news = require(path.join(root, "netlify/lib/news-core.js"))._test;
+  const originalArticleImage = news.articleImage;
+  const originalApproved = news.editoriallyApprovedMedia;
+  const rejected = {
+    url: null,
+    imageType: "missing",
+    relevanceScore: 0,
+    approvalStatus: "pending",
+    requiresReview: true,
+    rightsConfirmed: false,
+    relevanceEvidence: { statement: "No relevant licensed image", humanConfirmed: false }
+  };
+  news.articleImage = async () => rejected;
+  news.editoriallyApprovedMedia = () => false;
+  try {
+    const client = { query: async () => ({ rows: [] }) };
+    const budget = { initial: 1, remaining: 1 };
+    const [article] = await ingestion._test.enrichArticlesWithMedia(client, [
+      { identity: "no-match", title: "Story without matching media", summary: "Verified summary", featuredMedia: null }
+    ], "latest", budget);
+    assert.equal(article.imageUrl, undefined);
+    assert.equal(article.featuredMedia, null);
+    assert.deepEqual(article.mediaAudit, rejected);
+    assert.equal(budget.remaining, 0);
+  } finally {
+    news.articleImage = originalArticleImage;
+    news.editoriallyApprovedMedia = originalApproved;
+  }
+});

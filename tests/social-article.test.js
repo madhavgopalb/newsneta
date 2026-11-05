@@ -87,6 +87,6 @@ test("CMS save and publish media associations use transactions", () => {
 
 test("article reader falls back to its approved public feed record when detail fetch fails", () => {
   const source = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  assert.match(source, /catch\(error\)\{[\s\S]*?if\(localStory\) renderStoryDetail\(localStory\)/);
+  assert.match(source, /catch\(error\)\{[\s\S]*?const fallbackStory = localStory \|\| findStoryById\(id\);[\s\S]*?if\(fallbackStory\) renderStoryDetail\(fallbackStory\)/);
   assert.match(source, /if\(backdrop\?\.classList\.contains\("open"\)\)\{[\s\S]*?if\(localStory && \/Loading article\|could not be loaded\/i\.test\(title\)\) renderStoryDetail\(localStory\)/);
 });

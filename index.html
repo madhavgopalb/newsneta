@@ -4532,7 +4532,8 @@ async function openStoryDetail(id, options={}){
   if(requestId === articleDetailRequest) renderStoryDetail(story);
  }catch(error){
   if(requestId !== articleDetailRequest) return;
-  if(localStory) renderStoryDetail(localStory);
+  const fallbackStory = localStory || findStoryById(id);
+  if(fallbackStory) renderStoryDetail(fallbackStory);
   else showStoryDetailState(id, "error", error.message || "The article could not be loaded. Please retry.");
  }
 }

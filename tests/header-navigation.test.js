@@ -55,6 +55,16 @@ test("district master and canonical regional paths include current supported dis
   assert.match(netlify, /from = "\/andhra-pradesh\/\*"/);
 });
 
+test("mobile district links stay visible above the generic white-on-red navigation rule", () => {
+  const genericMobileLinks = page.indexOf(".nav a,.nav-trigger{font-size:13px");
+  const districtOverride = page.indexOf(".nav .district-submenu a{display:flex!important", genericMobileLinks);
+  assert.ok(genericMobileLinks > -1);
+  assert.ok(districtOverride > genericMobileLinks);
+  assert.match(page.slice(districtOverride, districtOverride + 420), /color:#111827!important/);
+  assert.match(page.slice(districtOverride, districtOverride + 420), /background:#fff!important/);
+  assert.match(page, /max-height:min\(52dvh,420px\)/);
+});
+
 test("article sharing uses a permanent article URL and an inline five-action share row", () => {
   assert.match(page, /new URL\(`\/news\/\$\{encodeURIComponent\(identity\)\}`/);
   for (const platform of ["facebook", "whatsapp", "twitter", "linkedin", "copy"]) {

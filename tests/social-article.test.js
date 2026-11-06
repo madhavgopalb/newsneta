@@ -54,6 +54,7 @@ test("server-rendered article HTML exposes article-specific social metadata befo
 test("article function explicitly includes the CommonJS feed parser dependency for Netlify bundling", () => {
   const source = fs.readFileSync(path.join(root, "netlify", "functions", "article.mjs"), "utf8");
   assert.match(source, /import "rss-parser";/);
+  assert.match(source, /Cache-Control": "no-cache, max-age=0, must-revalidate"/);
 });
 
 test("article page uses a truthful branded fallback and exposes the required share row", async () => {

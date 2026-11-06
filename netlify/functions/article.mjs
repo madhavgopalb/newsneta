@@ -97,7 +97,7 @@ export default async function handler(request) {
     if (!result.rows[0]) return new Response("Article not found", { status: 404, headers: { "Cache-Control": "no-store" } });
     return new Response(pageHtml(result.rows[0], url), {
       status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=60, stale-while-revalidate=300", "X-Content-Type-Options": "nosniff" }
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, max-age=0, must-revalidate", "X-Content-Type-Options": "nosniff" }
     });
   } catch (error) {
     console.error(JSON.stringify({ code: "ARTICLE_PAGE_FAILED", message: error.message, timestamp: new Date().toISOString() }));

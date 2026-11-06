@@ -22,7 +22,24 @@ test("reporter and admin share one simplified article editor", () => {
   assert.match(editor, /Submit for Review/);
   assert.match(editor, /Publish Now/);
   assert.match(editor, /multiple/);
-  assert.doesNotMatch(editor, /SEO Title|Image URL|Thumbnail URL|Relevance Score|Reporter Location/);
+  assert.match(editor, /Edit published article/);
+  assert.match(editor, /Save & Update Published Article/);
+  assert.match(editor, /cmsThumbnailUpload/);
+  assert.match(editor, /cmsThumbnailRights/);
+  assert.match(editor, /cmsEditNote/);
+  assert.doesNotMatch(editor, /SEO Title|Relevance Score|Reporter Location/);
+});
+
+test("admin manage queue exposes live edit, view, unpublish and delete controls", () => {
+  const manage = page.slice(page.indexOf("function cmsManageScreen"), page.indexOf("function cmsAnalyticsScreen"));
+  assert.match(manage, /data-edit-article/);
+  assert.match(manage, /data-view-article/);
+  assert.match(manage, /unpublish/);
+  assert.match(manage, /data-delete-article/);
+  const binding = page.slice(page.indexOf("function bindCmsScreen(role)"), page.indexOf("function switchCmsScreen"));
+  assert.match(binding, /updatePublishedCmsArticle/);
+  assert.match(binding, /Confirm Live Update/);
+  assert.match(page, /\.cms-form-actions\{[^}]*safe-area-inset-bottom/);
 });
 
 test("dashboard omits shortcut cards and workflow diagram", () => {

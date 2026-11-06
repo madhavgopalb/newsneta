@@ -54,14 +54,21 @@ test("server-rendered article HTML exposes article-specific social metadata befo
 test("article function explicitly includes the CommonJS feed parser dependency for Netlify bundling", () => {
   const source = fs.readFileSync(path.join(root, "netlify", "functions", "article.mjs"), "utf8");
   assert.match(source, /import "rss-parser";/);
+  assert.match(source, /Cache-Control": "no-cache, max-age=0, must-revalidate"/);
 });
 
-test("article page uses a truthful branded fallback and only Listen and Share are prominent", async () => {
+test("article page uses a truthful branded fallback and exposes the required share row", async () => {
   const { pageHtml } = await import("../netlify/functions/article.mjs");
   const html = pageHtml({ ...publishedRow, image_url: null, thumbnail_url: null, featured_media: null }, new URL("https://newsneta.com/news/no-image"));
   assert.match(html, /social-share-1200x630\.png/);
   assert.match(html, /Event photograph unavailable/);
-  assert.match(html, /id="listen"[^>]*>Listen<\/button><button id="share"[^>]*>Share<\/button>/);
+  assert.match(html, /id="listen"[^>]*>Listen<\/button>/);
+  assert.match(html, /Share on Facebook/);
+  assert.match(html, /Share on WhatsApp/);
+  assert.match(html, /Share on X/);
+  assert.match(html, /Share on LinkedIn/);
+  assert.match(html, /Copy article link/);
+  assert.ok(html.indexOf('class="social-row"') < html.indexOf('class="toolbar"'));
   assert.doesNotMatch(html, /30 sec read|1 min read|Full article toggle|>Like<|>Important<|For More, Follow Us/);
 });
 

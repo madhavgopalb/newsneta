@@ -29,6 +29,7 @@ const publishHash = data => crypto.createHash("sha256").update(JSON.stringify({
 })).digest("hex");
 
 async function listArticles(pool, user) {
+  const reporterClause = user.role === "reporter" ? " AND author_id=$1" : "";
   const result = await pool.query({
     text: `SELECT id, slug, title AS headline, english_title, summary, body, category, state, district,
       status, author_id AS reporter, reviewer_id AS reviewer, publisher_id AS admin,
@@ -37,8 +38,9 @@ async function listArticles(pool, user) {
       last_editor_id, created_at, updated_at
       FROM articles
       WHERE source_provider='newsneta-cms'
+      ${reporterClause}
       ORDER BY updated_at DESC LIMIT 250`,
-    values: []
+    values: user.role === "reporter" ? [user.id] : []
   });
   return result.rows;
 }
@@ -131,12 +133,21 @@ async function saveArticle(pool, user, data) {
   const body = clean(data.body, 100000);
   const category = clean(data.category, 80).toLowerCase();
   if (!headline || !body || !category) throw Object.assign(new Error("Headline, body and category are required"), { status: 400 });
-  const slug = slugify(data.slug || headline);
-  const existing = await pool.query({ text: "SELECT id, status, author_id FROM articles WHERE slug=$1 LIMIT 1", values: [slug] });
-  const current = existing.rows[0];
+  const suppliedId = /^[0-9a-f-]{36}$/i.test(clean(data.id, 80)) ? clean(data.id, 80) : null;
+  const existing = suppliedId
+    ? await pool.query({ text: "SELECT id, slug, status, author_id, source_provider FROM articles WHERE id=$1 LIMIT 1", values: [suppliedId] })
+    : { rows: [] };
+  const current = existing.rows[0] || null;
+  if (current && current.source_provider !== "newsneta-cms") throw Object.assign(new Error("Only newsroom-owned articles can be edited in Studio"), { status: 403 });
   if (current && user.role === "reporter" && current.author_id !== user.id) throw Object.assign(new Error("Reporter cannot edit another reporter's article"), { status: 403 });
   if (current && user.role === "reporter" && !["draft", "changes_requested"].includes(current.status)) throw Object.assign(new Error("Article must be returned to draft before reporter editing"), { status: 409 });
   if (current?.status === "published") throw Object.assign(new Error("Published articles must use the audited edit endpoint"), { status: 409 });
+  const baseSlug = slugify(data.slug || headline);
+  let slug = current?.slug || baseSlug;
+  if (!current) {
+    const collision = await pool.query({ text: "SELECT id FROM articles WHERE slug=$1 LIMIT 1", values: [baseSlug] });
+    if (collision.rows[0]) slug = `${baseSlug.slice(0, 80)}-${crypto.randomUUID().slice(0, 8)}`;
+  }
 
   let media = null;
   if (data.featuredMediaId) {
@@ -146,9 +157,14 @@ async function saveArticle(pool, user, data) {
     const evidence = clean(data.relevanceEvidence, 4000);
     const imageType = ["reporter_photo", "event_photo", "illustration"].includes(clean(data.imageType, 40)) ? clean(data.imageType, 40) : "reporter_photo";
     const updatedMedia = await pool.query({
-      text: `UPDATE media_assets SET image_type=$1, relevance_evidence=$2::jsonb, rights_confirmed=$3, updated_at=now()
-        WHERE id=$4 AND uploaded_by=$5 RETURNING *`,
-      values: [imageType, JSON.stringify({ statement: evidence, humanConfirmed: Boolean(evidence) }), Boolean(data.rightsConfirmed), media.id, user.id]
+      text: `UPDATE media_assets SET image_type=$1, relevance_evidence=$2::jsonb, rights_confirmed=$3,
+        caption=COALESCE(NULLIF($4,''),caption), alt_text=COALESCE(NULLIF($5,''),alt_text),
+        source=COALESCE(NULLIF($6,''),source), copyright_owner=COALESCE(NULLIF($7,''),copyright_owner),
+        license=COALESCE(NULLIF($8,''),license), updated_at=now()
+        WHERE id=$9 AND uploaded_by=$10 RETURNING *`,
+      values: [imageType, JSON.stringify({ statement: evidence, humanConfirmed: Boolean(evidence) }), Boolean(data.rightsConfirmed),
+        clean(data.mediaCaption, 2000) || clean(data.headline, 500), clean(data.altText, 1000) || clean(data.headline, 500),
+        clean(data.mediaSource, 1000), clean(data.copyrightOwner, 1000), clean(data.mediaLicense, 1000), media.id, user.id]
     });
     media = updatedMedia.rows[0] || media;
   }
@@ -160,25 +176,25 @@ async function saveArticle(pool, user, data) {
     approvalStatus: media.status || "pending", requiresReview: media.status !== "approved", rightsConfirmed: Boolean(media.rights_confirmed),
     relevanceEvidence: media.relevance_evidence || {}, originalUrl: media.original_url || media.public_url
   } : null;
-  const result = await pool.query({
+  const values = [headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || summaryFromBody(body), body,
+    category, clean(data.state, 80) || null, clean(data.district, 120) || null,
+    media?.mime_type?.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : (media?.public_url || null), media?.alt_text || clean(data.altText, 500) || null,
+    featured ? JSON.stringify([featured]) : null, featured ? JSON.stringify(featured) : null,
+    JSON.stringify(Array.isArray(data.tags) ? data.tags.map(tag => clean(tag, 80)).filter(Boolean) : clean(data.tags, 500).split(",").map(tag => tag.trim()).filter(Boolean)),
+    Boolean(data.breaking), Boolean(data.topStory)];
+  const result = current ? await pool.query({
+    text: `UPDATE articles SET title=$1, english_title=$2, summary=$3, body=$4, category=$5, state=$6, district=$7,
+      image_url=COALESCE($8,image_url), thumbnail_url=COALESCE($8,thumbnail_url), image_alt=COALESCE($9,image_alt),
+      media=COALESCE($10::jsonb,media), featured_media=COALESCE($11::jsonb,featured_media), tags=$12::jsonb,
+      is_breaking=$13, is_top_story=$14, content_status='newsroom_full_text', content_revision=content_revision+1, updated_at=now()
+      WHERE id=$15 AND source_provider='newsneta-cms' RETURNING *`,
+    values: [...values, current.id]
+  }) : await pool.query({
     text: `INSERT INTO articles (slug,title,english_title,summary,body,category,state,district,status,author_id,
       image_url,thumbnail_url,image_alt,media,featured_media,tags,is_breaking,is_top_story,source_provider,source_article_id,content_revision,content_status)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9,$10,$10,$11,$12::jsonb,$13::jsonb,$14::jsonb,$15,$16,'newsneta-cms',$1,1,'newsroom_full_text')
-      ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, english_title=EXCLUDED.english_title,
-      summary=EXCLUDED.summary, body=EXCLUDED.body, category=EXCLUDED.category, state=EXCLUDED.state,
-      district=EXCLUDED.district, image_url=COALESCE(EXCLUDED.image_url,articles.image_url),
-      thumbnail_url=COALESCE(EXCLUDED.thumbnail_url,articles.thumbnail_url), image_alt=COALESCE(EXCLUDED.image_alt,articles.image_alt),
-      media=CASE WHEN EXCLUDED.featured_media IS NOT NULL THEN EXCLUDED.media ELSE articles.media END,
-      featured_media=COALESCE(EXCLUDED.featured_media,articles.featured_media), tags=EXCLUDED.tags,
-      is_breaking=EXCLUDED.is_breaking, is_top_story=EXCLUDED.is_top_story, content_status='newsroom_full_text',
-      content_revision=articles.content_revision+1, updated_at=now()
       RETURNING *`,
-    values: [slug, headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || summaryFromBody(body), body,
-      category, clean(data.state, 80) || null, clean(data.district, 120) || null, user.id,
-      media?.mime_type?.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : (media?.public_url || null), media?.alt_text || clean(data.altText, 500) || null,
-      JSON.stringify(featured ? [featured] : []), JSON.stringify(featured),
-      JSON.stringify(Array.isArray(data.tags) ? data.tags.map(tag => clean(tag, 80)).filter(Boolean) : clean(data.tags, 500).split(",").map(tag => tag.trim()).filter(Boolean)),
-      Boolean(data.breaking), Boolean(data.topStory)]
+    values: [slug, ...values.slice(0, 7), user.id, ...values.slice(7)]
   });
   if (media) await pool.query({ text: "UPDATE media_assets SET article_id=$1, updated_at=now() WHERE id=$2", values: [result.rows[0].id, media.id] });
   return result.rows[0];

@@ -48,6 +48,29 @@ test("admin direct publish commits article and audit in one transaction", async 
   assert.equal(pool.events.at(-1), "RELEASE");
 });
 
+test("new admin publication does not overwrite a published article with the same slug", async () => {
+  const { directAdminPublish } = await import("../netlify/functions/cms.mjs");
+  const events = [];
+  const client = {
+    async query(input) {
+      const text = typeof input === "string" ? input : input.text;
+      const values = input?.values || [];
+      events.push({ text, values });
+      if (/SELECT article_id, request_hash/.test(text)) return { rows: [] };
+      if (/SELECT id FROM articles WHERE slug/.test(text)) return { rows: [{ id: "20000000-0000-4000-8000-000000000001" }] };
+      if (/INSERT INTO articles/.test(text)) return { rows: [{ id: "30000000-0000-4000-8000-000000000001", slug: values[0], status: "draft", title: baseArticle.headline, body: baseArticle.body, category: "telangana", state: "Telangana", district: "Hyderabad", featured_media: {} }] };
+      if (/UPDATE articles SET status=/.test(text)) return { rows: [{ id: "30000000-0000-4000-8000-000000000001", slug: "new-story-12345678", status: "published" }] };
+      return { rows: [], rowCount: 1 };
+    },
+    release() { events.push({ text: "RELEASE", values: [] }); }
+  };
+  const result = await directAdminPublish({ connect: async () => client }, admin, { ...baseArticle, slug: "new-story" }, "publish:collision-test-1234");
+  const insert = events.find(event => /INSERT INTO articles/.test(event.text));
+  assert.match(insert.values[0], /^new-story-[0-9a-f]{8}$/);
+  assert.equal(result.article.status, "published");
+  assert.ok(events.some(event => /INSERT INTO article_workflow/.test(event.text)));
+});
+
 test("reporter cannot use the direct publish endpoint", async () => {
   const { directAdminPublish } = await import("../netlify/functions/cms.mjs");
   await assert.rejects(() => directAdminPublish(fakePool(), { ...admin, role: "reporter" }, baseArticle, "publish:1234567890abcdef"), /Only an Admin/);

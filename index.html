@@ -608,6 +608,7 @@ html{scroll-padding-top:156px}
 .pager-btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
 .pager-btn:disabled{opacity:.45;cursor:not-allowed}
 .pager-status{color:var(--muted);font:900 12px/1.3 Inter,sans-serif;min-width:96px;text-align:center}
+.pager-numbers{display:flex;align-items:center;justify-content:center;gap:6px}.pager-numbers .pager-btn{min-width:40px;padding:0 10px}
 .news-card{overflow:hidden;background:var(--surface);transition:transform .22s ease, box-shadow .22s ease;border-color:rgba(15,23,42,.14)}
 .news-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
 .thumb{aspect-ratio:16/9;background:linear-gradient(135deg,#d9e2f2,#fff);position:relative;overflow:hidden}
@@ -858,10 +859,11 @@ html{scroll-padding-top:156px}
  overflow:hidden;
 }
 .login-modal:not(.authenticated){width:min(520px,100%)}
-.login-modal:not(.authenticated) .cms-tabs{display:none}
 .login-modal:not(.authenticated) .login-content{display:block;min-height:auto;background:#fff}
 .login-modal:not(.authenticated) .login-panel{border-right:0}
+.login-modal:not(.authenticated)>header{padding:14px 18px}
 .login-modal.authenticated .login-panel{display:none}
+.login-modal.authenticated>header{display:none}
 .login-modal.authenticated .login-content{display:block;background:#f4f6f8;max-height:calc(94vh - 119px);overflow:hidden}
 .login-content{display:grid;grid-template-columns:320px 1fr;min-height:560px;background:#fff}
 .login-panel{border-right:1px solid var(--line);background:#fff}
@@ -874,6 +876,9 @@ html{scroll-padding-top:156px}
 .cms-sidebar-brand{width:100%;max-width:190px;height:auto;border-radius:4px;margin-bottom:4px}
 .cms-menu-btn{border:0;border-radius:6px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font-weight:900}
 .cms-menu-btn.active{background:var(--brand)}
+.cms-sidebar-nav{display:grid;gap:6px}
+.cms-sidebar-footer{display:grid;gap:8px;margin-top:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
+.cms-sidebar-close,.cms-mobile-header,.cms-mobile-nav,.cms-sidebar-scrim{display:none}
 .cms-workspace{padding:16px;display:grid;gap:12px;align-content:start;overflow:auto}
 .cms-screen{display:grid;gap:12px}
 .cms-screen-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
@@ -957,6 +962,10 @@ html{scroll-padding-top:156px}
 }
 .cms-form textarea{min-height:90px;resize:vertical}
 .cms-form textarea.article-body{min-height:160px}
+.cms-editor-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:6px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:#f8fafc}
+.cms-editor-toolbar button{width:38px;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-weight:900;cursor:pointer}
+.cms-editor-toolbar button:focus-visible{outline:3px solid rgba(215,25,32,.2);outline-offset:1px}
+.cms-editor-toolbar+textarea.article-body{border-radius:0 0 8px 8px}
 .cms-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .cms-editor{max-width:860px;margin:0 auto;padding:20px;gap:18px}
 .cms-editor-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:14px}
@@ -986,6 +995,7 @@ html{scroll-padding-top:156px}
 .cms-ai-actions button{border:1px solid rgba(206,2,3,.22);background:#fff;color:var(--brand);border-radius:999px;min-height:34px;padding:0 12px;font-weight:800}
 .cms-form-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;position:sticky;bottom:0;background:linear-gradient(180deg,rgba(255,255,255,.88),#fff);border-top:1px solid var(--line);padding:12px 0 max(12px,env(safe-area-inset-bottom));z-index:4}
 .cms-form-actions .pill-btn{min-width:170px}
+.cms-save-state{min-height:20px;color:#166534;font-size:12px;font-weight:900;text-align:right}
 .cms-secondary-btn{border-color:var(--line);background:#fff;color:var(--ink)}
 .compliance-checks{display:grid;gap:7px;margin-top:4px}
 .compliance-checks label{display:flex;align-items:flex-start;gap:8px;color:var(--ink);font-weight:700}
@@ -1144,6 +1154,14 @@ html{scroll-padding-top:156px}
  padding:0 14px;
  outline:none;
 }
+.login-modal input:focus,.login-modal select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(215,25,32,.12)}
+.login-password-wrap{position:relative}
+.login-password-wrap input{padding-right:52px}
+.login-password-toggle{position:absolute;right:4px;top:4px;width:40px;height:36px;border:0;background:transparent;color:var(--ink);font-weight:900;cursor:pointer}
+.login-form-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.login-help{color:var(--brand);font-size:12px;font-weight:900;text-decoration:none}
+.login-help:hover{text-decoration:underline}
+.login-submit[aria-busy="true"]{opacity:.72;cursor:wait}
 .login-error{display:none;margin:0 16px 14px;padding:10px 12px;border-radius:10px;background:rgba(215,25,32,.12);color:var(--brand);font-weight:900;font-size:13px}
 .login-error.show{display:block}
 .cms-preview{display:none}
@@ -1301,24 +1319,40 @@ html{scroll-padding-top:156px}
  .story-analysis-grid,.newsline{grid-template-columns:1fr}
  .edition-board,.edition-lead,.future-grid{grid-template-columns:1fr}
  .weather-grid{grid-template-columns:1fr}
+ .modal-backdrop:has(.login-modal.authenticated){padding:0;place-items:stretch}
  .login-content{grid-template-columns:1fr;max-height:86vh;overflow:auto}
  .login-modal{width:100%;max-height:96vh;border-radius:10px}
+ .login-modal:not(.authenticated){max-width:430px;margin:auto}
+ .login-modal.authenticated{height:100dvh;max-height:none;border:0;border-radius:0}
  .login-brand-lockup{gap:10px}
- .login-brand-logo{width:118px}
+ .login-brand-logo{width:108px}
  .login-modal header strong{font-size:20px}
- .login-modal.authenticated .login-content{max-height:calc(96vh - 119px);overflow:auto}
+ .login-modal.authenticated .login-content{height:100%;max-height:none;overflow:hidden}
  .login-panel{border-right:0}
  .role-dashboard{border-top:1px solid var(--line)}
- .cms-shell{grid-template-columns:1fr;height:auto;min-height:0}
- .cms-sidebar{grid-template-columns:1fr 1fr;align-items:start;position:sticky;top:0;z-index:3}
- .cms-sidebar .cms-sidebar-brand,.cms-sidebar strong,.cms-sidebar small{grid-column:1/-1}
- .cms-workspace{padding:12px;overflow:visible}
- .dashboard-head{display:grid}
+ .cms-shell{display:block;height:100%;min-height:0;padding:58px 0 calc(66px + env(safe-area-inset-bottom));position:relative;overflow:hidden}
+ .cms-mobile-header{position:absolute;inset:0 0 auto;z-index:12;height:58px;padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid var(--line)}
+ .cms-mobile-header img{width:84px;height:40px;object-fit:contain;background:var(--brand)}
+ .cms-mobile-header div{min-width:0;flex:1}.cms-mobile-header strong,.cms-mobile-header small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cms-mobile-header small{color:var(--muted);font-size:11px;font-weight:800}
+ .cms-sidebar{display:block;position:fixed;inset:0 auto 0 0;width:min(330px,88vw);padding:18px;z-index:420;overflow:auto;transform:translateX(-105%);transition:transform .2s ease;box-shadow:20px 0 50px rgba(15,23,42,.3)}
+ .cms-shell.cms-nav-open .cms-sidebar{transform:translateX(0)}
+ .cms-sidebar-close{display:grid;place-items:center;position:absolute;right:10px;top:10px;width:40px;height:40px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:22px}
+ .cms-sidebar-brand{max-width:150px}
+ .cms-sidebar-nav{margin-top:16px}
+ .cms-sidebar-scrim{display:block;position:fixed;inset:0;z-index:410;background:rgba(15,23,42,.48);opacity:0;visibility:hidden;transition:.2s}
+ .cms-shell.cms-nav-open .cms-sidebar-scrim{opacity:1;visibility:visible}
+ .cms-mobile-nav{position:absolute;inset:auto 0 0;z-index:12;display:grid;grid-template-columns:repeat(4,1fr);min-height:62px;padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line)}
+ .cms-mobile-nav button{border:0;background:#fff;color:var(--muted);display:grid;place-items:center;align-content:center;gap:2px;min-width:0;padding:7px 3px;font-size:11px;font-weight:900}
+ .cms-mobile-nav button span{font-size:18px;line-height:1}.cms-mobile-nav button.active{color:var(--brand)}
+ .cms-workspace{height:100%;padding:10px 10px 28px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+ .dashboard-head{display:flex;padding:10px;align-items:center}
+ .dashboard-head h3{font-size:17px}.dashboard-head p{font-size:11px;margin-top:2px}
  .dashboard-head-actions{justify-content:stretch}
- .dashboard-head-actions .pill-btn{flex:1}
+ .dashboard-head-actions .pill-btn:not([data-primary-dashboard-action]){display:none}
+ .dashboard-head-actions .pill-btn{flex:1;min-height:42px}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
  .cms-form.two-column,.cms-form-grid{grid-template-columns:1fr}
- .cms-form-actions{display:grid;grid-template-columns:1fr;position:sticky;bottom:0;padding-bottom:max(12px,env(safe-area-inset-bottom));margin-inline:-4px}
+ .cms-form-actions{display:grid;grid-template-columns:1fr;position:sticky;bottom:-28px;padding:10px 0 max(12px,env(safe-area-inset-bottom));margin-inline:-4px;background:#fff;box-shadow:0 -10px 24px rgba(15,23,42,.08)}
  .cms-form-actions .pill-btn{width:100%}
  .cms-workspace,.cms-editor{min-width:0;width:100%;max-width:100%;overflow-x:hidden}
  .article-inline-share{gap:8px}.article-inline-share .share-icon{width:42px;height:42px}
@@ -1873,12 +1907,6 @@ body{background:var(--bg)}
     </div>
     <button class="icon-btn" id="closeLogin" type="button" aria-label="Close login">×</button>
    </header>
-    <div class="cms-tabs" aria-label="NewsNeta Studio sections">
-     <button class="cms-tab active" type="button" data-cms-screen="create">Create Article</button>
-     <button class="cms-tab" type="button" data-cms-screen="feeds">Import Live Feeds</button>
-     <button class="cms-tab" type="button" data-cms-screen="media">Media Library</button>
-     <button class="cms-tab" type="button" data-cms-screen="review">Review &amp; Publish</button>
-   </div>
    <div class="login-content">
     <div class="login-panel">
      <div class="login-kicker">
@@ -1888,12 +1916,9 @@ body{background:var(--bg)}
      <form id="loginForm">
       <label>
        Email
-       <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email"/>
+       <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email" required/>
       </label>
-      <label>
-       Password
-       <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"/>
-      </label>
+      <label>Password<div class="login-password-wrap"><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" required/><button class="login-password-toggle" id="loginPasswordToggle" type="button" aria-label="Show password" aria-pressed="false">Show</button></div></label>
       <label>
        Role
        <select id="roleSelect">
@@ -1902,9 +1927,10 @@ body{background:var(--bg)}
         <option value="reviewer">Reviewer - approve and fact-check</option>
        </select>
       </label>
-      <button class="pill-btn admin-login-btn" type="submit">Sign in</button>
+      <div class="login-form-row"><a class="login-help" href="mailto:support@newsneta.com?subject=NewsNeta%20Studio%20password%20reset">Forgot password?</a><small>Secure newsroom access</small></div>
+      <button class="pill-btn admin-login-btn login-submit" id="loginSubmit" type="submit">Sign in</button>
      </form>
-     <div class="login-error" id="loginError" role="alert"></div>
+     <div class="login-error" id="loginError" role="alert" aria-live="assertive"></div>
     </div>
     <section class="role-dashboard" id="roleDashboard" hidden>
      <div id="roleDashboardContent"></div>
@@ -2065,6 +2091,8 @@ function serverArticlePayload(article){
   altText:article.altText, featuredMediaId:article.featuredMediaId || article.featured_media?.id || null,
   sourceNotes:article.sourceNotes || article.sourceReference || "", scheduledAt:article.scheduledAt || null,
   rightsConfirmed:Boolean(article.rightsConfirmed), relevanceEvidence:article.relevanceEvidence || "",
+  mediaCaption:article.mediaCaption || article.headline || "", mediaSource:article.mediaSource || "",
+  copyrightOwner:article.copyrightOwner || "", mediaLicense:article.mediaLicense || "",
   imageType:article.imageType || "reporter_photo", thumbnailUrl:article.thumbnail || null,
   socialImageUrl:article.socialImageUrl || article.thumbnail || article.image || null,
   thumbnailSource:article.thumbnailSource || article.mediaSource || "",
@@ -2212,8 +2240,8 @@ function cmsArticleDefaults(article = {}){
   altText: article.altText || headline,
   mediaSource: article.mediaSource || "Reporter upload",
   photographer: article.photographer || article.reporter || "",
-  copyrightOwner: article.copyrightOwner || "NewsNeta",
-  mediaLicense: article.mediaLicense || "NewsNeta editorial use",
+  copyrightOwner: article.copyrightOwner || article.reporter || "",
+  mediaLicense: article.mediaLicense || "",
   imageType: article.imageType || "event_photo",
   imageRelevanceScore: Number(article.imageRelevanceScore || 90),
   videoTranscript: article.videoTranscript || "",
@@ -2295,6 +2323,8 @@ let latestPage = 1;
 let reporterPage = 1;
 let latestFeedItems = [];
 let reporterFeedItems = [];
+let latestArchiveTotalPages = 0;
+let latestArchiveActive = false;
 let sideNewsMode = "latest";
 let heroStories = [];
 let heroIndex = 0;
@@ -2470,8 +2500,29 @@ function syncRegionalNav(state){
  active?.scrollIntoView?.({behavior:"smooth",block:"nearest",inline:"center"});
 }
 
+function closeDistrictNavigation({closeDrawer=false} = {}){
+ document.querySelectorAll("#categoryNav .nav-item.open").forEach(item=>{
+  item.classList.remove("open");
+  item.querySelector("[data-state-trigger]")?.setAttribute("aria-expanded","false");
+ });
+ document.querySelectorAll("#drawerNav .drawer-state.open").forEach(item=>{
+  item.classList.remove("open");
+  const trigger = item.querySelector(".drawer-state-trigger");
+  trigger?.setAttribute("aria-expanded","false");
+  if(trigger?.querySelector("span")) trigger.querySelector("span").textContent = "+";
+ });
+ if(closeDrawer){
+  const backdrop = document.getElementById("menuBackdrop");
+  backdrop?.classList.remove("open");
+  backdrop?.setAttribute("aria-hidden","true");
+  document.getElementById("menuToggle")?.setAttribute("aria-expanded","false");
+  document.body.classList.remove("lock");
+ }
+}
+
 async function navigateToRegionalNews(state, {historyMode="push", district="", scroll=true} = {}){
  if(!["telangana","ap"].includes(state)) return;
+ closeDistrictNavigation({closeDrawer:true});
  activeNewsCategory = state;
  activeDistrictFilter = district ? {state,district} : null;
  latestPage = 1;
@@ -2574,10 +2625,7 @@ function setupNav(){
    nav.querySelectorAll("a,.nav-trigger").forEach(a=>a.classList.remove("active"));
    districtLink.classList.add("active");
    districtLink.closest(".nav-item")?.querySelector(".nav-trigger")?.classList.add("active");
-   nav.querySelectorAll(".nav-item.open").forEach(node=>{
-    node.classList.remove("open");
-    node.querySelector("[data-state-trigger]")?.setAttribute("aria-expanded","false");
-   });
+   closeDistrictNavigation({closeDrawer:true});
    const telanganaMenuSelect = document.getElementById("telanganaMenuSelect");
    const apMenuSelect = document.getElementById("apMenuSelect");
    if(telanganaMenuSelect) telanganaMenuSelect.value = state === "telangana" ? district : "";
@@ -2600,6 +2648,7 @@ function setupNav(){
    return;
   }
   activeDistrictFilter = null;
+  closeDistrictNavigation({closeDrawer:true});
   const telanganaMenuSelect = document.getElementById("telanganaMenuSelect");
   const apMenuSelect = document.getElementById("apMenuSelect");
   if(telanganaMenuSelect) telanganaMenuSelect.value = "";
@@ -2641,10 +2690,7 @@ function setupNav(){
  }, {passive:true});
  document.addEventListener("click", event=>{
   if(!nav.contains(event.target)){
-   nav.querySelectorAll(".nav-item.open").forEach(node=>{
-    node.classList.remove("open");
-    node.querySelector("[data-state-trigger]")?.setAttribute("aria-expanded","false");
-   });
+   closeDistrictNavigation();
   }
  });
  const prev = document.getElementById("navScrollPrev");
@@ -2742,7 +2788,7 @@ function setupHeaderNavigation(){
   if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
   else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
  });
- document.addEventListener("keydown",event=>{ if(event.key === "Escape"){ if(backdrop?.classList.contains("open")) close(); document.getElementById("notificationPanel")?.classList.remove("open"); document.getElementById("followPanel")?.classList.remove("open"); } });
+ document.addEventListener("keydown",event=>{ if(event.key === "Escape"){ closeDistrictNavigation({closeDrawer:true}); if(backdrop?.classList.contains("open")) close(); document.getElementById("notificationPanel")?.classList.remove("open"); document.getElementById("followPanel")?.classList.remove("open"); } });
  document.querySelector('[data-drawer-action="login"]')?.addEventListener("click",()=>{ close(); document.getElementById("adminLoginBtn")?.click(); });
  document.querySelector('[data-drawer-action="notifications"]')?.addEventListener("click",()=>{ close(); document.getElementById("notificationBtn")?.click(); });
 
@@ -3495,11 +3541,11 @@ function renderReporterPublished(){
  });
 }
 
-function renderPagedFeed({items, page, pageSize, gridId, pagerId, pageKey, emptyHtml}){
+function renderPagedFeed({items, page, pageSize, gridId, pagerId, pageKey, emptyHtml, totalPages:totalPagesOverride=0, serverPaged=false}){
  const grid = document.getElementById(gridId);
  const pager = document.getElementById(pagerId);
  if(!grid) return;
- const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+ const totalPages = Math.max(1, totalPagesOverride || Math.ceil(items.length / pageSize));
  const safePage = Math.min(Math.max(1, page), totalPages);
  if(pageKey === "latest") latestPage = safePage;
  if(pageKey === "reporter") reporterPage = safePage;
@@ -3509,13 +3555,35 @@ function renderPagedFeed({items, page, pageSize, gridId, pagerId, pageKey, empty
   return;
  }
  const start = (safePage - 1) * pageSize;
- const visible = items.slice(start, start + pageSize);
+ const visible = serverPaged ? items : items.slice(start, start + pageSize);
  grid.innerHTML = visible.map(storyCard).join("");
  if(!pager) return;
+ const firstPage = Math.max(1, Math.min(safePage - 2, totalPages - 4));
+ const numbered = Array.from({length:Math.min(5,totalPages)},(_,index)=>firstPage + index)
+  .map(number=>`<button class="pager-btn ${number === safePage ? "primary" : ""}" type="button" data-page-action="${pageKey}:page:${number}" ${number === safePage ? 'aria-current="page"' : ""}>${number}</button>`).join("");
  pager.innerHTML = `<button class="pager-btn" type="button" data-page-action="${pageKey}:prev" ${safePage <= 1 ? "disabled" : ""}>Previous</button>
+  <span class="pager-numbers" aria-label="Page numbers">${numbered}</span>
   <span class="pager-status">Page ${safePage} / ${totalPages}</span>
-  <button class="pager-btn primary" type="button" data-page-action="${pageKey}:next" ${safePage >= totalPages ? "disabled" : ""}>Show older</button>
-  <button class="pager-btn" type="button" data-page-action="${pageKey}:first" ${safePage <= 1 ? "disabled" : ""}>Latest</button>`;
+  <button class="pager-btn" type="button" data-page-action="${pageKey}:next" ${safePage >= totalPages ? "disabled" : ""}>Next</button>`;
+}
+
+async function loadArchiveNewsPage(page=1, category=activeNewsCategory, district=activeDistrictFilter?.district || ""){
+ try{
+  const query = new URLSearchParams({cat:category,archive:"1",page:String(page),pageSize:String(latestPageSize)});
+  if(district) query.set("district",district);
+  const response = await fetch(`/.netlify/functions/news?${query}`, {cache:"no-store",headers:{"Cache-Control":"no-cache"}});
+  const payload = await response.json().catch(()=>({}));
+  if(!response.ok || !Array.isArray(payload.items)) throw new Error(payload.message || `Archive API ${response.status}`);
+  const items = normalizeItems(payload.items,{allowStale:true});
+  if(!items.length && Number(payload.total || 0) > 0) throw new Error("Archive page returned no valid stories");
+  latestArchiveActive = true;
+  latestArchiveTotalPages = Math.max(1,Number(payload.totalPages || 1));
+  latestPage = Math.min(latestArchiveTotalPages,Math.max(1,Number(payload.page || page)));
+  latestFeedItems = items;
+  renderPagedFeed({items:latestFeedItems,page:latestPage,pageSize:latestPageSize,gridId:"latestGrid",pagerId:"latestPager",pageKey:"latest",totalPages:latestArchiveTotalPages,serverPaged:true,emptyHtml:`<article class="mini-card"><h3>No archived news found</h3><p class="summary">Published stories will appear here after newsroom approval.</p></article>`});
+ }catch(error){
+  if(page > 1) console.error(JSON.stringify({code:"NEWS_ARCHIVE_PAGE_FAILED",category,district,page,message:String(error.message || error)}));
+ }
 }
 
 function renderSideNewsPanel(sorted){
@@ -3631,7 +3699,7 @@ function render(){
  reelsFeed.innerHTML = sorted.filter(story=>story.video && story.video.type !== "external").slice(0,6).map(renderReel).join("") || '<article class="mini-card"><h3>Video updates</h3><p class="summary">No playable video stories are available right now.</p></article>';
  initializeVideoPlayers(reelsFeed);
  document.getElementById("recommendedGrid").innerHTML = personalizedStories(sorted).slice(0,4).map(storyCard).join("");
- latestFeedItems = canonicalStories(sorted);
+ if(!latestArchiveActive) latestFeedItems = canonicalStories(sorted);
  renderPagedFeed({
   items: latestFeedItems,
   page: latestPage,
@@ -3639,7 +3707,9 @@ function render(){
   gridId: "latestGrid",
   pagerId: "latestPager",
   pageKey: "latest",
-  emptyHtml: `<article class="mini-card"><h3>No latest news found</h3><p class="summary">Please refresh news or choose another category.</p></article>`
+  emptyHtml: `<article class="mini-card"><h3>No latest news found</h3><p class="summary">Please refresh news or choose another category.</p></article>`,
+  totalPages:latestArchiveActive ? latestArchiveTotalPages : 0,
+  serverPaged:latestArchiveActive
  });
  renderReporterPublished();
  document.getElementById("mostViewed").innerHTML = "";
@@ -3771,6 +3841,8 @@ function animateCounters(){
 async function loadNews(cat="telangana", force=false){
  activeNewsCategory = cat;
  latestPage = 1;
+ latestArchiveActive = false;
+ latestArchiveTotalPages = 0;
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
   const refreshQuery = force ? `&refresh=${Date.now()}` : "";
@@ -3799,6 +3871,7 @@ async function loadNews(cat="telangana", force=false){
  nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
  refreshCount += 1;
  render();
+ void loadArchiveNewsPage(1,cat,"");
 }
 
 function setupDistricts(){
@@ -3856,6 +3929,8 @@ function setupDistricts(){
 async function loadDistrictNews(state, district, force=false){
  if(!state || !district) return loadNews(document.querySelector(".nav a.active")?.dataset.cat || "telangana", force);
  latestPage = 1;
+ latestArchiveActive = false;
+ latestArchiveTotalPages = 0;
  try{
   const view = matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
   const refreshQuery = force ? `&refresh=${Date.now()}` : "";
@@ -3887,6 +3962,7 @@ async function loadDistrictNews(state, district, force=false){
  nextRefreshAt = new Date(Date.now() + refreshIntervalMs);
  refreshCount += 1;
  render();
+ void loadArchiveNewsPage(1,state,district);
 }
 
 async function refreshAllNews(request){
@@ -4159,10 +4235,13 @@ function articleBodyMarkup(value){
  const blocks = text.split(/\n{2,}/).map(block=>block.trim()).filter(Boolean);
  return blocks.map(block=>{
   const lines = block.split("\n").map(line=>line.trim()).filter(Boolean);
+  const inline = line=>escapeHtml(line).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
   if(lines.length === 1 && /^(?:#{1,3}\s+|.{1,80}:$)/.test(lines[0])){
-   return `<h3>${escapeHtml(lines[0].replace(/^#{1,3}\s+/, ""))}</h3>`;
+   return `<h3>${inline(lines[0].replace(/^#{1,3}\s+/, ""))}</h3>`;
   }
-  return `<p>${lines.map(escapeHtml).join("<br>")}</p>`;
+  if(lines.every(line=>/^[-•]\s+/.test(line))) return `<ul>${lines.map(line=>`<li>${inline(line.replace(/^[-•]\s+/,""))}</li>`).join("")}</ul>`;
+  if(lines.every(line=>/^>\s?/.test(line))) return `<blockquote>${lines.map(line=>inline(line.replace(/^>\s?/,""))).join("<br>")}</blockquote>`;
+  return `<p>${lines.map(inline).join("<br>")}</p>`;
  }).join("");
 }
 
@@ -4274,10 +4353,11 @@ document.addEventListener("click", event=>{
  const pageButton = event.target.closest("[data-page-action]");
  if(pageButton){
   event.preventDefault();
-  const [target, action] = pageButton.dataset.pageAction.split(":");
-  const total = target === "latest" ? Math.max(1, Math.ceil(latestFeedItems.length / latestPageSize)) : Math.max(1, Math.ceil(reporterFeedItems.length / reporterPageSize));
+  const [target, action, requestedPage] = pageButton.dataset.pageAction.split(":");
+  const total = target === "latest" ? (latestArchiveActive ? latestArchiveTotalPages : Math.max(1, Math.ceil(latestFeedItems.length / latestPageSize))) : Math.max(1, Math.ceil(reporterFeedItems.length / reporterPageSize));
   if(target === "latest"){
-   latestPage = action === "next" ? Math.min(total, latestPage + 1) : action === "prev" ? Math.max(1, latestPage - 1) : 1;
+   latestPage = action === "next" ? Math.min(total, latestPage + 1) : action === "prev" ? Math.max(1, latestPage - 1) : action === "page" ? Math.min(total,Math.max(1,Number(requestedPage)||1)) : 1;
+   if(latestArchiveActive){ void loadArchiveNewsPage(latestPage); document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"}); return; }
    renderPagedFeed({
     items: latestFeedItems,
     page: latestPage,
@@ -4289,7 +4369,7 @@ document.addEventListener("click", event=>{
    });
    document.getElementById("latestGrid")?.scrollIntoView({behavior:"smooth", block:"start"});
   }else{
-   reporterPage = action === "next" ? Math.min(total, reporterPage + 1) : action === "prev" ? Math.max(1, reporterPage - 1) : 1;
+   reporterPage = action === "next" ? Math.min(total, reporterPage + 1) : action === "prev" ? Math.max(1, reporterPage - 1) : action === "page" ? Math.min(total,Math.max(1,Number(requestedPage)||1)) : 1;
    renderReporterPublished();
    document.getElementById("reporterPublished")?.scrollIntoView({behavior:"smooth", block:"start"});
   }
@@ -5062,6 +5142,24 @@ function fillAssistantContent(action){
  }
 }
 
+function formatCmsArticle(action){
+ const editor = document.getElementById("cmsBody");
+ if(!editor) return;
+ const start = editor.selectionStart;
+ const end = editor.selectionEnd;
+ const selected = editor.value.slice(start,end) || (action === "list" ? "List item" : "Text");
+ const transforms = {
+  bold:`**${selected}**`,
+  heading:`## ${selected}`,
+  quote:`> ${selected}`,
+  list:selected.split(/\r?\n/).map(line=>`- ${line.replace(/^[-•]\s*/,"")}`).join("\n")
+ };
+ const replacement = transforms[action] || selected;
+ editor.setRangeText(replacement,start,end,"end");
+ editor.dispatchEvent(new Event("input",{bubbles:true}));
+ editor.focus();
+}
+
 function simplifiedArticleEditor(role, article, categoryOptions){
  const state = article.state || "Telangana";
  const selectedDistricts = state === "Andhra Pradesh" ? districts.ap : districts.telangana;
@@ -5069,10 +5167,11 @@ function simplifiedArticleEditor(role, article, categoryOptions){
  const isAdmin = role === "admin";
  const editingPublished = isAdmin && article.status === "published";
  const thumbnail = article.thumbnail || article.image || "";
+ const uploader = currentCmsUser?.name || currentCmsUser?.email || article.reporter || "Newsroom uploader";
  return `<form class="cms-form cms-editor" id="storyUploadForm" novalidate>
   <div class="cms-editor-intro"><div><strong>${editingPublished ? "Edit published article" : isAdmin ? "Create and publish" : "Create article"}</strong><small>${editingPublished ? "Update the live story without changing its ID, URL or original publication time." : isAdmin ? "Validate and publish immediately, or schedule for later." : "Write the report, attach media, and send it for editorial review."}</small></div><span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></div>
   <label>News Headline *<textarea id="cmsHeadline" required maxlength="500" placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">${escapeHtml(article.headline || "")}</textarea></label>
-  <label>Full News Description *<textarea id="cmsBody" class="article-body" required placeholder="పూర్తి వార్తను పేరాగ్రాఫ్‌లతో రాయండి...">${escapeHtml(article.body || "")}</textarea><small class="field-help">Use blank lines for paragraphs and ## before a subheading. A card summary is generated automatically without changing this text.</small></label>
+  <label>Full News Description *<div class="cms-editor-toolbar" role="toolbar" aria-label="Article formatting"><button type="button" data-cms-format="bold" title="Bold">B</button><button type="button" data-cms-format="heading" title="Heading">H2</button><button type="button" data-cms-format="quote" title="Quote">“</button><button type="button" data-cms-format="list" title="Bulleted list">•</button></div><textarea id="cmsBody" class="article-body" required placeholder="పూర్తి వార్తను పేరాగ్రాఫ్‌లతో రాయండి...">${escapeHtml(article.body || "")}</textarea><small class="field-help">Use blank lines for paragraphs. Formatting works with Telugu, English and Hindi text.</small></label>
   <div class="cms-form-grid">
    <label>Category *<select id="cmsCategory" required>${categoryOptions}</select></label>
    <label>State *<select id="cmsState" required><option ${state === "Telangana" ? "selected" : ""}>Telangana</option><option ${state === "Andhra Pradesh" ? "selected" : ""}>Andhra Pradesh</option><option ${state === "National" ? "selected" : ""}>National</option><option ${state === "International" ? "selected" : ""}>International</option></select></label>
@@ -5086,31 +5185,30 @@ function simplifiedArticleEditor(role, article, categoryOptions){
    <div class="upload-preview" id="cmsMediaPreview"></div>
    <button class="pill-btn cms-secondary-btn" id="cmsRetryUploads" type="button" hidden>Retry failed uploads</button>
   </div>
-  <div class="upload-drop cms-thumbnail-editor">
-   <strong>Article thumbnail</strong>
-   <small>Upload a licensed JPG, PNG or WebP, or enter its HTTPS URL. This image is used on cards and social previews.</small>
-   <input id="cmsThumbnailUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-   ${thumbnail ? `<div class="upload-preview show" id="cmsThumbnailPreview"><img src="${escapeAttr(thumbnail)}" alt="Current article thumbnail" onerror="imageFallback(event)"></div>` : `<div class="upload-preview" id="cmsThumbnailPreview"></div>`}
-   <label>Thumbnail URL<input id="cmsThumbnail" type="url" inputmode="url" value="${escapeAttr(thumbnail)}" placeholder="https://..."></label>
-   <label>Social image URL<input id="cmsSocialImageUrl" type="url" inputmode="url" value="${escapeAttr(article.socialImageUrl || thumbnail)}" placeholder="Defaults to the thumbnail"></label>
-   <div class="cms-form-grid"><label>Image source<input id="cmsThumbnailSource" value="${escapeAttr(article.thumbnailSource || article.mediaSource || "")}" placeholder="Photographer, agency or newsroom"></label><label>Usage licence<input id="cmsThumbnailLicense" value="${escapeAttr(article.thumbnailLicense || article.mediaLicense || "")}" placeholder="Licensed editorial use"></label></div>
-   <label>Article relevance<textarea id="cmsThumbnailRelevance" placeholder="Explain how this image corresponds to the people, place or event in the story.">${escapeHtml(article.thumbnailRelevanceEvidence || article.relevanceEvidence || "")}</textarea></label>
-   <label class="cms-toggle"><input id="cmsThumbnailRights" type="checkbox" ${article.thumbnailRightsConfirmed || article.rightsConfirmed ? "checked" : ""}> I confirm the image rights and article relevance.</label>
-  </div>
+  <label class="cms-toggle"><input id="cmsRightsConfirmed" type="checkbox" ${article.rightsConfirmed ? "checked" : ""}> I confirm I have the right to publish the selected media and it belongs to this story.</label>
+  <label>Media rights basis<select id="cmsMediaRightsBasis"><option value="" ${!article.mediaLicense ? "selected" : ""}>Select when media is attached</option><option value="original" ${/original/i.test(article.mediaLicense || "") ? "selected" : ""}>Original reporter photo or video</option><option value="licensed" ${/licensed/i.test(article.mediaLicense || "") ? "selected" : ""}>Licensed editorial media</option><option value="permission" ${/permission/i.test(article.mediaLicense || "") ? "selected" : ""}>Supplied with publication permission</option><option value="illustration" ${/illustration/i.test(article.mediaLicense || "") ? "selected" : ""}>Newsroom illustration</option></select></label>
   <label>Source Notes<textarea id="cmsSourceNotes" placeholder="Optional source, contact or verification notes">${escapeHtml(article.sourceNotes || article.sourceReference || "")}</textarea></label>
   <input id="cmsImage" type="hidden" value="${escapeAttr(article.image || "")}">
+  <input id="cmsThumbnail" type="hidden" value="${escapeAttr(thumbnail)}">
+  <input id="cmsSocialImageUrl" type="hidden" value="${escapeAttr(article.socialImageUrl || thumbnail)}">
   <input id="cmsVideoUrl" type="hidden" value="${escapeAttr(article.videoUrl || "")}">
-  <details class="cms-advanced"><summary>Source and media details</summary>
-   <div class="cms-form-grid"><label>Caption<input id="cmsMediaCaption" value="${escapeAttr(article.mediaCaption || "")}" placeholder="What the image or video shows"></label><label>Alt text<input id="cmsAltText" value="${escapeAttr(article.altText || article.headline || "")}" placeholder="Accessible visual description"></label></div>
-   <div class="cms-form-grid"><label>Media source<input id="cmsMediaSource" value="${escapeAttr(article.mediaSource || "NewsNeta newsroom")}"></label><label>Copyright owner<input id="cmsCopyrightOwner" value="${escapeAttr(article.copyrightOwner || "NewsNeta")}"></label></div>
-   <label>Usage rights<input id="cmsMediaLicense" value="${escapeAttr(article.mediaLicense || "NewsNeta editorial use")}"></label>
-   <label>Why this media belongs to this article<textarea id="cmsRelevanceEvidence" placeholder="Identify the event, person, place, date, or reporter assignment that connects this media to the story.">${escapeHtml(article.relevanceEvidence || "")}</textarea></label>
+  <input id="cmsMediaCaption" type="hidden" value="${escapeAttr(article.mediaCaption || article.headline || "")}">
+  <input id="cmsAltText" type="hidden" value="${escapeAttr(article.altText || article.headline || "")}">
+  <input id="cmsMediaSource" type="hidden" value="${escapeAttr(article.mediaSource || uploader)}">
+  <input id="cmsCopyrightOwner" type="hidden" value="${escapeAttr(article.copyrightOwner || uploader)}">
+  <input id="cmsMediaLicense" type="hidden" value="${escapeAttr(article.mediaLicense || "")}">
+  <input id="cmsRelevanceEvidence" type="hidden" value="${escapeAttr(article.relevanceEvidence || (article.headline ? `Uploaded specifically for: ${article.headline}` : ""))}">
+  ${editingPublished ? `<details class="cms-advanced"><summary>Advanced Media Settings</summary>
+   <div class="upload-drop"><strong>Replace thumbnail</strong><input id="cmsThumbnailUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">${thumbnail ? `<div class="upload-preview show" id="cmsThumbnailPreview"><img src="${escapeAttr(thumbnail)}" alt="Current article thumbnail" onerror="imageFallback(event)"></div>` : `<div class="upload-preview" id="cmsThumbnailPreview"></div>`}</div>
+   <label>Social image override<input id="cmsSocialImageOverride" type="url" inputmode="url" value="${escapeAttr(article.socialImageUrl || "")}" placeholder="Optional HTTPS URL"></label>
+   <div class="cms-form-grid"><label>Media source<input id="cmsMediaSourceOverride" value="${escapeAttr(article.mediaSource || uploader)}"></label><label>Copyright owner<input id="cmsCopyrightOwnerOverride" value="${escapeAttr(article.copyrightOwner || uploader)}"></label></div>
+   <label>Usage licence<input id="cmsMediaLicenseOverride" value="${escapeAttr(article.mediaLicense || "")}"></label>
    <label>Media type<select id="cmsImageType"><option value="reporter_photo">Reporter photo from this story</option><option value="event_photo">Verified article-specific event photo</option><option value="illustration">Clearly labelled editorial illustration</option></select></label>
-   <label class="cms-toggle"><input id="cmsRightsConfirmed" type="checkbox" ${article.rightsConfirmed ? "checked" : ""}> I confirm NewsNeta has permission to publish this media and that it depicts or clearly illustrates this article.</label>
-  </details>
+  </details>` : `<input id="cmsImageType" type="hidden" value="${escapeAttr(article.imageType || "reporter_photo")}">`}
   ${editingPublished ? `<label>Revision note *<textarea id="cmsEditNote" required placeholder="Summarize what changed and why.">${escapeHtml(article.editNote || "")}</textarea></label>` : ""}
   ${isAdmin && !editingPublished ? `<details class="cms-advanced"><summary>Publishing options</summary><div class="cms-form-grid"><label class="cms-toggle"><input id="cmsBreaking" type="checkbox" ${article.breaking ? "checked" : ""}> Breaking news</label><label>Schedule (optional)<input id="cmsScheduledAt" type="datetime-local"></label></div></details>` : ""}
   <section class="cms-article-preview" id="cmsArticlePreview" hidden aria-live="polite"></section>
+  <div class="cms-save-state" id="cmsSaveState" aria-live="polite">${editingPublished ? "Published edits are saved only after confirmation." : "Draft changes will auto-save."}</div>
   <div class="cms-form-actions">
    ${editingPublished ? "" : `<button class="pill-btn cms-secondary-btn" type="button" data-save-draft="true">Save Draft</button>`}
    <button class="pill-btn cms-secondary-btn" type="button" data-preview-article="true">${editingPublished ? "Preview Changes" : "Preview"}</button>
@@ -5323,8 +5421,19 @@ function cmsMediaPanel(article){
  </div>`;
 }
 
-function cmsManageScreen(role){
- const queue = cmsQueueForRole(role);
+function cmsQueueFilter(role, filter, article){
+ if(filter === "published") return article.status === "published";
+ if(filter === "drafts") return ["draft","changes_requested"].includes(article.status);
+ if(filter === "scheduled") return article.status === "scheduled";
+ if(filter === "submitted") return ["submitted","under_review"].includes(article.status);
+ if(filter === "feedback") return ["changes_requested","reviewer_rejected"].includes(article.status);
+ if(filter === "pending") return role === "reviewer" ? ["submitted","under_review","review"].includes(article.status) : ["reviewer_approved","admin_review","approved"].includes(article.status);
+ if(filter === "reviewed") return ["reviewer_approved","reviewer_rejected","published"].includes(article.status);
+ return true;
+}
+
+function cmsManageScreen(role, filter="all"){
+ const queue = cmsQueueForRole(role).filter(article=>cmsQueueFilter(role,filter,article));
  const activeArticle = primaryCmsArticle();
  const missing = validatePublishReady(activeArticle);
  const rows = queue.length ? queue.map(article=>{
@@ -5335,8 +5444,9 @@ function cmsManageScreen(role){
   const isPublished = article.status === "published";
   return `<div class="queue-item"><span><strong>${escapeHtml(article.headline)}</strong><br><small>${escapeHtml(article.district)} • ${escapeHtml(article.category)} • <span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></small></span><div class="queue-actions">${canSubmit ? `<button type="button" data-queue-action="submit" data-article-id="${escapeAttr(article.id)}">Submit</button>` : ""}${canApprove ? `<button type="button" data-queue-action="approve" data-article-id="${escapeAttr(article.id)}">Approve</button>` : ""}${canPublish ? `<button type="button" data-queue-action="publish" data-article-id="${escapeAttr(article.id)}">Publish</button>` : ""}${isPublished ? `<button type="button" data-view-article="${escapeAttr(article.id)}">View</button>` : ""}<button type="button" data-edit-article="${escapeAttr(article.id)}">${isPublished && role === "admin" ? "Edit live" : "Open"}</button>${isPublished && role === "admin" ? `<button type="button" data-queue-action="unpublish" data-article-id="${escapeAttr(article.id)}">Unpublish</button>` : ""}${canDelete ? `<button class="danger" type="button" data-delete-article="${escapeAttr(article.id)}">Delete</button>` : ""}</div></div>`;
  }).join("") : `<div class="queue-item"><span>No active CMS articles<br><small>Use Article Upload to recreate the sample story.</small></span><div class="queue-actions"><button type="button" data-reset-sample="true">Create Sample</button></div></div>`;
+ const titles = {published:"Published Articles",drafts:"Draft Articles",scheduled:"Scheduled News",submitted:"Submitted for Review",feedback:"Review Feedback",pending:"Pending Review",reviewed:"Reviewed History","my-articles":"My Articles",all:"Stories"};
  return `<div class="cms-screen">
-  <div class="cms-screen-head"><div><strong>Manage Content</strong><small>Working queue for reporter upload, reviewer approval, admin publish and delete rights.</small></div><span class="chip">Manage</span></div>
+  <div class="cms-screen-head"><div><strong>${titles[filter] || "Stories"}</strong><small>Role-authorized newsroom articles with status, location and editorial actions.</small></div><span class="chip">${queue.length} items</span></div>
   <div class="cms-feature-grid">
    <div class="cms-feature-card"><strong>Reporter Drafts</strong><small>${cmsArticles.filter(a=>a.status === "draft").length} stories can be edited or submitted.</small></div>
    <div class="cms-feature-card"><strong>Review Queue</strong><small>${cmsArticles.filter(a=>["submitted","under_review","review"].includes(a.status)).length} stories awaiting reviewer action.</small></div>
@@ -5345,9 +5455,7 @@ function cmsManageScreen(role){
   </div>
   <div class="queue-list">${rows}</div>
   ${role === "admin" ? `<div class="${missing.length ? "publish-validation" : "workflow-note"}">${missing.length ? `Publishing validation: ${missing.join(", ")} still required.` : "Publishing validation passed for the active article."}</div>` : ""}
-  ${cmsMediaPanel(activeArticle)}
-  ${cmsNotificationPanel(activeArticle, role)}
-  ${cmsWorkflowAudit(activeArticle)}
+  ${filter === "all" ? `${cmsMediaPanel(activeArticle)}${cmsNotificationPanel(activeArticle, role)}${cmsWorkflowAudit(activeArticle)}` : ""}
   <div class="workflow-note" id="cmsWorkflowNote">${role === "admin" ? "Admin can publish approved stories and delete any article." : role === "reviewer" ? "Reviewer can approve stories submitted by reporters." : "Reporter can upload drafts and submit them for review."}</div>
  </div>`;
 }
@@ -5405,10 +5513,30 @@ function cmsMediaLibraryScreen(role){
  </div>`;
 }
 
-function cmsScreenMarkup(role, screen="article"){
+function cmsRoleHomeScreen(role){
+ const nextScreen = role === "reviewer" ? "pending" : "create";
+ const nextLabel = role === "reviewer" ? "Open Pending Review" : "Create News";
+ const allScreen = role === "reviewer" ? "pending" : role === "admin" ? "published" : "my-articles";
+ const recent = cmsQueueForRole(role).slice(0,5).map(article=>`<div class="queue-item"><span><strong>${escapeHtml(article.headline || "Untitled article")}</strong><br><small>${escapeHtml(article.district || article.state || "Newsroom")} • ${articleStatusLabel(article.status)}</small></span><div class="queue-actions"><button type="button" data-edit-article="${escapeAttr(article.id)}">Open</button></div></div>`).join("");
+ return `<div class="cms-screen"><div class="cms-screen-head"><div><strong>${role === "admin" ? "Admin overview" : role === "reviewer" ? "Review desk" : "Reporter workspace"}</strong><small>Current newsroom workload and publication status.</small></div><button class="pill-btn admin-login-btn" type="button" data-cms-screen-jump="${nextScreen}">${nextLabel}</button></div><div class="dashboard-metrics">${cmsMetricsForRole(role).map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}</div><div class="cms-screen-head"><div><strong>Recent stories</strong><small>The latest articles available to your role.</small></div><button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="${allScreen}">View all</button></div><div class="queue-list">${recent || `<div class="queue-item"><span>No newsroom articles yet.</span></div>`}</div></div>`;
+}
+
+function cmsUsersScreen(role){
+ if(role !== "admin") return `<div class="cms-screen"><div class="publish-validation">Administrator permission is required.</div></div>`;
+ return `<div class="cms-screen"><div class="cms-screen-head"><div><strong>Manage Users</strong><small>Authorized newsroom roles. Account credentials remain server-managed.</small></div><span class="chip">Admin only</span></div><div class="queue-list"><div class="queue-item"><span><strong>Administrators</strong><br><small>Publish, unpublish, edit live stories and manage newsroom settings.</small></span><span class="status-pill published">Active</span></div><div class="queue-item"><span><strong>Reporters</strong><br><small>Create, edit and submit their own stories.</small></span><span class="status-pill published">Active</span></div><div class="queue-item"><span><strong>Reviewers</strong><br><small>Fact-check, approve, reject or request changes.</small></span><span class="status-pill published">Active</span></div></div></div>`;
+}
+
+function cmsAssignmentsScreen(role){
+ return `<div class="cms-screen"><div class="cms-screen-head"><div><strong>${role === "reporter" ? "My Assignments" : "Newsroom Settings"}</strong><small>${role === "reporter" ? "Desk and district assignments will appear here when assigned by an administrator." : "Analytics, feed health and newsroom configuration."}</small></div><span class="chip">${role}</span></div>${role === "admin" ? cmsAnalyticsScreen(role) : `<div class="queue-item"><span>No active assignments<br><small>Your desk will notify you when a new assignment is available.</small></span></div>`}</div>`;
+}
+
+function cmsScreenMarkup(role, screen="home"){
+ if(screen === "home") return cmsRoleHomeScreen(role);
  if(screen === "feeds") return cmsFeedScreen(role);
  if(screen === "media") return cmsMediaLibraryScreen(role);
- if(screen === "review" || screen === "manage") return cmsManageScreen(role);
+ if(["review","manage","published","pending","drafts","scheduled","submitted","feedback","reviewed","my-articles"].includes(screen)) return cmsManageScreen(role,screen === "review" || screen === "manage" ? "all" : screen);
+ if(screen === "users") return cmsUsersScreen(role);
+ if(screen === "assignments" || screen === "settings") return cmsAssignmentsScreen(role);
  if(screen === "video") return cmsVideoScreen(role);
  if(screen === "analytics") return cmsAnalyticsScreen(role);
  return `<div class="cms-screen">
@@ -5441,22 +5569,24 @@ function updateArticleFromReporterForm(article){
  article.scheduledAt = document.getElementById("cmsScheduledAt")?.value ? new Date(document.getElementById("cmsScheduledAt").value).toISOString() : null;
  article.image = document.getElementById("cmsImage")?.value.trim() || article.image;
  article.thumbnail = document.getElementById("cmsThumbnail")?.value.trim() || article.thumbnail || article.image;
- article.socialImageUrl = document.getElementById("cmsSocialImageUrl")?.value.trim() || article.socialImageUrl || article.thumbnail;
+ article.socialImageUrl = document.getElementById("cmsSocialImageOverride")?.value.trim() || document.getElementById("cmsSocialImageUrl")?.value.trim() || article.socialImageUrl || article.thumbnail;
  article.thumbnailSource = document.getElementById("cmsThumbnailSource")?.value.trim() || article.thumbnailSource || article.mediaSource;
  article.thumbnailLicense = document.getElementById("cmsThumbnailLicense")?.value.trim() || article.thumbnailLicense || article.mediaLicense;
  article.thumbnailRelevanceEvidence = document.getElementById("cmsThumbnailRelevance")?.value.trim() || article.thumbnailRelevanceEvidence || article.relevanceEvidence;
- article.thumbnailRightsConfirmed = Boolean(document.getElementById("cmsThumbnailRights")?.checked);
+ article.thumbnailRightsConfirmed = Boolean(document.getElementById("cmsThumbnailRights")?.checked || document.getElementById("cmsRightsConfirmed")?.checked);
  article.editNote = document.getElementById("cmsEditNote")?.value.trim() || article.editNote || "";
  article.videoUrl = document.getElementById("cmsVideoUrl")?.value.trim() || article.videoUrl;
  article.youtubeUrl = document.getElementById("cmsYoutubeUrl")?.value.trim() || article.youtubeUrl;
  article.mediaCaption = document.getElementById("cmsMediaCaption")?.value.trim() || article.mediaCaption;
  article.altText = document.getElementById("cmsAltText")?.value.trim() || article.altText;
- article.mediaSource = document.getElementById("cmsMediaSource")?.value.trim() || article.mediaSource;
+ article.mediaSource = document.getElementById("cmsMediaSourceOverride")?.value.trim() || document.getElementById("cmsMediaSource")?.value.trim() || article.mediaSource || currentCmsUser?.name || currentCmsUser?.email || "Newsroom uploader";
  article.photographer = document.getElementById("cmsPhotographer")?.value.trim() || article.photographer;
- article.copyrightOwner = document.getElementById("cmsCopyrightOwner")?.value.trim() || article.copyrightOwner;
- article.mediaLicense = document.getElementById("cmsMediaLicense")?.value.trim() || article.mediaLicense;
+ article.copyrightOwner = document.getElementById("cmsCopyrightOwnerOverride")?.value.trim() || document.getElementById("cmsCopyrightOwner")?.value.trim() || article.copyrightOwner || currentCmsUser?.name || currentCmsUser?.email || "Newsroom uploader";
+ const rightsLabels = {original:"Original media supplied by the authenticated newsroom uploader",licensed:"Licensed editorial media",permission:"Media supplied with publication permission",illustration:"Newsroom editorial illustration"};
+ const rightsBasis = document.getElementById("cmsMediaRightsBasis")?.value || "";
+ article.mediaLicense = document.getElementById("cmsMediaLicenseOverride")?.value.trim() || rightsLabels[rightsBasis] || document.getElementById("cmsMediaLicense")?.value.trim() || article.mediaLicense;
  article.imageType = document.getElementById("cmsImageType")?.value || article.imageType;
- article.relevanceEvidence = document.getElementById("cmsRelevanceEvidence")?.value.trim() || article.relevanceEvidence || "";
+ article.relevanceEvidence = document.getElementById("cmsRelevanceEvidence")?.value.trim() || article.relevanceEvidence || (article.headline ? `Uploaded specifically for: ${article.headline}` : "");
  article.rightsConfirmed = Boolean(document.getElementById("cmsRightsConfirmed")?.checked);
  article.imageRelevanceScore = Number(document.getElementById("cmsImageRelevanceScore")?.value || article.imageRelevanceScore || 0);
  article.videoTranscript = document.getElementById("cmsVideoTranscript")?.value.trim() || article.videoTranscript;
@@ -5545,15 +5675,19 @@ function createVideoPosterFile(file){
 }
 
 async function uploadCmsFileToServer(kind, file, position, config, note){
+ const headline = document.getElementById("cmsHeadline")?.value.trim() || file.name;
+ const uploader = currentCmsUser?.name || currentCmsUser?.email || "Newsroom uploader";
+ const rightsLabels = {original:"Original media supplied by the authenticated newsroom uploader",licensed:"Licensed editorial media",permission:"Media supplied with publication permission",illustration:"Newsroom editorial illustration"};
+ const rightsBasis = document.getElementById("cmsMediaRightsBasis")?.value || "";
  const form = new FormData();
  form.append("file", file);
- form.append("caption", document.getElementById("cmsMediaCaption")?.value || file.name);
- form.append("altText", document.getElementById("cmsAltText")?.value || file.name);
- form.append("source", document.getElementById("cmsMediaSource")?.value || "NewsNeta reporter upload");
- form.append("copyrightOwner", document.getElementById("cmsCopyrightOwner")?.value || "NewsNeta");
- form.append("license", document.getElementById("cmsMediaLicense")?.value || "NewsNeta editorial use");
+ form.append("caption", document.getElementById("cmsMediaCaption")?.value || headline);
+ form.append("altText", document.getElementById("cmsAltText")?.value || headline);
+ form.append("source", document.getElementById("cmsMediaSourceOverride")?.value || document.getElementById("cmsMediaSource")?.value || uploader);
+ form.append("copyrightOwner", document.getElementById("cmsCopyrightOwnerOverride")?.value || document.getElementById("cmsCopyrightOwner")?.value || uploader);
+ form.append("license", document.getElementById("cmsMediaLicenseOverride")?.value || rightsLabels[rightsBasis] || document.getElementById("cmsMediaLicense")?.value || "");
  form.append("imageType", document.getElementById("cmsImageType")?.value || "reporter_photo");
- form.append("relevanceEvidence", document.getElementById("cmsRelevanceEvidence")?.value || "");
+ form.append("relevanceEvidence", document.getElementById("cmsRelevanceEvidence")?.value || `Uploaded specifically for: ${headline}`);
  form.append("rightsConfirmed", document.getElementById("cmsRightsConfirmed")?.checked ? "true" : "false");
  const payload = await cmsApi("upload", {form});
  const media = payload.media;
@@ -5710,6 +5844,7 @@ function bindCmsUploadInputs(){
 
 function bindCmsScreen(role){
  bindCmsUploadInputs();
+ document.querySelectorAll("[data-cms-format]").forEach(button=>button.addEventListener("click",()=>formatCmsArticle(button.dataset.cmsFormat)));
  document.getElementById("cmsLoadHealth")?.addEventListener("click", async()=>{
   const output = document.getElementById("cmsHealthOutput");
   if(!output || role !== "admin") return;
@@ -5859,7 +5994,7 @@ function bindCmsScreen(role){
   const preview = document.getElementById("cmsArticlePreview");
   if(!preview) return;
   const image = article.image ? `<img src="${escapeAttr(article.image)}" alt="${escapeAttr(article.altText || article.headline)}">` : "";
-  preview.innerHTML = `${image}<span class="chip">${escapeHtml(categoryLabelForId(categoryIdForValue(article.category)))}</span><h2>${escapeHtml(article.headline || "Untitled article")}</h2><p class="cms-preview-summary">${escapeHtml(article.summary || "Summary will be generated from the article.")}</p>${String(article.body || "").split(/\n{2,}/).filter(Boolean).map(paragraph=>`<p>${escapeHtml(paragraph)}</p>`).join("")}`;
+  preview.innerHTML = `${image}<span class="chip">${escapeHtml(categoryLabelForId(categoryIdForValue(article.category)))}</span><h2>${escapeHtml(article.headline || "Untitled article")}</h2><p class="cms-preview-summary">${escapeHtml(article.summary || "Summary will be generated from the article.")}</p>${articleBodyMarkup(article.body)}`;
   preview.hidden = false;
   if(role === "admin"){
    const form = document.getElementById("storyUploadForm");
@@ -5878,6 +6013,8 @@ function bindCmsScreen(role){
    const editingPublished = role === "admin" && activeArticle.status === "published" && String(cmsEditingArticleId || "") === String(activeArticle.id);
    if(role === "admin" && submit) submit.textContent = editingPublished ? "Save & Update Published Article" : document.getElementById("cmsScheduledAt")?.value ? "Schedule" : "Publish Now";
    if(editingPublished) return;
+   const saveState = document.getElementById("cmsSaveState");
+   if(saveState) saveState.textContent = "Saving draft...";
    window.clearTimeout(cmsAutosaveTimer);
    cmsAutosaveTimer = window.setTimeout(async()=>{
     const article = updateArticleFromReporterForm(primaryCmsArticle());
@@ -5887,9 +6024,13 @@ function bindCmsScreen(role){
      saveCmsArticles();
      const note = document.getElementById("cmsWorkflowNote");
      if(note) note.textContent = `Draft autosaved at ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}.`;
+     const state = document.getElementById("cmsSaveState");
+     if(state) state.textContent = `Saved ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`;
     }catch(error){
      const note = document.getElementById("cmsWorkflowNote");
      if(note) note.textContent = `Autosave paused: ${error.message || error}`;
+     const state = document.getElementById("cmsSaveState");
+     if(state) state.textContent = "Not saved - check your connection";
     }
    },1800);
   });
@@ -5983,8 +6124,7 @@ function bindCmsScreen(role){
 
 function switchCmsScreen(screen){
  if(!currentCmsUser) return;
- document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === screen));
- document.querySelectorAll(".cms-menu-btn").forEach(button=>button.classList.toggle("active", button.dataset.cmsScreen === screen));
+ document.querySelectorAll("[data-cms-screen]").forEach(button=>button.classList.toggle("active", button.dataset.cmsScreen === screen));
  const host = document.getElementById("cmsScreenHost");
  if(host){
   host.innerHTML = cmsScreenMarkup(currentCmsUser.role, screen);
@@ -6004,54 +6144,78 @@ function cmsMetricsForRole(role){
  return [["Total Articles", cmsArticles.filter(a=>a.status !== "deleted").length],["Pending Approvals", count("reviewer_approved") + count("admin_review")],["Published", count("published")],["Scheduled", count("scheduled")]];
 }
 
+function cmsNavigationForRole(role){
+ if(role === "admin") return [["home","Overview"],["create","Create News"],["published","Published Articles"],["pending","Pending Review"],["drafts","Drafts"],["scheduled","Scheduled News"],["media","Media Library"],["users","Manage Users"],["feeds","Live Feeds"],["settings","Analytics & Settings"]];
+ if(role === "reviewer") return [["home","Review Overview"],["pending","Pending Review"],["reviewed","Reviewed History"]];
+ return [["home","Overview"],["create","Create News"],["my-articles","My Articles"],["drafts","Drafts"],["submitted","Submitted for Review"],["feedback","Review Feedback"],["published","Published Articles"],["assignments","My Assignments"]];
+}
+
+function cmsMobileNavigation(role){
+ return role === "reviewer" ? [["home","⌂","Home"],["pending","✓","Review"],["reviewed","▤","History"]] : [["home","⌂","Home"],["create","＋","Create"],[role === "admin" ? "published" : "my-articles","▤","Stories"]];
+}
+
+function closeCmsNavigation(){
+ const shell = document.querySelector(".cms-shell");
+ shell?.classList.remove("cms-nav-open");
+ document.body.classList.remove("lock");
+}
+
+function signOutCms(){
+ const dashboard = document.getElementById("roleDashboard");
+ dashboard.hidden = true;
+ currentCmsUser = null;
+ cmsSessionToken = "";
+ sessionStorage.removeItem("newsneta-cms-profile");
+ sessionStorage.removeItem("newsneta-cms-user");
+ sessionStorage.removeItem("newsneta-cms-token");
+ document.querySelector(".login-modal")?.classList.remove("authenticated");
+ document.getElementById("loginTitle").textContent = "Login";
+ renderWeather();
+ loadNews("latest", true);
+}
+
 function openRoleDashboard(role, user = currentCmsUser){
  ensureCmsSample();
  const dashboard = document.getElementById("roleDashboard");
  const content = document.getElementById("roleDashboardContent");
  const data = dashboardConfig(role);
+ const navigation = cmsNavigationForRole(role);
+ const mobileNavigation = cmsMobileNavigation(role);
+ const primaryScreen = role === "reviewer" ? "pending" : "create";
+ const primaryLabel = role === "reviewer" ? "Review Articles" : "Create News";
  dashboard.hidden = false;
  content.innerHTML = `
   <div class="cms-shell">
-   <aside class="cms-sidebar">
+   <div class="cms-sidebar-scrim" data-cms-close-menu></div>
+   <header class="cms-mobile-header"><img data-brand-logo data-brand-variant="newsroom" src="assets/brand/v1/wordmark-mobile.png" alt="NewsNeta Studio"><div><strong>NewsNeta Studio</strong><small>${escapeHtml(role)} • ${escapeHtml(user?.location?.city || "Newsroom")}</small></div><button class="icon-btn" type="button" data-cms-close-studio aria-label="Close Studio">×</button></header>
+   <aside class="cms-sidebar" id="cmsSidebar" aria-label="${escapeAttr(role)} newsroom navigation">
+     <button class="cms-sidebar-close" type="button" data-cms-close-menu aria-label="Close navigation">×</button>
      <img class="cms-sidebar-brand" data-brand-logo data-brand-variant="newsroom" src="assets/brand/v1/wordmark-mobile.png" alt="NewsNeta Studio" width="720" height="310">
      <strong>NewsNeta Studio</strong>
-    <small>${user ? `${user.name} • ${user.location.city}` : "Newsroom"} workspace</small>
-     <button class="cms-menu-btn active" type="button" data-cms-screen="create">Create Article</button>
-     <button class="cms-menu-btn" type="button" data-cms-screen="feeds">Import Live Feeds</button>
-     <button class="cms-menu-btn" type="button" data-cms-screen="media">Media Library</button>
-     <button class="cms-menu-btn" type="button" data-cms-screen="review">Review &amp; Publish</button>
+    <small>${user ? `${escapeHtml(user.name)} • ${escapeHtml(user.location.city)}` : "Newsroom"} • ${escapeHtml(role)}</small>
+    <nav class="cms-sidebar-nav">${navigation.map(([screen,label],index)=>`<button class="cms-menu-btn ${index === 0 ? "active" : ""}" type="button" data-cms-screen="${screen}">${label}</button>`).join("")}</nav>
+    <div class="cms-sidebar-footer"><button class="cms-menu-btn" type="button" data-cms-close-studio>Close Studio</button><button class="cms-menu-btn" type="button" data-cms-signout>Sign out</button></div>
    </aside>
    <div class="cms-workspace">
   <div class="dashboard-head">
    <div><h3>${data.title}</h3><p>${user ? `${user.name} • ${user.location.city} desk • ` : ""}${data.subtitle}</p></div>
    <div class="dashboard-head-actions">
-     <button class="pill-btn admin-login-btn" type="button" data-cms-screen-jump="create">${role === "admin" ? "Create News" : role === "reviewer" ? "Open Article" : "Create Article"}</button>
-     <button class="pill-btn cms-secondary-btn" type="button" data-cms-screen-jump="review">Review &amp; Publish</button>
-    <button class="pill-btn" id="dashboardLogout" type="button">Close</button>
+     <button class="pill-btn admin-login-btn" data-primary-dashboard-action type="button" data-cms-screen-jump="${primaryScreen}">${primaryLabel}</button>
+     <button class="pill-btn" type="button" data-cms-close-studio>Close</button>
    </div>
   </div>
-  <div class="dashboard-metrics">
-   ${cmsMetricsForRole(role).map(([label,value])=>`<div class="metric-card"><span>${label}</span><b>${value}</b></div>`).join("")}
-  </div>
-   <div id="cmsScreenHost">${cmsScreenMarkup(role, "create")}</div>
+   <div id="cmsScreenHost">${cmsScreenMarkup(role, "home")}</div>
    </div>
+   <nav class="cms-mobile-nav" aria-label="Studio navigation">${mobileNavigation.map(([screen,icon,label],index)=>`<button class="${index === 0 ? "active" : ""}" type="button" data-cms-screen="${screen}"><span aria-hidden="true">${icon}</span>${label}</button>`).join("")}<button type="button" data-cms-more><span aria-hidden="true">☰</span>More</button></nav>
   </div>
  `;
- document.getElementById("dashboardLogout").addEventListener("click",()=>{
-  dashboard.hidden = true;
-  currentCmsUser = null;
-  sessionStorage.removeItem("newsneta-cms-user");
-  sessionStorage.removeItem("newsneta-cms-token");
-  cmsSessionToken = "";
-  document.querySelector(".login-modal")?.classList.remove("authenticated");
-  document.getElementById("loginTitle").textContent = "Login";
-   document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "create"));
-  renderWeather();
-  loadNews("latest", true);
- });
  content.querySelectorAll("[data-cms-screen]").forEach(button=>{
-  button.addEventListener("click",()=>switchCmsScreen(button.dataset.cmsScreen));
+  button.addEventListener("click",()=>{ switchCmsScreen(button.dataset.cmsScreen); closeCmsNavigation(); });
  });
+ content.querySelectorAll("[data-cms-close-menu]").forEach(button=>button.addEventListener("click",closeCmsNavigation));
+ content.querySelectorAll("[data-cms-close-studio]").forEach(button=>button.addEventListener("click",()=>{ closeCmsNavigation(); document.getElementById("loginBackdrop").classList.remove("open"); }));
+ content.querySelectorAll("[data-cms-signout]").forEach(button=>button.addEventListener("click",signOutCms));
+ content.querySelector("[data-cms-more]")?.addEventListener("click",()=>{ content.querySelector(".cms-shell")?.classList.add("cms-nav-open"); document.body.classList.add("lock"); });
  bindCmsScreen(role);
 }
 
@@ -6061,7 +6225,11 @@ document.getElementById("loginForm").addEventListener("submit",async event=>{
  const password = document.getElementById("loginPassword").value;
  const role = document.getElementById("roleSelect").value;
  const errorBox = document.getElementById("loginError");
+ const submit = document.getElementById("loginSubmit");
+ if(submit?.disabled) return;
  try{
+  if(submit){ submit.disabled=true; submit.setAttribute("aria-busy","true"); submit.textContent="Signing in..."; }
+  if(errorBox){ errorBox.textContent=""; errorBox.classList.remove("show"); }
   const response = await fetch("/.netlify/functions/cms?action=login", {method:"POST",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password,role})});
   const payload = await response.json();
   if(!response.ok) throw new Error(payload.message || "Login failed");
@@ -6071,10 +6239,10 @@ document.getElementById("loginForm").addEventListener("submit",async event=>{
   sessionStorage.setItem("newsneta-cms-user", email);
   const profile = cmsRoleProfiles[role] || cmsRoleProfiles.reporter;
   currentCmsUser = {...payload.user,...profile};
+  sessionStorage.setItem("newsneta-cms-profile", JSON.stringify(currentCmsUser));
   await reloadCmsArticles();
   if(errorBox){ errorBox.textContent=""; errorBox.classList.remove("show"); }
   document.querySelector(".login-modal")?.classList.add("authenticated");
-  document.querySelectorAll(".cms-tab").forEach(tab=>tab.classList.toggle("active", tab.dataset.cmsScreen === "article"));
   document.getElementById("loginTitle").textContent = "Newsroom Dashboard";
   openRoleDashboard(role, currentCmsUser);
   renderWeather();
@@ -6083,9 +6251,37 @@ document.getElementById("loginForm").addEventListener("submit",async event=>{
    currentCmsUser = null;
    sessionStorage.removeItem("newsneta-cms-token");
    sessionStorage.removeItem("newsneta-cms-user");
+   sessionStorage.removeItem("newsneta-cms-profile");
   if(errorBox){ errorBox.textContent=error.message || "Login failed."; errorBox.classList.add("show"); }
+ }finally{
+  if(submit){ submit.disabled=false; submit.removeAttribute("aria-busy"); submit.textContent="Sign in"; }
  }
 });
+document.getElementById("loginPasswordToggle")?.addEventListener("click",event=>{
+ const input = document.getElementById("loginPassword");
+ const showing = input.type === "text";
+ input.type = showing ? "password" : "text";
+ event.currentTarget.textContent = showing ? "Show" : "Hide";
+ event.currentTarget.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+ event.currentTarget.setAttribute("aria-pressed", String(!showing));
+ input.focus();
+});
+
+async function restoreCmsSession(){
+ if(!cmsSessionToken) return;
+ let saved;
+ try{ saved = JSON.parse(sessionStorage.getItem("newsneta-cms-profile") || "null"); }catch(error){ saved = null; }
+ if(!saved?.role || !cmsRoleProfiles[saved.role]){ signOutCms(); return; }
+ try{
+  currentCmsUser = {...saved,...cmsRoleProfiles[saved.role]};
+  await reloadCmsArticles();
+  document.querySelector(".login-modal")?.classList.add("authenticated");
+  document.getElementById("loginTitle").textContent = "Newsroom Dashboard";
+  openRoleDashboard(saved.role,currentCmsUser);
+  document.getElementById("loginBackdrop").classList.add("open");
+ }catch(error){ signOutCms(); }
+}
+restoreCmsSession();
 document.getElementById("summarizeBtn").addEventListener("click",()=>{
  const text = document.getElementById("summaryInput").value.trim();
  const words = text ? text.split(/\s+/).slice(0,28).join(" ") : "ఈ వార్తలోని ప్రధాన అంశాలు, నేపథ్యం, ప్రజలపై ప్రభావం";
@@ -6102,6 +6298,8 @@ document.getElementById("searchInput").addEventListener("input", event=>{
  const reason = document.getElementById("preferenceReason");
  if(reason) reason.textContent = filtered.length ? `${filtered.length} matching stories found for "${event.target.value.trim()}".` : "No exact match found. Showing the latest available stories.";
  latestPage = 1;
+ latestArchiveActive = false;
+ latestArchiveTotalPages = 0;
  latestFeedItems = filtered.length ? filtered : stories;
  renderPagedFeed({
   items: latestFeedItems,
@@ -6172,7 +6370,7 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pageshow", event=>refreshMobileFreshness(Boolean(event.persisted)));
 window.addEventListener("focus", ()=>refreshMobileFreshness(false));
 window.addEventListener("online", refreshAllNews);
-window.addEventListener("popstate", ()=>applyRegionalRoute({load:true, scroll:true}));
+window.addEventListener("popstate", ()=>{ closeDistrictNavigation({closeDrawer:true}); applyRegionalRoute({load:true, scroll:true}); });
 async function disableLocalPreviewServiceWorker(){
  if(!isLocalPreview || !("serviceWorker" in navigator)) return;
  const registrations = await navigator.serviceWorker.getRegistrations();

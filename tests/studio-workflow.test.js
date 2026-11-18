@@ -6,12 +6,25 @@ const path = require("node:path");
 const root = path.join(__dirname, "..");
 const page = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
-test("NewsNeta Studio exposes four primary newsroom actions", () => {
+test("NewsNeta Studio uses one compact secure login before role navigation", () => {
   const modal = page.slice(page.indexOf('id="loginBackdrop"'), page.indexOf('id="storyBackdrop"'));
-  for (const label of ["Create Article", "Import Live Feeds", "Media Library", "Review &amp; Publish"]) {
-    assert.match(modal, new RegExp(label.replace(/[&]/g, "&")));
+  assert.match(modal, /id="loginEmail"[\s\S]*?required/);
+  assert.match(modal, /id="loginPassword"[\s\S]*?required/);
+  assert.match(modal, /id="loginPasswordToggle"/);
+  assert.match(modal, /Forgot password\?/);
+  assert.match(modal, /id="loginSubmit"/);
+  assert.equal((modal.match(/class="cms-tabs/g) || []).length, 0);
+});
+
+test("Studio restores validated sessions and exposes role-specific navigation", () => {
+  assert.match(page, /async function restoreCmsSession/);
+  assert.match(page, /await reloadCmsArticles/);
+  const navigation = page.slice(page.indexOf("function cmsNavigationForRole"), page.indexOf("function cmsMobileNavigation"));
+  for (const label of ["Create News", "Published", "Pending", "Drafts", "Media", "Users", "My Articles", "Submitted", "Feedback", "Reviewed"]) {
+    assert.match(navigation, new RegExp(label));
   }
-  assert.equal((modal.match(/<button class="cms-tab/g) || []).length, 4);
+  assert.match(page, /class="cms-mobile-nav"/);
+  assert.match(page, /safe-area-inset-bottom/);
 });
 
 test("reporter and admin share one simplified article editor", () => {
@@ -25,9 +38,11 @@ test("reporter and admin share one simplified article editor", () => {
   assert.match(editor, /Edit published article/);
   assert.match(editor, /Save & Update Published Article/);
   assert.match(editor, /cmsThumbnailUpload/);
-  assert.match(editor, /cmsThumbnailRights/);
+  assert.match(editor, /cmsRightsConfirmed/);
+  assert.match(editor, /cmsMediaRightsBasis/);
   assert.match(editor, /cmsEditNote/);
-  assert.doesNotMatch(editor, /SEO Title|Relevance Score|Reporter Location/);
+  assert.doesNotMatch(editor, />Thumbnail URL<|>Social Image URL<|Article Relevance|Why this media belongs|SEO Title|Relevance Score|Reporter Location/);
+  assert.match(editor, /Advanced Media Settings/);
 });
 
 test("admin manage queue exposes live edit, view, unpublish and delete controls", () => {

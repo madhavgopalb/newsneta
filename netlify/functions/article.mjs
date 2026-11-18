@@ -30,7 +30,14 @@ function canonicalMediaUrl(value, origin) {
 function articleParagraphs(value) {
   const paragraphs = clean(value, 100000).split(/\n{2,}/).map(item => item.trim()).filter(Boolean);
   return paragraphs.length
-    ? paragraphs.map(paragraph => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("")
+    ? paragraphs.map(paragraph => {
+      const lines = paragraph.split("\n").map(line => line.trim()).filter(Boolean);
+      const inline = line => escapeHtml(line).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      if (lines.length === 1 && /^#{1,3}\s+/.test(lines[0])) return `<h2>${inline(lines[0].replace(/^#{1,3}\s+/, ""))}</h2>`;
+      if (lines.every(line => /^[-•]\s+/.test(line))) return `<ul>${lines.map(line => `<li>${inline(line.replace(/^[-•]\s+/, ""))}</li>`).join("")}</ul>`;
+      if (lines.every(line => /^>\s?/.test(line))) return `<blockquote>${lines.map(line => inline(line.replace(/^>\s?/, ""))).join("<br>")}</blockquote>`;
+      return `<p>${lines.map(inline).join("<br>")}</p>`;
+    }).join("")
     : "<p>Details are not available for this report.</p>";
 }
 

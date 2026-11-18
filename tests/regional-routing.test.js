@@ -23,7 +23,13 @@ test("regional navigation updates history, category, pagination and scroll targe
 });
 
 test("browser back and forward reapply the regional route", () => {
-  assert.match(page, /window\.addEventListener\("popstate", \(\)=>applyRegionalRoute/);
+  assert.match(page, /window\.addEventListener\("popstate", \(\)=>\{ closeDistrictNavigation\(\{closeDrawer:true\}\); applyRegionalRoute/);
+});
+
+test("district navigation closes after selection and restores the page drawer", () => {
+  assert.match(page, /function closeDistrictNavigation\(\{closeDrawer=false\}/);
+  assert.match(page, /navigateToRegionalNews[\s\S]*?closeDistrictNavigation\(\{closeDrawer:true\}\)/);
+  assert.match(page, /body\.classList\.remove\("lock"\)/);
 });
 
 test("district selection retains canonical state routing and passes a district filter", () => {

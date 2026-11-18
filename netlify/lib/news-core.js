@@ -1021,6 +1021,42 @@ async function persistedArticles(cat, district, limit = 24, getDatabase) {
   }
 }
 
+async function persistedArchivePage(cat, district, page = 1, pageSize = 9, getDatabase) {
+  const { pool } = getDatabase();
+  const safePage = Math.max(1, Math.min(10000, Number(page) || 1));
+  const safePageSize = Math.max(1, Math.min(24, Number(pageSize) || 9));
+  const offset = (safePage - 1) * safePageSize;
+  const values = [cat];
+  let districtClause = "";
+  if (district) {
+    values.push(district);
+    districtClause = " AND lower(district)=lower($2)";
+  }
+  const count = await pool.query({
+    text: `SELECT count(*)::int AS total FROM articles WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}`,
+    values
+  });
+  const limitIndex = values.length + 1;
+  const offsetIndex = values.length + 2;
+  const result = await pool.query({
+    text: `SELECT id, title, summary, source_description, body, category, state, district, image_url,
+      thumbnail_url, social_image_url, featured_media, source_url, source_name, published_at,
+      source_published_at, updated_at, views, content_revision, content_status, image_alt, author_id,
+      full_content_review_required, full_content_review_reason FROM articles
+      WHERE status='published' AND ($1='latest' OR category=$1)${districtClause}
+      ORDER BY published_at DESC NULLS LAST, id DESC LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+    values: [...values, safePageSize, offset]
+  });
+  const total = Number(count.rows[0]?.total || 0);
+  return {
+    items: result.rows.map(persistedArticleFromRow),
+    page: safePage,
+    pageSize: safePageSize,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / safePageSize))
+  };
+}
+
 exports.handler = async function handler(event, getDatabase) {
   const params = event.queryStringParameters || {};
   const articleId = cleanText(params.article || params.id || "").slice(0, 500);
@@ -1036,6 +1072,15 @@ exports.handler = async function handler(event, getDatabase) {
   }
   const cat = normalizeCategory(params.cat || params.category || "telangana");
   const district = cleanText(params.district || "");
+  if (params.archive === "1") {
+    try {
+      const archive = await persistedArchivePage(cat, district, params.page, params.pageSize, getDatabase);
+      return json(200, { status: "ok", provider: "newsneta-archive", category: cat, district: district || null, ...archive, servedAt: new Date().toISOString() }, 0);
+    } catch (error) {
+      logEvent("NEWS_ARCHIVE_READ_FAILED", { category: cat, district: district || null, message: error.message });
+      return json(503, { status: "database-unavailable", message: "Archived news could not be loaded. Please retry." }, 0);
+    }
+  }
   const forceRefresh = Boolean(params.refresh || params.force);
   const ingestionMode = params.ingest === "1";
   const cacheKey = district ? `${cat}:${district.toLowerCase()}` : cat;
@@ -1197,4 +1242,4 @@ exports.handler = async function handler(event, getDatabase) {
   }
 };
 
-exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, commonsMediaPolicyApproved, editoriallyApprovedMedia, enrichVisiblePersistedArticles, feedAssociatedMedia, freshSorted, gnewsArticleMedia, gnewsMediaPolicyApproved, imageSearchQuery, normalizeCategory, normalizeGNewsApiKey, normalizeLicensedBody, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };
+exports._test = { approvedPersistedImage, articleImage, brandedFallbackDecision, classifyProviderContent, commonsMediaPolicyApproved, editoriallyApprovedMedia, enrichVisiblePersistedArticles, feedAssociatedMedia, freshSorted, gnewsArticleMedia, gnewsMediaPolicyApproved, imageSearchQuery, normalizeCategory, normalizeGNewsApiKey, normalizeLicensedBody, persistedArchivePage, persistedArticleFromRow, publicMediaItem, selectImage, stableImageIndex, trustedImageUrl };

@@ -864,13 +864,15 @@ html{scroll-padding-top:156px}
 .login-modal:not(.authenticated)>header{padding:14px 18px}
 .login-modal.authenticated .login-panel{display:none}
 .login-modal.authenticated>header{display:none}
-.login-modal.authenticated .login-content{display:block;background:#f4f6f8;max-height:calc(94vh - 119px);overflow:hidden}
+.login-modal.authenticated{width:min(1480px,calc(100vw - 32px));height:min(920px,calc(100dvh - 32px));max-height:none}
+.login-modal.authenticated .login-content{display:block;background:#f4f6f8;height:100%;min-height:0;max-height:none;overflow:hidden}
 .login-content{display:grid;grid-template-columns:320px 1fr;min-height:560px;background:#fff}
 .login-panel{border-right:1px solid var(--line);background:#fff}
-.role-dashboard{padding:0;background:#f4f6f8;overflow:auto}
+.role-dashboard{height:100%;min-height:0;padding:0;background:#f4f6f8;overflow:hidden}
 .role-dashboard[hidden]{display:none}
-.cms-shell{display:grid;grid-template-columns:220px minmax(0,1fr);height:calc(94vh - 119px);min-height:560px}
-.cms-sidebar{background:#202124;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
+.cms-shell{display:grid;grid-template-columns:240px minmax(0,1fr);width:100%;height:100%;min-height:0;overflow:hidden}
+.cms-shell.editor-active .dashboard-head{display:none}
+.cms-sidebar{position:sticky;top:0;height:100%;min-width:0;overflow-y:auto;overscroll-behavior:contain;background:#202124;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
 .cms-sidebar strong{display:block;font-size:16px;margin-bottom:4px}
 .cms-sidebar small{display:block;color:#b8c2d2;font-weight:800;margin-bottom:10px}
 .cms-sidebar-brand{width:100%;max-width:190px;height:auto;border-radius:4px;margin-bottom:4px}
@@ -879,7 +881,7 @@ html{scroll-padding-top:156px}
 .cms-sidebar-nav{display:grid;gap:6px}
 .cms-sidebar-footer{display:grid;gap:8px;margin-top:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
 .cms-sidebar-close,.cms-mobile-header,.cms-mobile-nav,.cms-sidebar-scrim{display:none}
-.cms-workspace{padding:16px;display:grid;gap:12px;align-content:start;overflow:auto}
+.cms-workspace{min-width:0;width:100%;height:100%;padding:16px;display:grid;gap:12px;align-content:start;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-padding-bottom:96px}
 .cms-screen{display:grid;gap:12px}
 .cms-screen-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
 .cms-screen-head strong{font-size:18px}
@@ -961,13 +963,13 @@ html{scroll-padding-top:156px}
  outline:none;
 }
 .cms-form textarea{min-height:90px;resize:vertical}
-.cms-form textarea.article-body{min-height:160px}
+.cms-form textarea.article-body{min-height:260px;overflow-y:hidden;touch-action:pan-y}
 .cms-editor-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:6px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:#f8fafc}
 .cms-editor-toolbar button{width:38px;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-weight:900;cursor:pointer}
 .cms-editor-toolbar button:focus-visible{outline:3px solid rgba(215,25,32,.2);outline-offset:1px}
 .cms-editor-toolbar+textarea.article-body{border-radius:0 0 8px 8px}
 .cms-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.cms-editor{max-width:860px;margin:0 auto;padding:20px;gap:18px}
+.cms-editor{width:100%;max-width:1180px;min-width:0;margin:0;padding:20px;gap:18px}
 .cms-editor-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:14px}
 .cms-editor-intro strong{display:block;font-size:20px;color:var(--ink)}
 .cms-editor-intro small,.field-help{display:block;color:var(--muted);font-weight:700;margin-top:4px}
@@ -1195,6 +1197,41 @@ html{scroll-padding-top:156px}
 @keyframes pulse{50%{opacity:.45;transform:scale(.9)}}
 @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
 @keyframes shortProgress{from{width:0}to{width:100%}}
+@media (max-width:1023px){
+ .modal-backdrop:has(.login-modal.authenticated){padding:0;place-items:stretch}
+ .login-modal.authenticated{width:100%;height:100dvh;max-height:none;border:0;border-radius:0}
+ .login-modal.authenticated .login-content{height:100%;min-height:0;max-height:none;overflow:hidden}
+ .role-dashboard{height:100%;min-height:0;border-top:1px solid var(--line);overflow:hidden}
+ .cms-shell{display:block;width:100%;height:100%;min-height:0;padding:58px 0 calc(66px + env(safe-area-inset-bottom));position:relative;overflow:hidden}
+ .cms-mobile-header{position:absolute;inset:0 0 auto;z-index:12;height:58px;padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid var(--line)}
+ .cms-mobile-header img{width:84px;height:40px;object-fit:contain;background:var(--brand)}
+ .cms-mobile-header div{min-width:0;flex:1}
+ .cms-mobile-header strong,.cms-mobile-header small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .cms-mobile-header small{color:var(--muted);font-size:11px;font-weight:800}
+ .cms-sidebar{display:block;position:fixed;inset:0 auto 0 0;width:min(330px,88vw);height:100dvh;padding:18px;z-index:420;overflow-y:auto;transform:translateX(-105%);transition:transform .2s ease;box-shadow:20px 0 50px rgba(15,23,42,.3)}
+ .cms-shell.cms-nav-open .cms-sidebar{transform:translateX(0)}
+ .cms-sidebar-close{display:grid;place-items:center;position:absolute;right:10px;top:10px;width:40px;height:40px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:22px}
+ .cms-sidebar-brand{max-width:150px}
+ .cms-sidebar-nav{margin-top:16px}
+ .cms-sidebar-scrim{display:block;position:fixed;inset:0;z-index:410;background:rgba(15,23,42,.48);opacity:0;visibility:hidden;transition:.2s}
+ .cms-shell.cms-nav-open .cms-sidebar-scrim{opacity:1;visibility:visible}
+ .cms-mobile-nav{position:absolute;inset:auto 0 0;z-index:12;display:grid;grid-template-columns:repeat(4,1fr);min-height:62px;padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line)}
+ .cms-mobile-nav button{border:0;background:#fff;color:var(--muted);display:grid;place-items:center;align-content:center;gap:2px;min-width:0;padding:7px 3px;font-size:11px;font-weight:900}
+ .cms-mobile-nav button span{font-size:18px;line-height:1}
+ .cms-mobile-nav button.active{color:var(--brand)}
+ .cms-workspace{height:100%;min-height:0;padding:12px 12px 28px;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scroll-padding:72px 0 132px}
+ .cms-shell.editor-active .cms-workspace{padding-top:12px}
+ .dashboard-head{align-items:center}
+ .dashboard-head-actions .pill-btn:not([data-primary-dashboard-action]){display:none}
+ .cms-form.two-column,.cms-form-grid{grid-template-columns:1fr}
+ .cms-editor{width:100%;max-width:100%;min-width:0;margin:0;padding:16px;overflow:visible}
+ .cms-editor-intro{align-items:flex-start;flex-wrap:wrap}
+ .cms-editor-toolbar{overflow-x:auto;flex-wrap:nowrap;overscroll-behavior-x:contain}
+ .cms-form-actions{display:grid;grid-template-columns:1fr;position:sticky;bottom:0;padding:10px 0 max(12px,env(safe-area-inset-bottom));margin:0;background:#fff;box-shadow:0 -10px 24px rgba(15,23,42,.08)}
+ .cms-form-actions .pill-btn{width:100%;min-width:0}
+ .cms-screen-head{align-items:flex-start;flex-wrap:wrap}
+ .dashboard-metrics,.dashboard-actions,.cms-feature-grid{grid-template-columns:1fr}
+}
 @media (max-width:980px){
  .header{grid-template-columns:auto auto;gap:10px}
  .search-wrap{grid-column:1/-1;order:3}
@@ -1352,7 +1389,7 @@ html{scroll-padding-top:156px}
  .dashboard-head-actions .pill-btn{flex:1;min-height:42px}
  .dashboard-metrics,.dashboard-actions{grid-template-columns:1fr}
  .cms-form.two-column,.cms-form-grid{grid-template-columns:1fr}
- .cms-form-actions{display:grid;grid-template-columns:1fr;position:sticky;bottom:-28px;padding:10px 0 max(12px,env(safe-area-inset-bottom));margin-inline:-4px;background:#fff;box-shadow:0 -10px 24px rgba(15,23,42,.08)}
+ .cms-form-actions{display:grid;grid-template-columns:1fr;position:sticky;bottom:0;padding:10px 0 max(12px,env(safe-area-inset-bottom));margin:0;background:#fff;box-shadow:0 -10px 24px rgba(15,23,42,.08)}
  .cms-form-actions .pill-btn{width:100%}
  .cms-workspace,.cms-editor{min-width:0;width:100%;max-width:100%;overflow-x:hidden}
  .article-inline-share{gap:8px}.article-inline-share .share-icon{width:42px;height:42px}
@@ -2788,7 +2825,7 @@ function setupHeaderNavigation(){
   if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
   else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
  });
- document.addEventListener("keydown",event=>{ if(event.key === "Escape"){ closeDistrictNavigation({closeDrawer:true}); if(backdrop?.classList.contains("open")) close(); document.getElementById("notificationPanel")?.classList.remove("open"); document.getElementById("followPanel")?.classList.remove("open"); } });
+ document.addEventListener("keydown",event=>{ if(event.key === "Escape"){ closeDistrictNavigation({closeDrawer:true}); closeCmsNavigation(); if(backdrop?.classList.contains("open")) close(); document.getElementById("notificationPanel")?.classList.remove("open"); document.getElementById("followPanel")?.classList.remove("open"); } });
  document.querySelector('[data-drawer-action="login"]')?.addEventListener("click",()=>{ close(); document.getElementById("adminLoginBtn")?.click(); });
  document.querySelector('[data-drawer-action="notifications"]')?.addEventListener("click",()=>{ close(); document.getElementById("notificationBtn")?.click(); });
 
@@ -5160,6 +5197,13 @@ function formatCmsArticle(action){
  editor.focus();
 }
 
+function resizeCmsArticleBody(){
+ const editor = document.getElementById("cmsBody");
+ if(!editor) return;
+ editor.style.height = "auto";
+ editor.style.height = `${Math.max(260,editor.scrollHeight)}px`;
+}
+
 function simplifiedArticleEditor(role, article, categoryOptions){
  const state = article.state || "Telangana";
  const selectedDistricts = state === "Andhra Pradesh" ? districts.ap : districts.telangana;
@@ -5169,7 +5213,7 @@ function simplifiedArticleEditor(role, article, categoryOptions){
  const thumbnail = article.thumbnail || article.image || "";
  const uploader = currentCmsUser?.name || currentCmsUser?.email || article.reporter || "Newsroom uploader";
  return `<form class="cms-form cms-editor" id="storyUploadForm" novalidate>
-  <div class="cms-editor-intro"><div><strong>${editingPublished ? "Edit published article" : isAdmin ? "Create and publish" : "Create article"}</strong><small>${editingPublished ? "Update the live story without changing its ID, URL or original publication time." : isAdmin ? "Validate and publish immediately, or schedule for later." : "Write the report, attach media, and send it for editorial review."}</small></div><span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></div>
+  <div class="cms-editor-intro"><div><strong>${editingPublished ? "Edit Published News" : "Create News"}</strong><small>${editingPublished ? "Update the live story while preserving its URL and revision history." : isAdmin ? "Write, validate and publish a complete newsroom article." : "Write the report, attach media and submit it for editorial review."}</small></div><span class="status-pill ${escapeAttr(article.status)}">${articleStatusLabel(article.status)}</span></div>
   <label>News Headline *<textarea id="cmsHeadline" required maxlength="500" placeholder="తెలుగులో వార్త శీర్షిక రాయండి...">${escapeHtml(article.headline || "")}</textarea></label>
   <label>Full News Description *<div class="cms-editor-toolbar" role="toolbar" aria-label="Article formatting"><button type="button" data-cms-format="bold" title="Bold">B</button><button type="button" data-cms-format="heading" title="Heading">H2</button><button type="button" data-cms-format="quote" title="Quote">“</button><button type="button" data-cms-format="list" title="Bulleted list">•</button></div><textarea id="cmsBody" class="article-body" required placeholder="పూర్తి వార్తను పేరాగ్రాఫ్‌లతో రాయండి...">${escapeHtml(article.body || "")}</textarea><small class="field-help">Use blank lines for paragraphs. Formatting works with Telugu, English and Hindi text.</small></label>
   <div class="cms-form-grid">
@@ -5844,6 +5888,8 @@ function bindCmsUploadInputs(){
 
 function bindCmsScreen(role){
  bindCmsUploadInputs();
+ resizeCmsArticleBody();
+ document.getElementById("cmsBody")?.addEventListener("input",resizeCmsArticleBody);
  document.querySelectorAll("[data-cms-format]").forEach(button=>button.addEventListener("click",()=>formatCmsArticle(button.dataset.cmsFormat)));
  document.getElementById("cmsLoadHealth")?.addEventListener("click", async()=>{
   const output = document.getElementById("cmsHealthOutput");
@@ -6125,11 +6171,14 @@ function bindCmsScreen(role){
 function switchCmsScreen(screen){
  if(!currentCmsUser) return;
  document.querySelectorAll("[data-cms-screen]").forEach(button=>button.classList.toggle("active", button.dataset.cmsScreen === screen));
+ const shell = document.querySelector(".cms-shell");
+ shell?.classList.toggle("editor-active",screen === "create");
  const host = document.getElementById("cmsScreenHost");
  if(host){
   host.innerHTML = cmsScreenMarkup(currentCmsUser.role, screen);
   bindCmsScreen(currentCmsUser.role);
  }
+ document.querySelector(".cms-workspace")?.scrollTo({top:0,behavior:"auto"});
 }
 
 function cmsMetricsForRole(role){
@@ -6159,6 +6208,9 @@ function closeCmsNavigation(){
  shell?.classList.remove("cms-nav-open");
  document.body.classList.remove("lock");
 }
+
+const cmsDesktopMedia = window.matchMedia("(min-width:1024px)");
+cmsDesktopMedia.addEventListener?.("change",event=>{ if(event.matches) closeCmsNavigation(); });
 
 function signOutCms(){
  const dashboard = document.getElementById("roleDashboard");

@@ -870,9 +870,10 @@ html{scroll-padding-top:156px}
 .login-panel{border-right:1px solid var(--line);background:#fff}
 .role-dashboard{height:100%;min-height:0;padding:0;background:#f4f6f8;overflow:hidden}
 .role-dashboard[hidden]{display:none}
-.cms-shell{display:grid;grid-template-columns:240px minmax(0,1fr);width:100%;height:100%;min-height:0;overflow:hidden}
+#roleDashboardContent{width:100%;height:100%;min-width:0;min-height:0;overflow:hidden}
+.cms-shell{display:grid;grid-template-columns:240px minmax(0,1fr);grid-template-rows:minmax(0,1fr);width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box}
 .cms-shell.editor-active .dashboard-head{display:none}
-.cms-sidebar{position:sticky;top:0;height:100%;min-width:0;overflow-y:auto;overscroll-behavior:contain;background:#202124;color:#fff;padding:14px;display:grid;align-content:start;gap:10px}
+.cms-sidebar{grid-column:1;grid-row:1;position:sticky;top:0;width:240px;height:100%;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;background:#202124;color:#fff;padding:14px;display:grid;align-content:start;gap:10px;box-sizing:border-box}
 .cms-sidebar strong{display:block;font-size:16px;margin-bottom:4px}
 .cms-sidebar small{display:block;color:#b8c2d2;font-weight:800;margin-bottom:10px}
 .cms-sidebar-brand{width:100%;max-width:190px;height:auto;border-radius:4px;margin-bottom:4px}
@@ -881,7 +882,7 @@ html{scroll-padding-top:156px}
 .cms-sidebar-nav{display:grid;gap:6px}
 .cms-sidebar-footer{display:grid;gap:8px;margin-top:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
 .cms-sidebar-close,.cms-mobile-header,.cms-mobile-nav,.cms-sidebar-scrim{display:none}
-.cms-workspace{min-width:0;width:100%;height:100%;padding:16px;display:grid;gap:12px;align-content:start;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-padding-bottom:96px}
+.cms-workspace{grid-column:2;grid-row:1;min-width:0;min-height:0;width:100%;height:100%;padding:16px;display:grid;gap:12px;align-content:start;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-padding-bottom:96px;box-sizing:border-box}
 .cms-screen{display:grid;gap:12px}
 .cms-screen-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
 .cms-screen-head strong{font-size:18px}
@@ -1069,6 +1070,7 @@ html{scroll-padding-top:156px}
 .article-content-full p{font-size:17px;line-height:1.85;color:var(--ink)}
 .article-content-brief{padding:18px;border-left:4px solid var(--accent);background:var(--soft);border-radius:4px}
 .article-content-brief h3{margin-top:0}
+.article-content-brief .brief-empty{color:var(--muted)}
 .article-detail-state{display:grid;place-items:center;gap:12px;min-height:220px;padding:32px;text-align:center;color:var(--muted)}
 .article-loading-brand{width:min(220px,70vw);height:auto;border-radius:4px;box-shadow:0 8px 28px rgba(15,23,42,.12)}
 .article-detail-spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:article-spin .8s linear infinite}
@@ -1125,7 +1127,7 @@ html{scroll-padding-top:156px}
 .newsline-card small{color:var(--muted);font-weight:900;text-transform:uppercase;font-family:Inter,sans-serif}
 .newsline-card strong{font-size:17px;line-height:1.25}
 .newsline-card span{color:var(--brand);font-weight:900}
-.login-modal header{
+.login-modal>header{
  display:flex;
  justify-content:space-between;
  align-items:center;
@@ -1134,9 +1136,9 @@ html{scroll-padding-top:156px}
  background:var(--brand);
  color:#fff;
 }
-.login-modal header strong{font-size:25px;line-height:1.1}
-.login-modal header .summary{color:rgba(255,255,255,.86) !important;font-weight:800}
-.login-modal header .icon-btn{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.22);color:#fff}
+.login-modal>header strong{font-size:25px;line-height:1.1}
+.login-modal>header .summary{color:rgba(255,255,255,.86) !important;font-weight:800}
+.login-modal>header .icon-btn{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.22);color:#fff}
 .cms-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);background:#fff}
 .cms-tab{min-height:44px;border:0;border-bottom:2px solid transparent;background:#fff;color:var(--muted);font-weight:900;cursor:pointer}
 .cms-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
@@ -1197,6 +1199,12 @@ html{scroll-padding-top:156px}
 @keyframes pulse{50%{opacity:.45;transform:scale(.9)}}
 @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
 @keyframes shortProgress{from{width:0}to{width:100%}}
+@media (min-width:1024px){
+ .login-modal.authenticated .cms-shell{display:grid;grid-template-columns:240px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .login-modal.authenticated .cms-sidebar{grid-column:1;grid-row:1}
+ .login-modal.authenticated .cms-workspace{grid-column:2;grid-row:1}
+ .login-modal.authenticated .cms-mobile-header,.login-modal.authenticated .cms-mobile-nav,.login-modal.authenticated .cms-sidebar-scrim,.login-modal.authenticated .cms-sidebar-close{display:none}
+}
 @media (max-width:1023px){
  .modal-backdrop:has(.login-modal.authenticated){padding:0;place-items:stretch}
  .login-modal.authenticated{width:100%;height:100dvh;max-height:none;border:0;border-radius:0}
@@ -1363,7 +1371,7 @@ html{scroll-padding-top:156px}
  .login-modal.authenticated{height:100dvh;max-height:none;border:0;border-radius:0}
  .login-brand-lockup{gap:10px}
  .login-brand-logo{width:108px}
- .login-modal header strong{font-size:20px}
+ .login-modal>header strong{font-size:20px}
  .login-modal.authenticated .login-content{height:100%;max-height:none;overflow:hidden}
  .login-panel{border-right:0}
  .role-dashboard{border-top:1px solid var(--line)}
@@ -2875,7 +2883,19 @@ function isGenericStoryDescription(value, title = ""){
 
 function storyDescription(story){
  const candidates = [story?.sourceDescription,story?.description,story?.summary,story?.aiSummary,story?.contentSnippet,story?.excerpt];
- return candidates.map(cleanText).find(value=>!isGenericStoryDescription(value,story?.title)) || "";
+ return candidates.map(preserveDescription).find(value=>!isGenericStoryDescription(value,story?.title)) || "";
+}
+
+function preserveDescription(value){
+ const container = document.createElement("div");
+ container.innerHTML = String(value || "").replace(/<(?:br\s*\/?>|\/p|\/div|\/li|\/h[1-6])>/gi,"\n");
+ return String(container.textContent || "")
+  .replace(/\r\n?/g,"\n")
+  .split(/\n+/)
+  .map(line=>line.replace(/[ \t]+/g," ").trim())
+  .filter(Boolean)
+  .join("\n\n")
+  .trim();
 }
 
 function heroStorySummary(story){
@@ -4286,19 +4306,22 @@ function buildExpandedArticle(story){
  const status = story.contentStatus || "brief";
  const isFullArticle = status === "newsroom_full_text" || status === "licensed_full_text";
  const fullBody = story.fullArticle || (isFullArticle ? story.body : "");
- const availableDescription = String(story.sourceDescription || story.description || story.summary || story.aiSummary || "").trim();
+ const availableDescription = storyDescription(story);
  if(isFullArticle && cleanText(fullBody)){
   return `<div class="article-content article-content-full" data-content-status="${escapeAttr(status)}">${articleBodyMarkup(fullBody)}</div>`;
  }
- const labels = currentLanguage === "te"
-  ? { title:"వార్తా సంక్షిప్తం", unavailable:"ఈ వార్తకు పూర్తి కథనం ప్రస్తుతం అందుబాటులో లేదు.", original:"అసలు నివేదిక చదవండి" }
+  const labels = currentLanguage === "te"
+   ? { title:"వార్తా సంక్షిప్తం", unavailable:"ప్రచురణకర్త నుంచి వివరణ అందుబాటులో లేదు.", original:"అసలు నివేదిక చదవండి" }
   : currentLanguage === "hi"
-   ? { title:"समाचार संक्षेप", unavailable:"इस समाचार का पूरा लेख अभी उपलब्ध नहीं है.", original:"मूल रिपोर्ट पढ़ें" }
-   : { title:"News Brief", unavailable:"The full article is not currently available for this feed item.", original:"Read original report" };
+    ? { title:"समाचार संक्षेप", unavailable:"प्रकाशक से विवरण उपलब्ध नहीं है.", original:"मूल रिपोर्ट पढ़ें" }
+    : { title:"News Brief", unavailable:"Details are not available from the publisher.", original:"Read original report" };
  const sourceLink = story.sourceUrl
   ? `<p class="article-source-link"><a href="${escapeAttr(story.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.original)} →</a></p>`
   : "";
- return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3>${availableDescription ? articleBodyMarkup(availableDescription) : `<p>${escapeHtml(labels.unavailable)}</p>`}${sourceLink}</div>`;
+ const descriptionMarkup = availableDescription
+  ? articleBodyMarkup(availableDescription)
+  : `<p class="brief-empty">${escapeHtml(labels.unavailable)}</p>`;
+ return `<div class="article-content article-content-brief" data-content-status="brief"><h3>${escapeHtml(labels.title)}</h3>${descriptionMarkup}${sourceLink}</div>`;
 }
 
 function storyMediaGallery(story){
@@ -4559,7 +4582,9 @@ function setStoryModalMedia(story){
  const caption = document.getElementById("storyModalImageCaption");
  if(!image) return;
  const url = extractSourceImage(story);
- const media = (Array.isArray(story.media) ? story.media[0] : story.media) || story.featuredMedia || story.mediaDecision || {};
+ const mediaItems = Array.isArray(story.media) ? story.media : [story.media].filter(Boolean);
+ const matchingMedia = mediaItems.find(item=>[item?.public_url,item?.publicUrl,item?.url].filter(Boolean).includes(url));
+ const media = matchingMedia || story.featuredMedia || story.mediaDecision || mediaItems[0] || {};
  const imageType = String(media.imageType || media.image_type || "").toLowerCase();
  const label = story.imageLabel || media.label || (imageType === "illustration" ? "ILLUSTRATION" : imageType === "archive" ? "FILE PHOTO" : "");
  const captionText = media.caption || media.altText || media.alt_text || "";

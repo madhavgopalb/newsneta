@@ -47,9 +47,16 @@ test("reporter and admin share one simplified article editor", () => {
 });
 
 test("Studio uses a non-overlapping desktop grid and a drawer below 1024px", () => {
-  assert.match(page, /\.cms-shell\{display:grid;grid-template-columns:240px minmax\(0,1fr\);width:100%;height:100%;min-height:0;overflow:hidden\}/);
-  assert.match(page, /\.cms-sidebar\{position:sticky;top:0;height:100%;min-width:0;overflow-y:auto/);
-  assert.match(page, /\.cms-workspace\{min-width:0;width:100%;height:100%[\s\S]*?overflow-y:auto;overflow-x:hidden/);
+  assert.doesNotMatch(page, /\.login-modal header\{/);
+  assert.match(page, /\.login-modal>header\{/);
+  assert.match(page, /#roleDashboardContent\{width:100%;height:100%;min-width:0;min-height:0;overflow:hidden\}/);
+  assert.match(page, /\.cms-shell\{display:grid;grid-template-columns:240px minmax\(0,1fr\);grid-template-rows:minmax\(0,1fr\)[\s\S]*?height:100%;min-width:0;min-height:0;overflow:hidden/);
+  assert.match(page, /\.cms-sidebar\{grid-column:1;grid-row:1;position:sticky;top:0;width:240px;height:100%;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden/);
+  assert.match(page, /\.cms-workspace\{grid-column:2;grid-row:1;min-width:0;min-height:0;width:100%;height:100%[\s\S]*?overflow-y:auto;overflow-x:hidden/);
+  const desktop = page.slice(page.indexOf("@media (min-width:1024px)"), page.indexOf("@media (max-width:1023px)"));
+  assert.match(desktop, /\.login-modal\.authenticated \.cms-sidebar\{grid-column:1;grid-row:1\}/);
+  assert.match(desktop, /\.login-modal\.authenticated \.cms-workspace\{grid-column:2;grid-row:1\}/);
+  assert.match(desktop, /\.login-modal\.authenticated \.cms-mobile-header[\s\S]*?\{display:none\}/);
   const responsive = page.slice(page.indexOf("@media (max-width:1023px)"), page.indexOf("@media (max-width:980px)"));
   assert.match(responsive, /\.cms-sidebar\{display:block;position:fixed/);
   assert.match(responsive, /transform:translateX\(-105%\)/);

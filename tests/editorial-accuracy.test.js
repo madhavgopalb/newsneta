@@ -124,8 +124,10 @@ test("paragraph-form source descriptions remain separate from card summaries", (
 
 test("browser detail uses source description paragraphs and requires explicit media approval", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(source, /story\.sourceDescription \|\| story\.description/);
-  assert.match(source, /availableDescription \? articleBodyMarkup\(availableDescription\)/);
+  assert.match(source, /\[story\?\.sourceDescription,story\?\.description,story\?\.summary/);
+  assert.match(source, /candidates\.map\(preserveDescription\)/);
+  assert.match(source, /const descriptionMarkup = availableDescription/);
+  assert.match(source, /articleBodyMarkup\(availableDescription\)/);
   assert.match(source, /decisionApproval === "approved"/);
   assert.match(source, /decisionEvidence\.humanConfirmed === true/);
   assert.doesNotMatch(source, /Boolean\(decision\?\.license/);

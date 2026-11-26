@@ -3108,13 +3108,14 @@ function extractSourceImage(item){
  const decisionType = String(decision?.imageType || decision?.image_type || "").toLowerCase();
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
  const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
+ const decisionMediaUrl = decision?.public_url || decision?.publicUrl || decision?.url || decision?.thumbnailUrl || decision?.thumbnail_url;
  const decisionApproval = String(decision?.approvalStatus || decision?.approval_status || decision?.status || "").toLowerCase();
  const decisionRights = decision?.rightsConfirmed === true || decision?.rights_confirmed === true;
  const decisionEvidence = decision?.relevanceEvidence || decision?.relevance_evidence || {};
- const hasApprovedCmsMedia = Boolean(primaryMediaUrl && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && ["cms_approved","cms_upload","uploaded","event_photo","archive","illustration"].includes(decisionType));
+ const hasApprovedAssociatedMedia = Boolean((primaryMediaUrl || decisionMediaUrl) && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && ["cms_approved","cms_upload","uploaded","event_photo","archive","illustration"].includes(decisionType));
  const articleAssociated = ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","archive","illustration"].includes(decisionType);
  const approvedDecision = decision && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
- if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
+ if(decision && !approvedDecision && !hasApprovedAssociatedMedia) return null;
  const candidates = [
   item.featuredImage,
   item.image,
@@ -3123,6 +3124,7 @@ function extractSourceImage(item){
   item.thumbnailUrl,
   item.heroImage,
   primaryMediaUrl,
+  decisionMediaUrl,
   item.enclosure?.url,
   item.enclosure?.link,
   item.media?.content?.url,
@@ -3130,7 +3132,7 @@ function extractSourceImage(item){
  ].filter(Boolean).map(absoluteMediaUrl);
  return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url)
   && !/avatar|icon|sprite|1x1|pixel|newsneta-logo|branded_fallback/i.test(url)
-  && (hasApprovedCmsMedia || decision || !/wikimedia|unsplash/i.test(url))) || null;
+  && (hasApprovedAssociatedMedia || approvedDecision || !/wikimedia|unsplash/i.test(url))) || null;
 }
 
 function chooseRelevantImage(story,index=0){
@@ -3155,7 +3157,7 @@ function storyImageMarkup(story, {alt = story?.title || "", loading = "lazy"} = 
  const cardStory = thumbnail ? {...story,image:thumbnail,imageUrl:thumbnail} : story;
  const url = extractSourceImage(cardStory || {});
  if(!url) return "";
- return `<img loading="${loading}" src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" onerror="imageFallback(event)">`;
+ return `<img loading="${loading}" decoding="async" src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" onerror="imageFallback(event)">`;
 }
 
 function stableStoryIdentity(story = {}){

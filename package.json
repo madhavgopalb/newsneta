@@ -2,8 +2,9 @@
   "name": "newsneta",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "patch-package",
     "dev": "netlify dev",
-    "check": "node --check netlify/lib/news-core.js && node --check netlify/functions/news.mjs && node --check netlify/functions/article.mjs && node --check netlify/functions/image.mjs && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/refresh-news.mjs && node --check netlify/functions/news-health.mjs && node --check netlify/lib/cms-auth.js && node --check netlify/functions/cms.mjs && node --check netlify/functions/media.mjs",
+    "check": "node --check netlify/lib/news-core.js && node --check netlify/functions/news.mjs && node --check netlify/functions/article.mjs && node --check netlify/functions/image.mjs && node --check netlify/lib/ingest-news-core.js && node --check netlify/functions/ingest-news.mjs && node --check netlify/functions/refresh-news.mjs && node --check netlify/functions/news-health.mjs && node --check netlify/lib/cms-auth.js && node --check netlify/functions/cms.mjs && node --check netlify/functions/media.mjs && node --check netlify/lib/edition-core.mjs && node --check netlify/lib/edition-distribution.mjs && node --check netlify/functions/editions.mjs && node --check netlify/functions/edition-reader.mjs && node --check netlify/functions/edition-distribute.mjs && node --check netlify/functions/send-editions.mjs && node --check netlify/functions/generate-edition.mjs",
     "check:playstore": "node scripts/verify-playstore-readiness.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",
@@ -13,10 +14,13 @@
     "@netlify/blobs": "^11.1.4",
     "@netlify/database": "^2.0.1",
     "drizzle-orm": "^1.0.0-beta.22",
+    "fontkit": "2.0.4",
     "hls.js": "^1.5.17",
+    "pdfkit": "^0.17.2",
     "rss-parser": "^3.13.0"
   },
   "devDependencies": {
-    "drizzle-kit": "^1.0.0-beta.22"
+    "drizzle-kit": "^1.0.0-beta.22",
+    "patch-package": "^8.0.0"
   }
 }

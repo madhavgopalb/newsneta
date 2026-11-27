@@ -15,6 +15,12 @@
   force = true
 
 [[redirects]]
+  from = "/epaper/*"
+  to = "/.netlify/functions/edition-reader?id=:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/telangana"
   to = "/index.html"
   status = 200
@@ -65,4 +71,14 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 [functions."ingest-news"]
+  schedule = "*/5 * * * *"
+
+[functions."generate-edition"]
+  schedule = "30 0 * * *"
+  included_files = ["assets/fonts/*.ttf"]
+
+[functions."editions"]
+  included_files = ["assets/fonts/*.ttf"]
+
+[functions."send-editions"]
   schedule = "*/5 * * * *"

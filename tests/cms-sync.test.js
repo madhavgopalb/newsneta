@@ -72,12 +72,15 @@ test("approved CMS uploads remain visible in local preview and production", () =
 
 test("CMS login accepts articles without optional media", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const backend = fs.readFileSync(path.join(__dirname, "..", "netlify", "functions", "cms.mjs"), "utf8");
   const start = source.indexOf("function cmsArticleDefaults");
   const defaults = source.slice(start, source.indexOf("cmsArticles = cmsArticles.map(cmsArticleDefaults)", start));
   assert.match(defaults, /imageUrl \? \[\{/);
   assert.match(defaults, /\}\] : \[\]\)/);
   assert.match(defaults, /media:normalizedMedia/);
   assert.doesNotMatch(defaults, /imageUrl\.match/);
+  assert.match(backend, /featured \? JSON\.stringify\(\[featured\]\) : "\[\]"/);
+  assert.match(backend, /featured \? JSON\.stringify\(featured\) : "\{\}"/);
 });
 
 test("failed CMS initialization clears partial login state", () => {

@@ -4,6 +4,8 @@
 # Dependencies and generated files
 node_modules/
 npm-debug.log*
+output/
+tmp/
 
 # Local secrets
 .env

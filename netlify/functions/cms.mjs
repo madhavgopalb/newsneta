@@ -179,7 +179,7 @@ async function saveArticle(pool, user, data) {
   const values = [headline, clean(data.englishTitle, 500) || null, clean(data.summary, 4000) || summaryFromBody(body), body,
     category, clean(data.state, 80) || null, clean(data.district, 120) || null,
     media?.mime_type?.startsWith("video/") ? (clean(data.posterUrl, 2000) || null) : (media?.public_url || null), media?.alt_text || clean(data.altText, 500) || null,
-    featured ? JSON.stringify([featured]) : null, featured ? JSON.stringify(featured) : null,
+    featured ? JSON.stringify([featured]) : "[]", featured ? JSON.stringify(featured) : "{}",
     JSON.stringify(Array.isArray(data.tags) ? data.tags.map(tag => clean(tag, 80)).filter(Boolean) : clean(data.tags, 500).split(",").map(tag => tag.trim()).filter(Boolean)),
     Boolean(data.breaking), Boolean(data.topStory)];
   const result = current ? await pool.query({

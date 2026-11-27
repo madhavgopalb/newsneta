@@ -211,3 +211,11 @@ test("visible persisted stories receive only approved article-specific media", a
   assert.equal(enriched[1].image, null);
   assert.equal(enriched[1].featuredMedia, undefined);
 });
+
+test("browser normalization keeps approved associated media renderable", () => {
+  const source = require("node:fs").readFileSync(path.join(root, "index.html"), "utf8");
+  assert.match(source, /const decisionMediaUrl = decision\?\.public_url \|\| decision\?\.publicUrl \|\| decision\?\.url/);
+  assert.match(source, /\(primaryMediaUrl \|\| decisionMediaUrl\).*decisionApproval === "approved"/);
+  assert.match(source, /primaryMediaUrl,\s+decisionMediaUrl,/);
+  assert.doesNotMatch(source, /if\(decision && !approvedDecision && !hasApprovedCmsMedia\)/);
+});

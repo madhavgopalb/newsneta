@@ -464,6 +464,13 @@ html{scroll-padding-top:156px}
 .edition-lead h3{margin:4px 0 8px;font-size:24px;line-height:1.2}
 .edition-list{display:grid;gap:10px}
 .edition-list .reader-row{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
+.epaper-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.epaper-actions select{height:38px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:0 30px 0 12px;font-weight:800}
+.edition-public-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px;color:var(--muted);font:800 12px/1.4 Inter,sans-serif}
+.edition-studio-list{display:grid;gap:10px;margin-top:16px}
+.edition-studio-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.edition-studio-item textarea{min-height:76px;margin-top:8px}
+.edition-order-actions{display:grid;gap:6px}.edition-order-actions button{width:38px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:6px;font-weight:900}
 .live-timeline{display:grid;gap:10px}
 .timeline-item{display:grid;grid-template-columns:62px 1fr;gap:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:10px}
 .timeline-item time{font:900 12px/1 Inter,sans-serif;color:var(--brand)}
@@ -1734,7 +1741,11 @@ body{background:var(--bg)}
   <section class="section newsroom-desk" id="todaysEditionFull" style="order:5">
    <div class="section-title">
     <h2 id="todayFullTitle">Today's Edition</h2>
-    <div class="reader-tools">
+    <div class="reader-tools epaper-actions">
+     <select id="editionArchiveSelect" aria-label="Previous editions" hidden></select>
+     <button class="quick-pill" type="button" id="editionReadOnline" hidden>Read Online</button>
+     <a class="quick-pill" id="editionDownload" href="#" hidden>Download PDF</a>
+     <button class="quick-pill" type="button" id="editionShare" hidden>Share on WhatsApp</button>
      <button class="quick-pill live" type="button" id="editionRefreshNow">Refresh edition</button>
      <button class="quick-pill" type="button" id="editionBriefListen">Listen brief</button>
     </div>
@@ -2124,6 +2135,24 @@ async function cmsApi(action, {method="POST", body=null, form=null, headers={}} 
  });
  const payload = await response.json();
  if(!response.ok) throw new Error(payload.message || `CMS API ${response.status}`);
+ return payload;
+}
+
+async function editionApi(action="list", {method="GET", body=null, id=""} = {}){
+ const query = new URLSearchParams({action});
+ if(id) query.set("id", id);
+ const response = await fetch(`/.netlify/functions/editions?${query}`, {
+  method,cache:"no-store",headers:{...cmsHeaders(),...(body ? {"Content-Type":"application/json"} : {})},body:body ? JSON.stringify(body) : null
+ });
+ const payload = await response.json();
+ if(!response.ok) throw new Error(payload.message || `Edition API ${response.status}`);
+ return payload;
+}
+
+async function editionDistributionApi({method="GET", body=null} = {}){
+ const response = await fetch("/.netlify/functions/edition-distribute", {method,cache:"no-store",headers:{...cmsHeaders(),...(body ? {"Content-Type":"application/json"} : {})},body:body ? JSON.stringify(body) : null});
+ const payload = await response.json();
+ if(!response.ok) throw new Error(payload.message || `Edition delivery API ${response.status}`);
  return payload;
 }
 
@@ -3108,13 +3137,14 @@ function extractSourceImage(item){
  const decisionType = String(decision?.imageType || decision?.image_type || "").toLowerCase();
  const decisionScore = Number(decision?.relevanceScore ?? item.imageRelevanceScore ?? 0);
  const primaryMediaUrl = primaryMedia?.public_url || primaryMedia?.publicUrl || primaryMedia?.url;
+ const decisionMediaUrl = decision?.public_url || decision?.publicUrl || decision?.url || decision?.thumbnailUrl || decision?.thumbnail_url;
  const decisionApproval = String(decision?.approvalStatus || decision?.approval_status || decision?.status || "").toLowerCase();
  const decisionRights = decision?.rightsConfirmed === true || decision?.rights_confirmed === true;
  const decisionEvidence = decision?.relevanceEvidence || decision?.relevance_evidence || {};
- const hasApprovedCmsMedia = Boolean(primaryMediaUrl && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && ["cms_approved","cms_upload","uploaded","event_photo","archive","illustration"].includes(decisionType));
+ const hasApprovedAssociatedMedia = Boolean((primaryMediaUrl || decisionMediaUrl) && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && ["cms_approved","cms_upload","uploaded","event_photo","archive","illustration"].includes(decisionType));
  const articleAssociated = ["event_candidate","event_photo","uploaded","cms_upload","cms_approved","archive","illustration"].includes(decisionType);
  const approvedDecision = decision && decisionApproval === "approved" && decisionRights && decisionEvidence.humanConfirmed === true && decision.requiresReview !== true && decisionScore >= 80 && articleAssociated;
- if(decision && !approvedDecision && !hasApprovedCmsMedia) return null;
+ if(decision && !approvedDecision && !hasApprovedAssociatedMedia) return null;
  const candidates = [
   item.featuredImage,
   item.image,
@@ -3123,6 +3153,7 @@ function extractSourceImage(item){
   item.thumbnailUrl,
   item.heroImage,
   primaryMediaUrl,
+  decisionMediaUrl,
   item.enclosure?.url,
   item.enclosure?.link,
   item.media?.content?.url,
@@ -3130,7 +3161,7 @@ function extractSourceImage(item){
  ].filter(Boolean).map(absoluteMediaUrl);
  return candidates.find(url=>/^(https?:\/\/|blob:|data:)/i.test(url)
   && !/avatar|icon|sprite|1x1|pixel|newsneta-logo|branded_fallback/i.test(url)
-  && (hasApprovedCmsMedia || decision || !/wikimedia|unsplash/i.test(url))) || null;
+  && (hasApprovedAssociatedMedia || approvedDecision || !/wikimedia|unsplash/i.test(url))) || null;
 }
 
 function chooseRelevantImage(story,index=0){
@@ -3155,7 +3186,7 @@ function storyImageMarkup(story, {alt = story?.title || "", loading = "lazy"} = 
  const cardStory = thumbnail ? {...story,image:thumbnail,imageUrl:thumbnail} : story;
  const url = extractSourceImage(cardStory || {});
  if(!url) return "";
- return `<img loading="${loading}" src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" onerror="imageFallback(event)">`;
+ return `<img loading="${loading}" decoding="async" src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" onerror="imageFallback(event)">`;
 }
 
 function stableStoryIdentity(story = {}){
@@ -3331,12 +3362,72 @@ function editionItems(){
  return all.filter(story=>String(story.category || "").toLowerCase().includes(activeEditionTopic.toLowerCase())).concat(all).slice(0,9);
 }
 
+let publishedEditions = [];
+let activePublishedEdition = null;
+let editionLoadPromise = null;
+
+function editionPublicUrl(edition = activePublishedEdition){
+ return edition ? new URL(`/epaper/${encodeURIComponent(edition.id)}`, location.origin).href : location.href;
+}
+
+function bindPublishedEditionActions(){
+ const download = document.getElementById("editionDownload");
+ const share = document.getElementById("editionShare");
+ const read = document.getElementById("editionReadOnline");
+ const archive = document.getElementById("editionArchiveSelect");
+ const available = Boolean(activePublishedEdition);
+ [download,share,read,archive].forEach(control=>{ if(control) control.hidden = !available; });
+ if(!available) return;
+ download.href = `/.netlify/functions/editions?action=pdf&id=${encodeURIComponent(activePublishedEdition.id)}`;
+ download.download = `newsneta-daily-${activePublishedEdition.edition_date}.pdf`;
+ archive.innerHTML = publishedEditions.map(item=>`<option value="${escapeAttr(item.id)}" ${item.id === activePublishedEdition.id ? "selected" : ""}>${escapeHtml(item.edition_date)} • ${escapeHtml(item.edition_scope)}</option>`).join("");
+}
+
+function renderPublishedEdition(edition){
+ activePublishedEdition = edition;
+ const leadHost = document.getElementById("editionLead");
+ const listHost = document.getElementById("editionList");
+ const timelineHost = document.getElementById("editionTimeline");
+ const topicHost = document.getElementById("forYouTopics");
+ if(!leadHost || !listHost || !timelineHost || !topicHost || !edition?.items?.length) return;
+ const [lead,...rest] = edition.items;
+ topicHost.innerHTML = `<div class="edition-public-meta"><span class="chip">NewsNeta Daily</span><span>${escapeHtml(edition.edition_date)}</span><span>${escapeHtml(edition.edition_scope)}</span><span>${edition.page_count} pages</span></div>`;
+ const leadUrl = `/news/${encodeURIComponent(lead.article_slug)}`;
+ leadHost.innerHTML = `<article class="edition-lead">${lead.image_url ? `<img loading="eager" decoding="async" src="${escapeAttr(lead.image_url)}" alt="${escapeAttr(lead.headline)}" onerror="imageFallback(event)">` : ""}<div><span class="tag">${escapeHtml(lead.section)}</span><h3>${escapeHtml(lead.headline)}</h3><p class="summary">${escapeHtml(lead.summary)}</p><a class="pill-btn admin-login-btn" href="${escapeAttr(leadUrl)}">Read full story</a></div></article>`;
+ listHost.innerHTML = rest.slice(0,8).map(item=>`<a class="reader-row" href="/news/${encodeURIComponent(item.article_slug)}">${item.image_url ? `<img loading="lazy" decoding="async" src="${escapeAttr(item.image_url)}" alt="" onerror="imageFallback(event)">` : ""}<h3>${escapeHtml(item.headline)}</h3><small>${escapeHtml(item.section)}</small></a>`).join("");
+ timelineHost.innerHTML = edition.items.slice(0,6).map((item,index)=>`<div class="timeline-item"><time>${index ? `0${index + 1}` : "LEAD"}</time><strong>${escapeHtml(item.headline)}</strong></div>`).join("");
+ bindPublishedEditionActions();
+}
+
+async function loadPublishedEditions(force=false){
+ if(publishedEditions.length && !force) return activePublishedEdition;
+ try{
+  const listResponse = await fetch(`/.netlify/functions/editions?refresh=${force ? Date.now() : "reader"}`, {cache:"no-store"});
+  if(!listResponse.ok) throw new Error(`Edition list returned ${listResponse.status}`);
+  const list = await listResponse.json();
+  publishedEditions = Array.isArray(list.items) ? list.items : [];
+  if(!publishedEditions.length) return null;
+  const requestedId = location.hash.match(/^#epaper-([0-9a-f-]{36})$/i)?.[1];
+  const selected = publishedEditions.find(item=>item.id === requestedId) || publishedEditions[0];
+  const detailResponse = await fetch(`/.netlify/functions/editions?action=detail&id=${encodeURIComponent(selected.id)}`, {cache:"no-store"});
+  if(!detailResponse.ok) throw new Error(`Edition detail returned ${detailResponse.status}`);
+  const payload = await detailResponse.json();
+  renderPublishedEdition(payload.edition);
+  return payload.edition;
+ }catch(error){
+  console.warn(JSON.stringify({code:"EDITION_FETCH_FAILED",message:String(error.message || error),timestamp:new Date().toISOString()}));
+  return null;
+ }
+}
+
 function renderTodayEdition(){
  const leadHost = document.getElementById("editionLead");
  const listHost = document.getElementById("editionList");
  const timelineHost = document.getElementById("editionTimeline");
  const topicHost = document.getElementById("forYouTopics");
  if(!leadHost || !listHost || !timelineHost || !topicHost) return;
+ if(!activePublishedEdition && !editionLoadPromise) editionLoadPromise = loadPublishedEditions().finally(()=>{ editionLoadPromise = null; });
+ if(activePublishedEdition?.items?.length){ renderPublishedEdition(activePublishedEdition); return; }
  const items = editionItems();
  if(!items.length){
   topicHost.innerHTML = "";
@@ -3369,7 +3460,8 @@ function renderTodayEdition(){
  }).join("");
 }
 
-function openTodayEdition(){
+async function openTodayEdition(){
+ await loadPublishedEditions();
  renderTodayEdition();
  document.getElementById("todaysEditionFull")?.scrollIntoView({behavior:"smooth", block:"start"});
 }
@@ -4853,6 +4945,19 @@ document.getElementById("editionRefreshNow")?.addEventListener("click",async ()=
 });
 document.getElementById("editionListen")?.addEventListener("click",()=>speakTelugu((editionItems().slice(0,3).map(story=>story.title).join(". "))));
 document.getElementById("editionBriefListen")?.addEventListener("click",()=>speakTelugu((editionItems().slice(0,5).map(story=>story.title).join(". "))));
+document.getElementById("editionReadOnline")?.addEventListener("click",()=>document.getElementById("editionLead")?.scrollIntoView({behavior:"smooth",block:"start"}));
+document.getElementById("editionShare")?.addEventListener("click",async()=>{
+ const url = editionPublicUrl();
+ const title = `NewsNeta Daily • ${activePublishedEdition?.edition_date || "Today's Edition"}`;
+ if(navigator.share){
+  try{ await navigator.share({title,text:title,url}); return; }catch(error){ if(error.name === "AbortError") return; }
+ }
+ window.open(`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,"_blank","noopener,noreferrer");
+});
+document.getElementById("editionArchiveSelect")?.addEventListener("change",async event=>{
+ const response = await fetch(`/.netlify/functions/editions?action=detail&id=${encodeURIComponent(event.target.value)}`, {cache:"no-store"});
+ if(response.ok){ const payload = await response.json(); renderPublishedEdition(payload.edition); history.replaceState(null,"",`#epaper-${payload.edition.id}`); }
+});
 document.getElementById("readerQuestionBtn")?.addEventListener("click",()=>{
  const input = document.getElementById("readerQuestion");
  const out = document.getElementById("readerQuestionOut");
@@ -5582,6 +5687,117 @@ function cmsMediaLibraryScreen(role){
  </div>`;
 }
 
+let cmsEditionList = [];
+let cmsActiveEdition = null;
+
+function cmsEditionScreen(role){
+ if(role !== "admin") return `<div class="cms-screen"><div class="publish-validation">Administrator permission is required.</div></div>`;
+ const today = new Date().toISOString().slice(0,10);
+ return `<div class="cms-screen">
+  <div class="cms-screen-head"><div><strong>NewsNeta Daily ePaper</strong><small>Create a reviewed Telugu newspaper snapshot from eligible published stories.</small></div><span class="chip">Admin only</span></div>
+  <form class="cms-form" id="editionDraftForm">
+   <div class="cms-form-grid"><label>Edition date<input id="editionDate" type="date" value="${today}" required></label><label>Language<select id="editionLanguage"><option value="te">Telugu</option><option value="en">English</option><option value="hi">Hindi</option></select></label><label>Edition<select id="editionScope"><option value="combined">Combined</option><option value="telangana">Telangana</option><option value="andhra-pradesh">Andhra Pradesh</option></select></label><label>Pages<select id="editionPageCount"><option>4</option><option>6</option><option>8</option></select></label></div>
+   <div class="cms-form-actions"><button class="pill-btn admin-login-btn" type="submit">Prepare Draft</button><button class="pill-btn cms-secondary-btn" id="editionReload" type="button">Edition History</button></div>
+   <div class="workflow-note" id="editionStudioNote">Draft generation reuses stored summaries and approved article images. Publication always requires Admin approval.</div>
+  </form>
+  <div id="editionHistory" class="queue-list"></div><div id="editionEditor"></div>
+ </div>`;
+}
+
+function renderCmsEditionHistory(){
+ const host = document.getElementById("editionHistory");
+ if(!host) return;
+ host.innerHTML = cmsEditionList.map(item=>`<div class="queue-item"><span><strong>${escapeHtml(item.edition_date)} • ${escapeHtml(item.edition_scope)}</strong><br><small>${escapeHtml(item.language)} • ${item.page_count} pages • ${escapeHtml(item.status)}</small></span><div class="queue-actions"><button type="button" data-open-edition="${escapeAttr(item.id)}">Open</button>${item.pdf_storage_key ? `<a class="pill-btn cms-secondary-btn" href="/.netlify/functions/editions?action=pdf&id=${encodeURIComponent(item.id)}" target="_blank" rel="noopener">PDF</a>` : ""}</div></div>`).join("") || `<div class="queue-item"><span>No editions have been prepared yet.</span></div>`;
+ host.querySelectorAll("[data-open-edition]").forEach(button=>button.addEventListener("click",()=>openCmsEdition(button.dataset.openEdition)));
+}
+
+function renderCmsEditionEditor(){
+ const host = document.getElementById("editionEditor");
+ if(!host || !cmsActiveEdition) return;
+ const editable = cmsActiveEdition.status === "draft";
+ host.innerHTML = `<div class="cms-screen-head"><div><strong>${escapeHtml(cmsActiveEdition.edition_date)} edition</strong><small>${cmsActiveEdition.items.length} stories • ${escapeHtml(cmsActiveEdition.status)}</small></div><span class="chip">${cmsActiveEdition.page_count} pages</span></div><div class="edition-studio-list">${cmsActiveEdition.items.map((item,index)=>`<div class="edition-studio-item" data-edition-item="${escapeAttr(item.article_id)}"><b>${index + 1}</b><div><input data-edition-headline value="${escapeAttr(item.headline)}" ${editable ? "" : "disabled"}><textarea data-edition-summary ${editable ? "" : "disabled"}>${escapeHtml(item.summary)}</textarea><small>${escapeHtml(item.section)} • revision ${item.article_revision}</small></div>${editable ? `<div class="edition-order-actions"><button type="button" data-edition-move="up" aria-label="Move up">↑</button><button type="button" data-edition-move="down" aria-label="Move down">↓</button></div>` : ""}</div>`).join("")}</div><div class="cms-form-actions">${editable ? `<button class="pill-btn cms-secondary-btn" id="editionSave" type="button">Save Order & Summaries</button><button class="pill-btn cms-secondary-btn" id="editionGenerate" type="button">Generate PDF</button><button class="pill-btn admin-login-btn" id="editionPublish" type="button">Publish Edition</button>` : ""}${cmsActiveEdition.pdf_storage_key ? `<a class="pill-btn cms-secondary-btn" href="/.netlify/functions/editions?action=pdf&id=${encodeURIComponent(cmsActiveEdition.id)}" target="_blank" rel="noopener">Download PDF</a><a class="pill-btn cms-secondary-btn" href="https://wa.me/?text=${encodeURIComponent(`NewsNeta Daily ${cmsActiveEdition.edition_date} ${location.origin}/#epaper-${cmsActiveEdition.id}`)}" target="_blank" rel="noopener">Share on WhatsApp</a>` : ""}</div>`;
+ const editionShareLink = [...host.querySelectorAll('a[href^="https://wa.me/"]')].at(-1);
+ if(editionShareLink) editionShareLink.href = `https://wa.me/?text=${encodeURIComponent(`NewsNeta Daily ${cmsActiveEdition.edition_date} ${location.origin}/epaper/${cmsActiveEdition.id}`)}`;
+ if(cmsActiveEdition.status === "published"){
+  const defaultTime = new Date(Date.now() + 30 * 60000); defaultTime.setSeconds(0,0);
+  const localDefaultTime = new Date(defaultTime.getTime() - defaultTime.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+  host.insertAdjacentHTML("beforeend", `<div class="cms-screen-head"><div><strong>Edition Distribution</strong><small>Send now or schedule delivery to a consented recipient through configured official providers.</small></div><span class="chip">Audited</span></div><form class="cms-form" id="editionDeliveryForm"><div class="cms-form-grid"><label>Channel<select id="editionDeliveryChannel"><option value="email">Email</option><option value="whatsapp">WhatsApp Business</option></select></label><label>Recipient<input id="editionDeliveryRecipient" autocomplete="off" placeholder="reader@example.com" required></label><label>Delivery time<input id="editionDeliveryTime" type="datetime-local" value="${localDefaultTime}"></label><label class="check-row"><input id="editionDeliveryConsent" type="checkbox" required> Recipient consent confirmed</label></div><div class="cms-form-actions"><button class="pill-btn admin-login-btn" type="button" data-edition-delivery="now">Send Now</button><button class="pill-btn cms-secondary-btn" type="button" data-edition-delivery="schedule">Schedule Delivery</button></div><div class="workflow-note" id="editionDeliveryNote">WhatsApp requires an approved Meta template. Email requires a verified sender.</div></form><div class="queue-list" id="editionDeliveryHistory"></div>`);
+  bindCmsEditionDistribution();
+ }
+ host.querySelectorAll("[data-edition-move]").forEach(button=>button.addEventListener("click",()=>{
+  const item = button.closest("[data-edition-item]");
+  const sibling = button.dataset.editionMove === "up" ? item.previousElementSibling : item.nextElementSibling;
+  if(!sibling) return;
+  if(button.dataset.editionMove === "up") item.parentElement.insertBefore(item,sibling); else item.parentElement.insertBefore(sibling,item);
+  [...item.parentElement.children].forEach((row,index)=>{ row.firstElementChild.textContent = index + 1; });
+ }));
+ document.getElementById("editionSave")?.addEventListener("click",saveCmsEdition);
+ document.getElementById("editionGenerate")?.addEventListener("click",()=>runCmsEditionAction("generate"));
+ document.getElementById("editionPublish")?.addEventListener("click",()=>runCmsEditionAction("publish"));
+}
+
+async function loadCmsEditionDeliveries(){
+ const host=document.getElementById("editionDeliveryHistory"); if(!host) return;
+ try{ const payload=await editionDistributionApi(); host.innerHTML=(payload.items || []).filter(item=>item.edition_id===cmsActiveEdition.id).map(item=>`<div class="queue-item"><span><strong>${escapeHtml(item.channel)} • ${escapeHtml(item.recipient_masked)}</strong><br><small>${escapeHtml(item.status)} • ${formatStoryDate(item.scheduled_at)}</small></span><span class="status-pill ${item.status === "sent" ? "published" : item.status === "failed" ? "rejected" : "pending"}">${escapeHtml(item.status)}</span></div>`).join("") || `<div class="queue-item"><span>No deliveries scheduled for this edition.</span></div>`; const note=document.getElementById("editionDeliveryNote"); if(note) note.textContent=`Providers: Email ${payload.providers?.email ? "ready" : "not configured"}; WhatsApp ${payload.providers?.whatsapp ? "ready" : "not configured"}.`; }
+ catch(error){ host.innerHTML=`<div class="publish-validation">Delivery history unavailable: ${escapeHtml(error.message || error)}</div>`; }
+}
+
+function bindCmsEditionDistribution(){
+ const channel=document.getElementById("editionDeliveryChannel"); const recipient=document.getElementById("editionDeliveryRecipient");
+ channel?.addEventListener("change",()=>{ recipient.placeholder=channel.value === "whatsapp" ? "+919876543210" : "reader@example.com"; });
+ document.querySelectorAll("[data-edition-delivery]").forEach(button=>button.addEventListener("click",async()=>{
+  const note=document.getElementById("editionDeliveryNote"); const sendNow=button.dataset.editionDelivery === "now";
+  try{ note.textContent=sendNow ? "Sending through the configured provider..." : "Scheduling delivery..."; await editionDistributionApi({method:"POST",body:{editionId:cmsActiveEdition.id,channel:channel.value,recipient:recipient.value,consentConfirmed:document.getElementById("editionDeliveryConsent").checked,sendNow,scheduledAt:document.getElementById("editionDeliveryTime").value}}); note.textContent=sendNow ? "Provider accepted the edition delivery." : "Edition delivery scheduled."; recipient.value=""; document.getElementById("editionDeliveryConsent").checked=false; await loadCmsEditionDeliveries(); }
+  catch(error){ note.textContent=`Delivery failed: ${error.message || error}`; }
+ }));
+ loadCmsEditionDeliveries();
+}
+
+async function loadCmsEditions(){
+ const payload = await editionApi("list");
+ cmsEditionList = payload.items || [];
+ renderCmsEditionHistory();
+}
+
+async function openCmsEdition(id){
+ const payload = await editionApi("detail", {id});
+ cmsActiveEdition = payload.edition;
+ renderCmsEditionEditor();
+}
+
+function cmsEditionEditorItems(){
+ return [...document.querySelectorAll("[data-edition-item]")].map((row,index)=>({articleId:row.dataset.editionItem,headline:row.querySelector("[data-edition-headline]")?.value || "",summary:row.querySelector("[data-edition-summary]")?.value || "",pageNumber:Math.floor(index / Math.max(1,Math.ceil(cmsActiveEdition.items.length / cmsActiveEdition.page_count))) + 1}));
+}
+
+async function saveCmsEdition(){
+ const note = document.getElementById("editionStudioNote");
+ try{ const payload = await editionApi("update", {method:"POST",body:{id:cmsActiveEdition.id,items:cmsEditionEditorItems()}}); cmsActiveEdition=payload.edition; if(note) note.textContent="Edition order and reviewed summaries saved."; renderCmsEditionEditor(); }
+ catch(error){ if(note) note.textContent=`Edition save failed: ${error.message || error}`; }
+}
+
+async function runCmsEditionAction(action){
+ const note = document.getElementById("editionStudioNote");
+ try{
+  if(action === "publish" && !window.confirm("Publish this edition to the public ePaper archive?")) return;
+  if(note) note.textContent = action === "generate" ? "Generating the stored PDF..." : "Publishing the approved edition...";
+  const payload = await editionApi(action, {method:"POST",body:{id:cmsActiveEdition.id}});
+  if(action === "publish") cmsActiveEdition = payload.edition; else await openCmsEdition(cmsActiveEdition.id);
+  await loadCmsEditions(); renderCmsEditionEditor(); if(note) note.textContent = action === "generate" ? "PDF generated and stored." : "Edition published to the public archive.";
+ }catch(error){ if(note) note.textContent=`Edition ${action} failed: ${error.message || error}`; }
+}
+
+function bindCmsEditionStudio(){
+ const form = document.getElementById("editionDraftForm");
+ if(!form) return;
+ loadCmsEditions().catch(error=>{ document.getElementById("editionStudioNote").textContent=`Edition history unavailable: ${error.message || error}`; });
+ document.getElementById("editionReload")?.addEventListener("click",()=>loadCmsEditions());
+ form.addEventListener("submit",async event=>{
+  event.preventDefault(); const note=document.getElementById("editionStudioNote"); note.textContent="Selecting and deduplicating eligible published stories...";
+  try{ const payload=await editionApi("draft",{method:"POST",body:{editionDate:document.getElementById("editionDate").value,language:document.getElementById("editionLanguage").value,editionScope:document.getElementById("editionScope").value,pageCount:Number(document.getElementById("editionPageCount").value)}}); cmsActiveEdition=payload.edition; await loadCmsEditions(); renderCmsEditionEditor(); note.textContent="Draft prepared. Review order, headlines and summaries before generating the PDF."; }
+  catch(error){ note.textContent=`Draft preparation failed: ${error.message || error}`; }
+ });
+}
+
 function cmsRoleHomeScreen(role){
  const nextScreen = role === "reviewer" ? "pending" : "create";
  const nextLabel = role === "reviewer" ? "Open Pending Review" : "Create News";
@@ -5603,6 +5819,7 @@ function cmsScreenMarkup(role, screen="home"){
  if(screen === "home") return cmsRoleHomeScreen(role);
  if(screen === "feeds") return cmsFeedScreen(role);
  if(screen === "media") return cmsMediaLibraryScreen(role);
+ if(screen === "epaper") return cmsEditionScreen(role);
  if(["review","manage","published","pending","drafts","scheduled","submitted","feedback","reviewed","my-articles"].includes(screen)) return cmsManageScreen(role,screen === "review" || screen === "manage" ? "all" : screen);
  if(screen === "users") return cmsUsersScreen(role);
  if(screen === "assignments" || screen === "settings") return cmsAssignmentsScreen(role);
@@ -6191,6 +6408,7 @@ function bindCmsScreen(role){
  document.querySelectorAll("[data-cms-screen-jump]").forEach(button=>{
   button.addEventListener("click",()=>switchCmsScreen(button.dataset.cmsScreenJump));
  });
+ bindCmsEditionStudio();
 }
 
 function switchCmsScreen(screen){
@@ -6219,7 +6437,7 @@ function cmsMetricsForRole(role){
 }
 
 function cmsNavigationForRole(role){
- if(role === "admin") return [["home","Overview"],["create","Create News"],["published","Published Articles"],["pending","Pending Review"],["drafts","Drafts"],["scheduled","Scheduled News"],["media","Media Library"],["users","Manage Users"],["feeds","Live Feeds"],["settings","Analytics & Settings"]];
+ if(role === "admin") return [["home","Overview"],["create","Create News"],["published","Published Articles"],["pending","Pending Review"],["drafts","Drafts"],["scheduled","Scheduled News"],["media","Media Library"],["epaper","Daily ePaper"],["users","Manage Users"],["feeds","Live Feeds"],["settings","Analytics & Settings"]];
  if(role === "reviewer") return [["home","Review Overview"],["pending","Pending Review"],["reviewed","Reviewed History"]];
  return [["home","Overview"],["create","Create News"],["my-articles","My Articles"],["drafts","Drafts"],["submitted","Submitted for Review"],["feedback","Review Feedback"],["published","Published Articles"],["assignments","My Assignments"]];
 }
